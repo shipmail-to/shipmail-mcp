@@ -1,6 +1,6 @@
 {
   "name": "shipmail",
-  "version": "0.7.0",
+  "version": "0.7.13",
   "description": "Operate secure custom-domain business email, calendars, and agent inboxes with Shipmail.",
   "author": {
     "name": "Shipmail",

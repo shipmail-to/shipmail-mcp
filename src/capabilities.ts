@@ -14,6 +14,7 @@ export const MCP_PERMISSION_GROUP_NAMES = [
   "booking_pages",
   "forwarding",
   "mailbox_rules",
+  "members",
   "webhooks",
   "credentials",
   "mailbox_export",
@@ -86,7 +87,7 @@ export const MCP_PERMISSION_GROUPS = [
     name: "mail_organize",
     label: "Organize mail",
     description:
-      "Update message state, move messages, and delete messages already in Trash or Junk.",
+      "Update message state, move messages, manage custom folders, and delete messages already in Trash or Junk.",
     scopes: ["messages:write"],
     persistent: false,
   },
@@ -131,6 +132,13 @@ export const MCP_PERMISSION_GROUPS = [
     description: "Read and manage persistent server-side sorting, move, read, and star rules.",
     scopes: ["mailbox_rules:read", "mailbox_rules:write"],
     persistent: true,
+  },
+  {
+    name: "members",
+    label: "Team members",
+    description: "Read organization members.",
+    scopes: ["members:read"],
+    persistent: false,
   },
   {
     name: "webhooks",
@@ -237,21 +245,20 @@ const CAPABILITY_ROWS = [
   ["shipmail_update_mailbox", "updateMailbox", "mailboxes:write"],
   ["shipmail_delete_mailbox", "deleteMailbox", "mailboxes:write"],
   ["shipmail_list_mailbox_folders", "listMailboxFolders", "mailboxes:read"],
-  ["shipmail_get_mailbox_rules", "getMailboxRules", "mailbox_rules:read"],
-  ["shipmail_set_mailbox_rules", "updateMailboxRules", "mailbox_rules:write"],
-  ["shipmail_create_mailbox_folder", "createMailboxFolder", "mailboxes:write"],
-  ["shipmail_update_mailbox_folder", "updateMailboxFolder", "mailboxes:write"],
-  ["shipmail_delete_mailbox_folder", "deleteMailboxFolder", "mailboxes:write"],
+  ["shipmail_create_mailbox_folder", "createMailboxFolder", "messages:write"],
+  ["shipmail_update_mailbox_folder", "updateMailboxFolder", "messages:write"],
+  ["shipmail_delete_mailbox_folder", "deleteMailboxFolder", "messages:write"],
+  ["shipmail_list_mailbox_rules", "getMailboxRules", "mailbox_rules:read"],
+  ["shipmail_get_mailbox_rule", "getMailboxRules", "mailbox_rules:read"],
+  ["shipmail_create_mailbox_rule", "updateMailboxRules", "mailbox_rules:write"],
+  ["shipmail_update_mailbox_rule", "updateMailboxRules", "mailbox_rules:write"],
+  ["shipmail_delete_mailbox_rule", "updateMailboxRules", "mailbox_rules:write"],
   ["shipmail_list_mailbox_identities", "listMailboxIdentities", "mailboxes:read"],
   ["shipmail_list_mailbox_inbox_messages", "listMailboxInboxMessages", "messages:read"],
   ["shipmail_get_mailbox_inbox_message", "getMailboxInboxMessage", "messages:read"],
   ["shipmail_list_mailbox_inbox_threads", "listMailboxInboxThreads", "messages:read"],
   ["shipmail_get_mailbox_inbox_thread", "getMailboxInboxThread", "messages:read"],
-  [
-    "shipmail_update_inbox_thread_reply_state",
-    "updateMailboxInboxThreadReplyState",
-    "messages:write",
-  ],
+  ["shipmail_update_inbox_thread_attention", "updateMailboxInboxThreadAttention", "messages:write"],
   ["shipmail_create_inbox_reply_draft", "createMailboxInboxReplyDraft", "drafts:write"],
   ["shipmail_send_inbox_reply_draft", "sendMailboxInboxReplyDraft", "messages:send"],
   ["shipmail_reply_to_inbox_message", "replyToMailboxInboxMessage", "messages:send"],
@@ -264,11 +271,15 @@ const CAPABILITY_ROWS = [
   ["shipmail_delete_mailbox_forwarding", "deleteMailboxForwarding", "mailbox_forwarding:write"],
   ["shipmail_reset_mailbox_password", "resetMailboxPassword", "mailboxes:write"],
   ["shipmail_set_auto_reply", "updateAutoReply", "mailboxes:write"],
+  ["shipmail_get_mailbox_delivery_routing", "getMailboxDeliveryRouting", "mailboxes:read"],
+  ["shipmail_update_mailbox_delivery_routing", "updateMailboxDeliveryRouting", "mailboxes:write"],
   ["shipmail_set_spam_filter", "updateSpamFilter", "mailboxes:write"],
   ["shipmail_create_mailbox_import", "createMailboxImport", "mailboxes:write"],
   ["shipmail_list_mailbox_imports", "listMailboxImports", "mailboxes:read"],
   ["shipmail_get_mailbox_import", "getMailboxImport", "mailboxes:read"],
   ["shipmail_cancel_mailbox_import", "cancelMailboxImport", "mailboxes:write"],
+  ["shipmail_resume_mailbox_import", "resumeMailboxImport", "mailboxes:write"],
+  ["shipmail_restore_mailbox_import", "restoreMailboxImport", "mailboxes:write"],
   ["shipmail_undo_mailbox_import", "undoMailboxImport", "mailboxes:write"],
   ["shipmail_inject_sandbox_inbound", "injectSandboxInbound", "messages:write"],
   ["shipmail_list_messages", "listMessages", "messages:read"],
@@ -288,6 +299,8 @@ const CAPABILITY_ROWS = [
   ["shipmail_create_reply_scan", "createReplyScan", "messages:write"],
   ["shipmail_get_reply_scan", "getReplyScan", "messages:read"],
   ["shipmail_list_reply_scan_results", "listReplyScanResults", "messages:read"],
+  ["shipmail_list_members", "listMembers", "members:read"],
+  ["shipmail_get_member", "getMember", "members:read"],
   ["shipmail_create_webhook", "createWebhook", "webhooks:write"],
   ["shipmail_list_webhooks", "listWebhooks", "webhooks:read"],
   ["shipmail_get_webhook", "getWebhook", "webhooks:read"],
@@ -334,6 +347,12 @@ const CAPABILITY_ROWS = [
   ["shipmail_get_newsletter", "getNewsletter", "newsletters:read"],
   ["shipmail_update_newsletter", "updateNewsletter", "newsletters:write"],
   ["shipmail_list_newsletter_assets", "listNewsletterAssets", "newsletters:read"],
+  [
+    "shipmail_upload_newsletter_asset_with_file",
+    "prepareNewsletterAssetUpload",
+    "newsletters:write",
+  ],
+  ["shipmail_prepare_newsletter_asset_upload", "prepareNewsletterAssetUpload", "newsletters:write"],
   ["shipmail_register_newsletter_asset", "uploadNewsletterAsset", "newsletters:write"],
   ["shipmail_preview_newsletter", "previewNewsletter", "newsletters:read"],
   ["shipmail_run_newsletter_preflight", "runNewsletterPreflight", "newsletters:write"],
@@ -439,7 +458,6 @@ const DESTRUCTIVE_TOOLS: ReadonlySet<string> = new Set([
   "shipmail_create_mailbox_export",
   "shipmail_rotate_webhook_secret",
   "shipmail_consume_partner_mailbox_credential_grant",
-  "shipmail_set_mailbox_rules",
   "shipmail_rotate_audience_feed",
   "shipmail_revoke_audience_feed",
 ]);
@@ -507,6 +525,7 @@ function permissionGroupFor(
   if (requiredScope === "calendar:write") return "calendar_write";
   if (requiredScope.startsWith("booking_pages:")) return "booking_pages";
   if (requiredScope.startsWith("automations:")) return "automations";
+  if (requiredScope.startsWith("members:")) return "members";
   if (requiredScope.startsWith("webhooks:")) return "webhooks";
   if (requiredScope.startsWith("newsletters:")) return "newsletters";
   if (requiredScope.startsWith("audiences:")) return "audiences";
@@ -521,6 +540,7 @@ function effectFor(toolName: McpToolName): McpCapabilityEffect {
   if (
     toolName === "shipmail_status" ||
     toolName === "shipmail_compose_message_with_file" ||
+    toolName === "shipmail_upload_newsletter_asset_with_file" ||
     toolName.startsWith("shipmail_list_") ||
     toolName.startsWith("shipmail_get_") ||
     toolName.startsWith("shipmail_search_") ||
@@ -551,7 +571,7 @@ function durationFor(toolName: McpToolName): McpCapabilityDuration {
   }
   if (
     toolName.includes("forwarding") ||
-    toolName.includes("mailbox_rules") ||
+    toolName.includes("mailbox_rule") ||
     toolName.includes("webhook") ||
     toolName.includes("booking_page") ||
     toolName.includes("automation")
@@ -576,6 +596,7 @@ function idempotencyFor(
   if (
     toolName === "shipmail_create_mailbox_app_password" ||
     toolName === "shipmail_consume_partner_mailbox_credential_grant" ||
+    toolName === "shipmail_prepare_newsletter_asset_upload" ||
     toolName === "shipmail_prepare_staged_attachment_upload"
   ) {
     return "forbidden";
@@ -619,7 +640,9 @@ function defineCapability(row: (typeof CAPABILITY_ROWS)[number]): McpCapability 
     transports: {
       hostedOAuth: permissionGroup !== "partner_admin",
       directApiKeyHttp: true,
-      stdio: toolName !== "shipmail_compose_message_with_file",
+      stdio:
+        toolName !== "shipmail_compose_message_with_file" &&
+        toolName !== "shipmail_upload_newsletter_asset_with_file",
     },
   };
 }

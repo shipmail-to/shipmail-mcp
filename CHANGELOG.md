@@ -1,5 +1,87 @@
 # Changelog
 
+## [0.7.13](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.12...shipmail-mcp-v0.7.13) (2026-08-21)
+
+
+### Features
+
+* **mailboxes:** allow cross-domain catch-all ([#1587](https://github.com/shipmail-to/Shipmail/issues/1587)) ([7513e0c](https://github.com/shipmail-to/Shipmail/commit/7513e0c4141dd3b37de5d55a34e8771e28760bcb))
+
+## [0.7.12](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.11...shipmail-mcp-v0.7.12) (2026-08-20)
+
+
+### Features
+
+* **mailboxes:** add mailbox delivery routing ([#1582](https://github.com/shipmail-to/Shipmail/issues/1582)) ([fe3bb53](https://github.com/shipmail-to/Shipmail/commit/fe3bb53e7aa2dcf52da1d2bdbe42cbdcf93a3943))
+
+## [0.7.11](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.10...shipmail-mcp-v0.7.11) (2026-08-19)
+
+
+### Features
+
+* **inbox:** recover away conversations and expose members over the API ([#1546](https://github.com/shipmail-to/Shipmail/issues/1546)) ([f2a74e6](https://github.com/shipmail-to/Shipmail/commit/f2a74e66298ede77018edf67480caf68fbc70640))
+* **webhooks:** emit member.away_updated ([#1551](https://github.com/shipmail-to/Shipmail/issues/1551)) ([f75a2c3](https://github.com/shipmail-to/Shipmail/commit/f75a2c3da2454b92cc41fb8d74359aa78afa267f))
+
+## [0.7.10](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.9...shipmail-mcp-v0.7.10) (2026-08-17)
+
+
+### Bug Fixes
+
+* **newsletters:** allow deleting domains used by history ([#1520](https://github.com/shipmail-to/Shipmail/issues/1520)) ([0413628](https://github.com/shipmail-to/Shipmail/commit/0413628983ecaabcfeb8e0953f1f8f421bb2f317))
+
+## [0.7.9](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.8...shipmail-mcp-v0.7.9) (2026-08-15)
+
+
+### Features
+
+* retain and restore uploaded import sources ([#1457](https://github.com/shipmail-to/Shipmail/issues/1457)) ([de82b59](https://github.com/shipmail-to/Shipmail/commit/de82b59c6d84c6246fca6cd4fd31b05c2c1910f6))
+
+
+### Bug Fixes
+
+* retain and resume uploaded imports ([#1455](https://github.com/shipmail-to/Shipmail/issues/1455)) ([50df704](https://github.com/shipmail-to/Shipmail/commit/50df70454ffc0b57a57c27a330d01686aa21ced9))
+
+## [0.7.8](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.7...shipmail-mcp-v0.7.8) (2026-08-10)
+
+
+### Bug Fixes
+
+* **newsletters:** restore production media uploads ([#1359](https://github.com/shipmail-to/Shipmail/issues/1359)) ([9979155](https://github.com/shipmail-to/Shipmail/commit/99791559709bb914330a226f81ad43dd6a4dfc6b))
+
+## [0.7.7](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.6...shipmail-mcp-v0.7.7) (2026-08-08)
+
+
+### Features
+
+* **newsletters:** accept inline HTML in block prose ([#1290](https://github.com/shipmail-to/Shipmail/issues/1290)) ([1714569](https://github.com/shipmail-to/Shipmail/commit/17145691a8f34b53370e83f0501c6eb8cd50061c))
+* **newsletters:** add secure MCP media uploads ([#1300](https://github.com/shipmail-to/Shipmail/issues/1300)) ([3f4d04b](https://github.com/shipmail-to/Shipmail/commit/3f4d04ba6f961ad9deb86ade3a86cfd189167971))
+
+## [0.7.6](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.5...shipmail-mcp-v0.7.6) (2026-08-07)
+
+
+### Bug Fixes
+
+* **mcp:** let a multi-organization connection reach every organization ([#1282](https://github.com/shipmail-to/Shipmail/issues/1282)) ([7b452f1](https://github.com/shipmail-to/Shipmail/commit/7b452f1e64961eb2244f98b307496833cbde4e6e))
+
+## [0.7.5](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.4...shipmail-mcp-v0.7.5) (2026-08-03)
+
+
+### Features
+
+* **calendar:** localize invitation emails ([#1194](https://github.com/shipmail-to/Shipmail/issues/1194)) ([aa73780](https://github.com/shipmail-to/Shipmail/commit/aa737801aeb142dec503c39da8e1da3478a1c010))
+
+## [0.7.4](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.3...shipmail-mcp-v0.7.4) (2026-08-02)
+
+
+### Features
+
+* **mcp:** complete mailbox-rule management tools ([#1183](https://github.com/shipmail-to/Shipmail/issues/1183)) ([679a325](https://github.com/shipmail-to/Shipmail/commit/679a3257a4a00b2d17ee3490dba76fca50c56bbf))
+
+
+### Bug Fixes
+
+* **mcp:** advertise folder and inbox-rule management tools ([#1181](https://github.com/shipmail-to/Shipmail/issues/1181)) ([c14c919](https://github.com/shipmail-to/Shipmail/commit/c14c919ec10062bf9ad1ef16527e3e202cb710b1))
+
 ## [0.7.3](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.2...shipmail-mcp-v0.7.3) (2026-08-02)
 
 

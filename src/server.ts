@@ -3,16 +3,21 @@ import { ShipmailClient } from "shipmail";
 
 import type { McpConfig } from "./config.js";
 import {
+  CROSS_ORGANIZATION_TOOL_BY_BASE_NAME,
   CROSS_ORGANIZATION_TOOL_NAMES,
   type CrossOrganizationGrant,
   registerCrossOrganizationTools,
 } from "./cross-organization-tools.js";
 import { registerPrompts } from "./prompts.js";
-import { registerResources } from "./resources.js";
+import { CONNECTION_SCOPED_RESOURCE_URIS, registerResources } from "./resources.js";
 import { registerTools } from "./tools.js";
 import { VERSION } from "./version.js";
 
-export { CROSS_ORGANIZATION_TOOL_NAMES };
+export {
+  CONNECTION_SCOPED_RESOURCE_URIS,
+  CROSS_ORGANIZATION_TOOL_BY_BASE_NAME,
+  CROSS_ORGANIZATION_TOOL_NAMES,
+};
 
 export type HostedOrganizationGrant = {
   readonly id: string;
@@ -29,6 +34,7 @@ Safety rules:
 - Never send, reply, delete, rotate secrets, or change settings without explicit user intent and the corresponding authorized tool.
 - When the host provides a conversation or library file and supports MCP Apps file handoff, use shipmail_compose_message_with_file so the user can review the exact file and message before the component uploads and sends it.
 - For a user-approved local filesystem file, compute its exact byte size and SHA-256 digest, call shipmail_prepare_staged_attachment_upload, POST the unmodified bytes to the returned one-time upload_url with the declared Content-Type, then pass the returned sat_ ID to shipmail_send_message. Never invent a file URL, place base64 bytes in MCP arguments, or print the upload URL.
+- When the host provides a conversation or library image or video and supports MCP Apps file handoff, use shipmail_upload_newsletter_asset_with_file. For a user-approved local newsletter media file, compute its exact byte size and SHA-256 digest, call shipmail_prepare_newsletter_asset_upload, PUT the unmodified bytes to upload_url with upload_headers, upload the generated JPEG poster when the response is for video, then POST an empty body to complete_url. Never place base64 media bytes in MCP arguments or print any prepared URL.
 - Prefer mailbox IDs over email-address lookup when sending.
 - Use list/get tools to confirm resource IDs before mutating state.
 - Domain purchase is intentionally unavailable in this MCP server.
@@ -93,7 +99,12 @@ export function createShipmailMcpServer(
     }),
   );
   registerCrossOrganizationTools(server, crossOrganizationGrants);
-  registerResources(server, client, componentConnectDomain(config.baseUrl));
+  registerResources(
+    server,
+    client,
+    componentConnectDomain(config.baseUrl),
+    crossOrganizationGrants,
+  );
   registerPrompts(server);
 
   return server;

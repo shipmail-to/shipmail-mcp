@@ -9,7 +9,13 @@ import { API_KEY_SCOPES } from "shipmail/api-key-scopes";
 import { z } from "zod/v4";
 
 import { MCP_CAPABILITIES, MCP_PERMISSION_GROUPS, MCP_TOOL_NAMES } from "../capabilities.js";
-import { audienceFeedSchema, updateAudienceFeedInputSchema } from "../schemas.js";
+import {
+  audienceFeedSchema,
+  createNewsletterInputSchema,
+  memberSchema,
+  updateAudienceFeedInputSchema,
+  updateNewsletterInputSchema,
+} from "../schemas.js";
 import { registerTools } from "../tools.js";
 
 const OPENAPI_PATH = fileURLToPath(new URL("../../fixtures/openapi.json", import.meta.url));
@@ -25,8 +31,14 @@ const INTENTIONALLY_EXCLUDED: Readonly<Record<string, string>> = {
     "Raw binary staging is exposed through SDKs and host components; JSON MCP calls consume only the resulting staged ID.",
   consumeStagedAttachmentUpload:
     "The MCP Apps component uploads raw bytes directly through the prepared single-use URL.",
+  consumeNewsletterAssetUpload:
+    "The MCP Apps component completes the direct newsletter media upload through the prepared single-use URL.",
   createMailboxImportUpload:
     "Import staging returns a presigned URL that requires a raw binary upload outside a JSON MCP tool call.",
+  completeMailboxImportUpload:
+    "Import completion belongs to the raw multipart upload flow outside a JSON MCP tool call.",
+  abortMailboxImportUpload:
+    "Import upload cleanup belongs to the raw multipart upload flow outside a JSON MCP tool call.",
 };
 
 const operationSchema = z
@@ -54,6 +66,11 @@ const openApiSchema = z.object({
 
 const OPENAPI_SCHEMA_COVERAGE = [
   {
+    componentName: "Member",
+    mcpKeys: memberSchema.keyof().options,
+    mcpOnlyKeys: [],
+  },
+  {
     componentName: "AudienceFeed",
     mcpKeys: audienceFeedSchema.keyof().options,
     mcpOnlyKeys: [],
@@ -62,6 +79,16 @@ const OPENAPI_SCHEMA_COVERAGE = [
     componentName: "UpdateAudienceFeedRequest",
     mcpKeys: updateAudienceFeedInputSchema.keyof().options,
     mcpOnlyKeys: ["audience_id", "idempotency_key"],
+  },
+  {
+    componentName: "CreateNewsletterRequest",
+    mcpKeys: createNewsletterInputSchema.keyof().options,
+    mcpOnlyKeys: ["idempotency_key"],
+  },
+  {
+    componentName: "UpdateNewsletterRequest",
+    mcpKeys: updateNewsletterInputSchema.keyof().options,
+    mcpOnlyKeys: ["id", "idempotency_key"],
   },
 ] as const;
 

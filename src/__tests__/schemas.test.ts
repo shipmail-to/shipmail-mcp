@@ -6,9 +6,11 @@ import {
   bookingPageSchema,
   createAutomationInputSchema,
   createBookingPageInputSchema,
+  createCalendarEventInputSchema,
   createDomainInputSchema,
   createMailboxFolderInputSchema,
   createMailboxInputSchema,
+  createMailboxRuleInputSchema,
   createNewsletterFromChangelogInputSchema,
   createNewsletterInputSchema,
   createWebhookInputSchema,
@@ -37,11 +39,13 @@ import {
   updateAudienceFeedInputSchema,
   updateAutomationInputSchema,
   updateBookingPageInputSchema,
+  updateCalendarEventInputSchema,
   updateDomainInputSchema,
   updateInboxMessageInputSchema,
+  updateMailboxDeliveryRoutingInputSchema,
   updateMailboxFolderInputSchema,
   updateMailboxInputSchema,
-  updateMailboxRulesInputSchema,
+  updateMailboxRuleInputSchema,
   updateNewsletterInputSchema,
 } from "../schemas.js";
 
@@ -79,6 +83,33 @@ describe("messageSchema", () => {
       matched_rule_ids: ["rule_invoices", "rule_priority"],
       stop_rule_id: "rule_priority",
     });
+  });
+});
+
+describe("calendar invitation language schemas", () => {
+  test("accept supported create and update values and reject unsupported ones", () => {
+    expect(
+      createCalendarEventInputSchema.parse({
+        mailbox: "hello@example.com",
+        title: "Sync",
+        start: "2026-08-07T08:30:00",
+        invitation_language: "fr",
+      }).invitation_language,
+    ).toBe("fr");
+    expect(
+      updateCalendarEventInputSchema.parse({
+        id: "evt_1",
+        mailbox: "hello@example.com",
+        invitation_language: "es",
+      }).invitation_language,
+    ).toBe("es");
+    expect(() =>
+      updateCalendarEventInputSchema.parse({
+        id: "evt_1",
+        mailbox: "hello@example.com",
+        invitation_language: "de",
+      }),
+    ).toThrow();
   });
 });
 
@@ -305,65 +336,56 @@ describe("mailbox rule schemas", () => {
   test("accepts webhook actions and rejects removed AI actions", () => {
     const base = {
       id: "mbx_123",
-      rules: [
-        {
-          id: "550e8400-e29b-41d4-a716-446655440000",
-          name: "Invalid",
-          enabled: true,
-          position: 0,
-          match_mode: "all",
-          stop: false,
-          conditions: [{ type: "has_attachment" }],
-          actions: [{ type: "send_webhook" }],
-        },
-      ],
+      name: "Attachments",
+      conditions: [{ type: "has_attachment" as const }],
+      actions: [{ type: "send_webhook" as const }],
     };
-    expect(updateMailboxRulesInputSchema.parse(base).rules[0]?.actions).toEqual([
-      { type: "send_webhook" },
-    ]);
+    expect(createMailboxRuleInputSchema.parse(base).actions).toEqual([{ type: "send_webhook" }]);
     expect(() =>
-      updateMailboxRulesInputSchema.parse({
+      createMailboxRuleInputSchema.parse({
         ...base,
-        rules: [{ ...base.rules[0], actions: [{ type: "ai_draft_reply" }] }],
+        actions: [{ type: "ai_draft_reply" }],
       }),
     ).toThrow();
     expect(() =>
-      updateMailboxRulesInputSchema.parse({
+      createMailboxRuleInputSchema.parse({
         ...base,
-        rules: [
-          {
-            ...base.rules[0],
-            actions: [{ type: "send_webhook", url: "https://example.com" }],
-          },
-        ],
+        actions: [{ type: "send_webhook", url: "https://example.com" }],
       }),
     ).toThrow();
   });
 
   test("enforces the API limit of four actions per rule", () => {
     expect(() =>
-      updateMailboxRulesInputSchema.parse({
+      createMailboxRuleInputSchema.parse({
         id: "mbx_123",
-        rules: [
-          {
-            id: "550e8400-e29b-41d4-a716-446655440000",
-            name: "Too many actions",
-            enabled: true,
-            position: 0,
-            match_mode: "all",
-            stop: false,
-            conditions: [{ type: "has_attachment" }],
-            actions: [
-              { type: "mark_read" },
-              { type: "star" },
-              { type: "send_webhook" },
-              { type: "move", target: { kind: "system", role: "archive" } },
-              { type: "move", target: { kind: "system", role: "trash" } },
-            ],
-          },
+        name: "Too many actions",
+        conditions: [{ type: "has_attachment" }],
+        actions: [
+          { type: "mark_read" },
+          { type: "star" },
+          { type: "send_webhook" },
+          { type: "move", target: { kind: "system", role: "archive" } },
+          { type: "move", target: { kind: "system", role: "trash" } },
         ],
       }),
     ).toThrow();
+  });
+
+  test("requires at least one field when updating a rule", () => {
+    expect(() =>
+      updateMailboxRuleInputSchema.parse({
+        id: "mbx_123",
+        rule_id: "550e8400-e29b-41d4-a716-446655440000",
+      }),
+    ).toThrow();
+    expect(
+      updateMailboxRuleInputSchema.parse({
+        id: "mbx_123",
+        rule_id: "550e8400-e29b-41d4-a716-446655440000",
+        enabled: false,
+      }).enabled,
+    ).toBe(false);
   });
 });
 
@@ -621,6 +643,38 @@ describe("domainVerificationSchema", () => {
     });
 
     expect(out.records.dmarc).toBe(true);
+  });
+});
+
+describe("mailbox delivery routing schema", () => {
+  test("allows the source mailbox to be both destination and fallback", () => {
+    expect(
+      updateMailboxDeliveryRoutingInputSchema.safeParse({
+        id: "mbx_source",
+        mode: "fixed",
+        destination_mailbox_id: "mbx_source",
+        fallback_mailbox_id: "mbx_source",
+      }).success,
+    ).toBe(true);
+    expect(
+      updateMailboxDeliveryRoutingInputSchema.safeParse({
+        id: "mbx_source",
+        mode: "round_robin",
+        destination_mailbox_ids: ["mbx_source", "mbx_b"],
+        fallback_mailbox_id: "mbx_source",
+      }).success,
+    ).toBe(true);
+  });
+
+  test("rejects a non-source mailbox used as both destination and fallback", () => {
+    expect(
+      updateMailboxDeliveryRoutingInputSchema.safeParse({
+        id: "mbx_source",
+        mode: "fixed",
+        destination_mailbox_id: "mbx_destination",
+        fallback_mailbox_id: "mbx_destination",
+      }).success,
+    ).toBe(false);
   });
 });
 
@@ -949,8 +1003,17 @@ describe("newsletter schemas", () => {
   test("create accepts complete block shapes up to the server block limit", () => {
     const blocks = [
       { type: "heading", level: 1, text: "July updates" },
-      { type: "list", ordered: false, items: ["One", "Two"] },
-      { type: "callout", variant: "info", title: "Quick note", body: "A short intro." },
+      {
+        type: "paragraph",
+        body: '<p>Read the <a href="https://example.com/launch">launch notes</a>.</p>',
+      },
+      { type: "list", ordered: false, items: ["One", "<strong>Two</strong>"] },
+      {
+        type: "callout",
+        variant: "info",
+        title: "Quick note",
+        body: "A <em>short</em> intro.",
+      },
       {
         type: "columns",
         ratio: "50-50",
@@ -965,7 +1028,10 @@ describe("newsletter schemas", () => {
       subject: "What shipped in July",
       blocks,
     });
-    expect(out.blocks?.[1]?.type).toBe("list");
+    expect(out.blocks?.[1]).toEqual({
+      type: "paragraph",
+      body: '<p>Read the <a href="https://example.com/launch">launch notes</a>.</p>',
+    });
 
     expect(() =>
       createNewsletterInputSchema.parse({
@@ -1058,15 +1124,14 @@ describe("newsletter schemas", () => {
     ).toThrow();
   });
 
-  test("newsletter output accepts the public response shape", () => {
+  test("newsletter output accepts detached sending configuration for history", () => {
     expect(
       newsletterSchema.parse({
         object: "newsletter",
         id: "nws_123",
         audience_id: "aud_123",
-        sender_identity_id: "nwsid_123",
-        newsletter_domain_id: "nwsdom_123",
-        reply_to_mailbox_id: null,
+        sender_identity_id: null,
+        newsletter_domain_id: null,
         name: "July Update",
         subject: "What shipped in July",
         published_at: null,
@@ -1078,8 +1143,9 @@ describe("newsletter schemas", () => {
         blocks: [{ type: "paragraph", body: "<p>Updates</p>" }],
         body_html: "<p>Updates</p>",
         body_text: null,
-        status: "draft",
+        status: "sent",
         archive_visibility: "private",
+        feed_entry_url: null,
         styling_mode: "styled",
         preflight_status: "not_run",
         preflight_results: {},
@@ -1111,12 +1177,12 @@ describe("newsletter schemas", () => {
       newsletterDomainSchema.parse({
         object: "newsletter_domain",
         id: "nwsdom_123",
-        root_domain_id: "dom_123",
+        root_domain_name: "example.com",
         domain_name: "updates.example.com",
         from_local_part: "updates",
         from_address: "updates@updates.example.com",
         mail_from_domain: "mail.updates.example.com",
-        reply_to_mailbox_id: "mbx_123",
+        reply_to_address: "hello@example.com",
         status: "verified",
         dkim_status: "verified",
         mail_from_status: "verified",

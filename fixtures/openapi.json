@@ -441,15 +441,21 @@
                   "properties": {
                     "data": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/Automation" }
+                      "items": {
+                        "$ref": "#/components/schemas/Automation"
+                      }
                     }
                   }
                 }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/AuthorizationError" },
-          "429": { "$ref": "#/components/responses/RateLimitError" }
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
         }
       },
       "post": {
@@ -463,7 +469,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreateAutomationRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/CreateAutomationRequest"
+              }
             }
           }
         },
@@ -472,13 +480,21 @@
             "description": "Automation created and activated.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Automation" }
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/AuthorizationError" },
-          "422": { "$ref": "#/components/responses/ValidationError" },
-          "429": { "$ref": "#/components/responses/RateLimitError" }
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
         }
       }
     },
@@ -489,7 +505,10 @@
           "in": "path",
           "required": true,
           "description": "Automation ID.",
-          "schema": { "type": "string", "pattern": "^aaut_[0-9a-z]{24}$" }
+          "schema": {
+            "type": "string",
+            "pattern": "^aaut_[0-9a-z]{24}$"
+          }
         }
       ],
       "get": {
@@ -503,13 +522,21 @@
             "description": "Automation object.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Automation" }
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/AuthorizationError" },
-          "404": { "$ref": "#/components/responses/NotFoundError" },
-          "429": { "$ref": "#/components/responses/RateLimitError" }
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
         }
       },
       "patch": {
@@ -523,7 +550,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/UpdateAutomationRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAutomationRequest"
+              }
             }
           }
         },
@@ -532,15 +561,27 @@
             "description": "Updated automation.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Automation" }
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/AuthorizationError" },
-          "404": { "$ref": "#/components/responses/NotFoundError" },
-          "409": { "$ref": "#/components/responses/ConflictError" },
-          "422": { "$ref": "#/components/responses/ValidationError" },
-          "429": { "$ref": "#/components/responses/RateLimitError" }
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
         }
       }
     },
@@ -551,7 +592,10 @@
           "in": "path",
           "required": true,
           "description": "Manual automation ID.",
-          "schema": { "type": "string", "pattern": "^aaut_[0-9a-z]{24}$" }
+          "schema": {
+            "type": "string",
+            "pattern": "^aaut_[0-9a-z]{24}$"
+          }
         }
       ],
       "post": {
@@ -566,15 +610,27 @@
             "description": "Automation run queued.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/AutomationRun" }
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationRun"
+                }
               }
             }
           },
-          "403": { "$ref": "#/components/responses/AuthorizationError" },
-          "404": { "$ref": "#/components/responses/NotFoundError" },
-          "409": { "$ref": "#/components/responses/ConflictError" },
-          "422": { "$ref": "#/components/responses/ValidationError" },
-          "429": { "$ref": "#/components/responses/RateLimitError" }
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
         }
       }
     },
@@ -943,7 +999,7 @@
       "patch": {
         "operationId": "updateDomain",
         "summary": "Update a domain",
-        "description": "Update domain settings such as the catch-all mailbox.",
+        "description": "Update domain settings such as the catch-all mailbox. Catch-all may target any active mailbox in the same organization, including one on another domain.",
         "tags": ["Domains"],
         "x-rate-limit-tier": "write",
         "x-scope": "domains:write",
@@ -1750,6 +1806,90 @@
         }
       }
     },
+    "/mailboxes/{id}/delivery-routing": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "get": {
+        "operationId": "getMailboxDeliveryRouting",
+        "summary": "Get mailbox delivery routing",
+        "description": "Read how new conversations sent to this mailbox's primary address are delivered. Alias, plus-alias, and catch-all recipients remain dedicated to the addressed identity and bypass this routing.",
+        "tags": ["Mailboxes"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "mailboxes:read",
+        "responses": {
+          "200": {
+            "description": "Mailbox delivery routing and eligible destination mailboxes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxDeliveryRouting"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateMailboxDeliveryRouting",
+        "summary": "Update mailbox delivery routing",
+        "description": "Choose whether new primary-address conversations stay in this mailbox, go to one mailbox, or rotate among mailboxes. Fixed and round-robin routing require an explicit fallback mailbox; the source mailbox may also be a normal destination. A destination that is out of office is skipped for new selections; existing conversation affinity is preserved.",
+        "tags": ["Mailboxes"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "mailboxes:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMailboxDeliveryRoutingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated mailbox delivery routing. Pending routes become active after the mail routing cache has synchronized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxDeliveryRouting"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
     "/mailboxes/{id}/spam-filter": {
       "parameters": [
         {
@@ -1901,7 +2041,7 @@
         "description": "Create a custom folder or subfolder for a mailbox. System folder names are reserved.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
-        "x-scope": "mailboxes:write",
+        "x-scope": "messages:write",
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -1964,7 +2104,7 @@
         "description": "Rename a custom mailbox folder. System folders cannot be renamed.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
-        "x-scope": "mailboxes:write",
+        "x-scope": "messages:write",
         "requestBody": {
           "required": true,
           "content": {
@@ -2012,7 +2152,7 @@
         "description": "Delete a custom mailbox folder and its subfolders after moving their messages to Trash. Folders referenced by rules must be removed from rules first.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
-        "x-scope": "mailboxes:write",
+        "x-scope": "messages:write",
         "responses": {
           "204": {
             "description": "Mailbox folder deleted."
@@ -3132,6 +3272,89 @@
         }
       }
     },
+    "/members": {
+      "get": {
+        "operationId": "listMembers",
+        "summary": "List members",
+        "description": "List non-shadow organization members.",
+        "tags": ["Members"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "members:read",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of members.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "pagination"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Member"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/members/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "get": {
+        "operationId": "getMember",
+        "summary": "Get a member",
+        "tags": ["Members"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "members:read",
+        "responses": {
+          "200": {
+            "description": "Member object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Member"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
     "/webhooks": {
       "post": {
         "operationId": "createWebhook",
@@ -4160,17 +4383,17 @@
       ],
       "get": {
         "operationId": "listMailboxInboxThreads",
-        "summary": "List mailbox inbox thread reply states",
-        "description": "Lists the deterministic reply queue with cursor-bound keyset pagination, anchored to the first page's message-time cutoff. Live state changes may add or remove rows; use reply-scans when a frozen historical candidate set is required. Defaults to needs_reply, oldest first.",
+        "summary": "List mailbox inbox thread attention states",
+        "description": "Lists the deterministic attention queue with cursor-bound keyset pagination, anchored to the first page's message-time cutoff. Live state changes may add or remove rows; use reply-scans when a frozen historical candidate set is required. Defaults to needs_reply, oldest first.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
         "parameters": [
           {
-            "name": "reply_state",
+            "name": "attention_state",
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/InboxThreadReplyState"
+              "$ref": "#/components/schemas/InboxThreadAttentionState"
             }
           },
           {
@@ -4178,8 +4401,8 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["needs_reply_since", "last_message_at"],
-              "default": "needs_reply_since"
+              "enum": ["attention_since", "last_message_at"],
+              "default": "attention_since"
             }
           },
           {
@@ -4216,7 +4439,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Reply queue page and state counts.",
+            "description": "Attention queue page and state counts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4288,9 +4511,9 @@
         }
       },
       "patch": {
-        "operationId": "updateMailboxInboxThreadReplyState",
-        "summary": "Update an inbox thread reply state",
-        "description": "Resolve, suppress, or reopen a thread using optimistic reply_version concurrency.",
+        "operationId": "updateMailboxInboxThreadAttention",
+        "summary": "Update inbox thread attention",
+        "description": "Complete, reopen, or schedule follow-up for a thread using optimistic version concurrency.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
@@ -4299,18 +4522,18 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateInboxThreadReplyStateRequest"
+                "$ref": "#/components/schemas/UpdateInboxThreadAttentionRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Updated reply state.",
+            "description": "Updated attention state.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboxThreadReplyStateResult"
+                  "$ref": "#/components/schemas/InboxThreadAttentionResult"
                 }
               }
             }
@@ -4348,7 +4571,7 @@
       "post": {
         "operationId": "createMailboxInboxReplyDraft",
         "summary": "Create a recipient-safe inbox reply draft",
-        "description": "Shipmail derives To/Cc from the latest inbound message and binds the draft to expected_reply_version.",
+        "description": "Shipmail derives To/Cc from the latest inbound message and binds the draft to expected_version.",
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "write",
         "x-scope": "drafts:write",
@@ -4415,7 +4638,7 @@
       "post": {
         "operationId": "sendMailboxInboxReplyDraft",
         "summary": "Send an approved inbox reply draft",
-        "description": "Returns 409 without sending when the thread reply_version changed after draft creation.",
+        "description": "Returns 409 without sending when the thread version changed after draft creation.",
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
@@ -4588,7 +4811,7 @@
       "post": {
         "operationId": "createMailboxImport",
         "summary": "Start a mailbox import",
-        "description": "Import mail from another provider into this mailbox. IMAP sources run over the source provider's IMAP with an app or device password. File sources import staged uploads (Google Takeout MBOX, Proton or Tuta EML exports, generic MBOX or EML zips). The import runs in the background, preserves folders, read state, and dates, deduplicates, and can be re-run safely.",
+        "description": "Import mail from another provider into this mailbox. IMAP sources run over the source provider's IMAP with an app or device password. File sources import staged uploads (complete Google Takeout ZIPs or VCF files, Proton or Tuta EML exports, and generic MBOX or EML zips). File imports always import all dates, spam, and trash; file-source options are ignored. Google Takeout contacts embedded in the archive are imported automatically. The import runs in the background, preserves folders, read state, and dates, deduplicates, and can be re-run safely.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
@@ -4682,8 +4905,8 @@
     "/mailboxes/{id}/imports/files": {
       "post": {
         "operationId": "createMailboxImportUpload",
-        "summary": "Stage an import file",
-        "description": "Create a presigned upload for a mailbox export file. PUT the raw file bytes to upload_url, then pass file_id to createMailboxImport with a files source. Staged files that are never used are deleted after 24 hours.",
+        "summary": "Prepare a multipart import upload",
+        "description": "Prepare a provider-bound multipart upload for a mailbox export file up to 100 GB. Accepted files are .mbox, .mbox.gz, .zip, and .eml, plus .vcf for Google Takeout. Split the file using part_size_bytes, PUT each raw part to its matching parts[].upload_url, record each response ETag, and call completeMailboxImportUpload. Then pass file_id to createMailboxImport with the same files provider. Upload sessions expire after six days. Completed staged files that are never used are deleted after 24 hours.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
@@ -4721,6 +4944,104 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/mailboxes/{id}/imports/files/{file_id}": {
+      "delete": {
+        "operationId": "abortMailboxImportUpload",
+        "summary": "Abort an import upload",
+        "description": "Abort an unfinished multipart upload or delete a completed staged file. This operation is idempotent.",
+        "tags": ["Mailboxes"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "mailboxes:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Mailbox ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "description": "Import file ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Upload aborted and staged data deleted."
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/mailboxes/{id}/imports/files/{file_id}/complete": {
+      "post": {
+        "operationId": "completeMailboxImportUpload",
+        "summary": "Complete a multipart import upload",
+        "description": "Complete the prepared multipart upload with every part number and the ETag returned by that part's PUT response. Shipmail verifies that the stored object matches the declared file size before staging it for import.",
+        "tags": ["Mailboxes"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "mailboxes:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Mailbox ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "description": "Import file ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteImportUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Upload completed and staged for import."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
@@ -4786,7 +5107,7 @@
       "post": {
         "operationId": "cancelMailboxImport",
         "summary": "Cancel a mailbox import",
-        "description": "Cancel a running import. Mail already imported stays in the mailbox. Starting a new import later resumes without duplicates.",
+        "description": "Stop a running import. Mail already imported stays in the mailbox. Uploaded file sources and durable cursors are retained.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
@@ -4823,6 +5144,124 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/mailboxes/{id}/imports/{import_id}/resume": {
+      "post": {
+        "operationId": "resumeMailboxImport",
+        "summary": "Resume an uploaded mailbox import",
+        "description": "Resume a stopped uploaded-file import from its durable cursor without uploading the source again.",
+        "tags": ["Mailboxes"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "mailboxes:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Mailbox ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "description": "Import ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resumed import.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxImport"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/mailboxes/{id}/imports/{import_id}/restore": {
+      "post": {
+        "operationId": "restoreMailboxImport",
+        "summary": "Restore an uploaded mailbox import source",
+        "description": "Rebind matching staged replacement files to a cancelled or failed uploaded-file import, then resume the same job from its durable cursor. Each replacement must match the original unfinished file by organization, mailbox, provider, format, exact size, sanitized name, and the versioned source fingerprint encoded in the object key. That fingerprint is a SHA-256 of file size plus bounded first and last samples, not a full-file hash. After the last required replacement is bound, the same import queues automatically.",
+        "tags": ["Mailboxes"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "mailboxes:write",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Mailbox ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "description": "Import ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreMailboxImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The restored and queued import.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailboxImport"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
@@ -6330,6 +6769,93 @@
         }
       }
     },
+    "/newsletter-assets/upload-tokens": {
+      "post": {
+        "operationId": "prepareNewsletterAssetUpload",
+        "summary": "Prepare a one-time newsletter asset upload",
+        "description": "Create a five-minute direct-to-storage PUT URL and single-use completion URL bound to this API key, organization, filename, content type, byte size, and SHA-256 digest. Video preparations also include a one-time JPEG poster PUT. Idempotency-Key is forbidden because the response contains one-time URLs.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareNewsletterAssetUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "One-time newsletter asset upload prepared.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterAssetUpload"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/newsletter-asset-uploads/{token}": {
+      "parameters": [
+        {
+          "name": "token",
+          "in": "path",
+          "required": true,
+          "description": "Short-lived signed completion token contained in complete_url.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "consumeNewsletterAssetUpload",
+        "summary": "Complete a direct newsletter media upload",
+        "description": "Verify the object uploaded to the prepared storage URL, register it as a newsletter asset, and consume the completion token. The stored object must match the prepared filename, content type, byte size, and SHA-256 digest. This endpoint accepts no media bytes and requires no API-key authentication.",
+        "tags": ["Newsletters"],
+        "security": [],
+        "x-rate-limit-tier": "write",
+        "x-scope": "public",
+        "responses": {
+          "201": {
+            "description": "Stored object verified, newsletter asset created, and completion token consumed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterAsset"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
     "/newsletters/{id}/preview": {
       "post": {
         "operationId": "previewNewsletter",
@@ -7441,6 +7967,7 @@
           "calendar_id",
           "uid",
           "title",
+          "invitation_language",
           "description",
           "location",
           "video_url",
@@ -7485,6 +8012,11 @@
           "title": {
             "type": "string",
             "nullable": true
+          },
+          "invitation_language": {
+            "type": "string",
+            "enum": ["en", "fr", "es"],
+            "description": "Language used for Shipmail invitation, update, cancellation, and RSVP interface copy."
           },
           "description": {
             "type": "string",
@@ -7607,6 +8139,12 @@
             "type": "string",
             "maxLength": 1024
           },
+          "invitation_language": {
+            "type": "string",
+            "enum": ["en", "fr", "es"],
+            "default": "en",
+            "description": "Language used for invitation, update, cancellation, and RSVP interface copy."
+          },
           "start": {
             "type": "string",
             "description": "Local date-time (YYYY-MM-DDTHH:MM:SS). Its zone is given by timezone."
@@ -7682,6 +8220,11 @@
           "title": {
             "type": "string",
             "maxLength": 1024
+          },
+          "invitation_language": {
+            "type": "string",
+            "enum": ["en", "fr", "es"],
+            "description": "Language used for future invitation, update, cancellation, and RSVP interface copy."
           },
           "description": {
             "type": "string",
@@ -7811,12 +8354,17 @@
             "additionalProperties": false,
             "required": ["type", "mailbox_ids"],
             "properties": {
-              "type": { "type": "string", "enum": ["email_received"] },
+              "type": {
+                "type": "string",
+                "enum": ["email_received"]
+              },
               "mailbox_ids": {
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 100,
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               }
             }
           },
@@ -7825,12 +8373,18 @@
             "additionalProperties": false,
             "required": ["type", "cron", "time_zone"],
             "properties": {
-              "type": { "type": "string", "enum": ["scheduled"] },
+              "type": {
+                "type": "string",
+                "enum": ["scheduled"]
+              },
               "cron": {
                 "type": "string",
                 "description": "Five-field daily or weekly cron expression."
               },
-              "time_zone": { "type": "string", "description": "IANA time zone." }
+              "time_zone": {
+                "type": "string",
+                "description": "IANA time zone."
+              }
             }
           },
           {
@@ -7838,12 +8392,17 @@
             "additionalProperties": false,
             "required": ["type", "mailbox_ids"],
             "properties": {
-              "type": { "type": "string", "enum": ["manual"] },
+              "type": {
+                "type": "string",
+                "enum": ["manual"]
+              },
               "mailbox_ids": {
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 100,
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               }
             }
           },
@@ -7852,14 +8411,22 @@
             "additionalProperties": false,
             "required": ["type", "mailbox_ids", "state", "duration_minutes"],
             "properties": {
-              "type": { "type": "string", "enum": ["thread_state"] },
+              "type": {
+                "type": "string",
+                "enum": ["thread_state"]
+              },
               "mailbox_ids": {
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 100,
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               },
-              "state": { "type": "string", "enum": ["no_reply_after"] },
+              "state": {
+                "type": "string",
+                "enum": ["no_reply_after"]
+              },
               "duration_minutes": {
                 "type": "integer",
                 "minimum": 15,
@@ -7876,12 +8443,18 @@
             "additionalProperties": false,
             "required": ["type", "addresses"],
             "properties": {
-              "type": { "type": "string", "enum": ["sender_address"] },
+              "type": {
+                "type": "string",
+                "enum": ["sender_address"]
+              },
               "addresses": {
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 100,
-                "items": { "type": "string", "format": "email" }
+                "items": {
+                  "type": "string",
+                  "format": "email"
+                }
               }
             }
           },
@@ -7890,12 +8463,18 @@
             "additionalProperties": false,
             "required": ["type", "domains"],
             "properties": {
-              "type": { "type": "string", "enum": ["sender_domain"] },
+              "type": {
+                "type": "string",
+                "enum": ["sender_domain"]
+              },
               "domains": {
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 100,
-                "items": { "type": "string", "maxLength": 253 }
+                "items": {
+                  "type": "string",
+                  "maxLength": 253
+                }
               }
             }
           },
@@ -7904,12 +8483,18 @@
             "additionalProperties": false,
             "required": ["type", "values"],
             "properties": {
-              "type": { "type": "string", "enum": ["subject_contains"] },
+              "type": {
+                "type": "string",
+                "enum": ["subject_contains"]
+              },
               "values": {
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 100,
-                "items": { "type": "string", "maxLength": 200 }
+                "items": {
+                  "type": "string",
+                  "maxLength": 200
+                }
               }
             }
           },
@@ -7918,8 +8503,13 @@
             "additionalProperties": false,
             "required": ["type", "value"],
             "properties": {
-              "type": { "type": "string", "enum": ["has_attachment"] },
-              "value": { "type": "boolean" }
+              "type": {
+                "type": "string",
+                "enum": ["has_attachment"]
+              },
+              "value": {
+                "type": "boolean"
+              }
             }
           },
           {
@@ -7927,9 +8517,19 @@
             "additionalProperties": false,
             "required": ["type", "instruction", "minimum_confidence"],
             "properties": {
-              "type": { "type": "string", "enum": ["semantic_positive_match"] },
-              "instruction": { "type": "string", "maxLength": 1000 },
-              "minimum_confidence": { "type": "number", "minimum": 0.5, "maximum": 1 }
+              "type": {
+                "type": "string",
+                "enum": ["semantic_positive_match"]
+              },
+              "instruction": {
+                "type": "string",
+                "maxLength": 1000
+              },
+              "minimum_confidence": {
+                "type": "number",
+                "minimum": 0.5,
+                "maximum": 1
+              }
             }
           }
         ]
@@ -7941,8 +8541,14 @@
             "additionalProperties": false,
             "required": ["type", "instruction"],
             "properties": {
-              "type": { "type": "string", "enum": ["create_reply_draft"] },
-              "instruction": { "type": "string", "maxLength": 2000 }
+              "type": {
+                "type": "string",
+                "enum": ["create_reply_draft"]
+              },
+              "instruction": {
+                "type": "string",
+                "maxLength": 2000
+              }
             }
           },
           {
@@ -7950,8 +8556,14 @@
             "additionalProperties": false,
             "required": ["type", "instruction"],
             "properties": {
-              "type": { "type": "string", "enum": ["reply_to_trigger_sender"] },
-              "instruction": { "type": "string", "maxLength": 2000 }
+              "type": {
+                "type": "string",
+                "enum": ["reply_to_trigger_sender"]
+              },
+              "instruction": {
+                "type": "string",
+                "maxLength": 2000
+              }
             }
           },
           {
@@ -7959,7 +8571,10 @@
             "additionalProperties": false,
             "required": ["type"],
             "properties": {
-              "type": { "type": "string", "enum": ["archive_trigger_message"] }
+              "type": {
+                "type": "string",
+                "enum": ["archive_trigger_message"]
+              }
             }
           },
           {
@@ -7967,9 +8582,16 @@
             "additionalProperties": false,
             "required": ["type", "mailbox_id", "destination_folder_id"],
             "properties": {
-              "type": { "type": "string", "enum": ["move_trigger_message"] },
-              "mailbox_id": { "type": "string" },
-              "destination_folder_id": { "type": "string" }
+              "type": {
+                "type": "string",
+                "enum": ["move_trigger_message"]
+              },
+              "mailbox_id": {
+                "type": "string"
+              },
+              "destination_folder_id": {
+                "type": "string"
+              }
             }
           },
           {
@@ -7977,8 +8599,13 @@
             "additionalProperties": false,
             "required": ["type", "is_read"],
             "properties": {
-              "type": { "type": "string", "enum": ["set_trigger_read_state"] },
-              "is_read": { "type": "boolean" }
+              "type": {
+                "type": "string",
+                "enum": ["set_trigger_read_state"]
+              },
+              "is_read": {
+                "type": "boolean"
+              }
             }
           },
           {
@@ -7986,8 +8613,13 @@
             "additionalProperties": false,
             "required": ["type", "is_starred"],
             "properties": {
-              "type": { "type": "string", "enum": ["set_trigger_star_state"] },
-              "is_starred": { "type": "boolean" }
+              "type": {
+                "type": "string",
+                "enum": ["set_trigger_star_state"]
+              },
+              "is_starred": {
+                "type": "boolean"
+              }
             }
           },
           {
@@ -7995,8 +8627,14 @@
             "additionalProperties": false,
             "required": ["type", "metric", "lookback_minutes"],
             "properties": {
-              "type": { "type": "string", "enum": ["generate_mail_report"] },
-              "metric": { "type": "string", "enum": ["received", "sent", "unread"] },
+              "type": {
+                "type": "string",
+                "enum": ["generate_mail_report"]
+              },
+              "metric": {
+                "type": "string",
+                "enum": ["received", "sent", "unread"]
+              },
               "lookback_minutes": {
                 "type": "integer",
                 "minimum": 15,
@@ -8011,17 +8649,23 @@
         "additionalProperties": false,
         "required": ["trigger", "conditions", "actions", "mode", "scope"],
         "properties": {
-          "trigger": { "$ref": "#/components/schemas/AutomationTrigger" },
+          "trigger": {
+            "$ref": "#/components/schemas/AutomationTrigger"
+          },
           "conditions": {
             "type": "array",
             "maxItems": 20,
-            "items": { "$ref": "#/components/schemas/AutomationCondition" }
+            "items": {
+              "$ref": "#/components/schemas/AutomationCondition"
+            }
           },
           "actions": {
             "type": "array",
             "minItems": 1,
             "maxItems": 10,
-            "items": { "$ref": "#/components/schemas/AutomationAction" }
+            "items": {
+              "$ref": "#/components/schemas/AutomationAction"
+            }
           },
           "mode": {
             "type": "string",
@@ -8037,12 +8681,17 @@
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 100,
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               },
               "calendar_addresses": {
                 "type": "array",
                 "maxItems": 100,
-                "items": { "type": "string", "format": "email" }
+                "items": {
+                  "type": "string",
+                  "format": "email"
+                }
               }
             }
           }
@@ -8052,24 +8701,45 @@
         "type": "object",
         "required": ["object", "id", "status", "error_code", "created_at"],
         "properties": {
-          "object": { "type": "string", "enum": ["automation_run"] },
-          "id": { "type": "string" },
+          "object": {
+            "type": "string",
+            "enum": ["automation_run"]
+          },
+          "id": {
+            "type": "string"
+          },
           "status": {
             "type": "string",
             "enum": ["queued", "running", "completed", "failed", "degraded", "cancelled", "skipped"]
           },
-          "error_code": { "type": "string", "nullable": true },
-          "created_at": { "type": "string", "format": "date-time" }
+          "error_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "AutomationRun": {
         "type": "object",
         "required": ["object", "id", "automation_id", "status"],
         "properties": {
-          "object": { "type": "string", "enum": ["automation_run"] },
-          "id": { "type": "string" },
-          "automation_id": { "type": "string" },
-          "status": { "type": "string", "enum": ["queued"] }
+          "object": {
+            "type": "string",
+            "enum": ["automation_run"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "automation_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["queued"]
+          }
         }
       },
       "Automation": {
@@ -8088,23 +8758,55 @@
           "updated_at"
         ],
         "properties": {
-          "object": { "type": "string", "enum": ["automation"] },
-          "id": { "type": "string", "pattern": "^aaut_[0-9a-z]{24}$" },
-          "name": { "type": "string", "maxLength": 100 },
-          "status": { "type": "string", "enum": ["active", "paused", "disabled"] },
-          "version_id": { "type": "string" },
-          "version": { "type": "integer", "minimum": 1 },
-          "definition": { "$ref": "#/components/schemas/AutomationDefinition" },
+          "object": {
+            "type": "string",
+            "enum": ["automation"]
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^aaut_[0-9a-z]{24}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "paused", "disabled"]
+          },
+          "version_id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "definition": {
+            "$ref": "#/components/schemas/AutomationDefinition"
+          },
           "last_run": {
-            "oneOf": [{ "$ref": "#/components/schemas/AutomationRunSummary" }, { "type": "null" }]
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AutomationRunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "next_run_at": {
             "type": "string",
             "format": "date-time",
             "nullable": true
           },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "CreateAutomationRequest": {
@@ -8112,8 +8814,14 @@
         "additionalProperties": false,
         "required": ["name", "definition"],
         "properties": {
-          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
-          "definition": { "$ref": "#/components/schemas/AutomationDefinition" }
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "definition": {
+            "$ref": "#/components/schemas/AutomationDefinition"
+          }
         }
       },
       "UpdateAutomationRequest": {
@@ -8121,9 +8829,18 @@
         "additionalProperties": false,
         "minProperties": 1,
         "properties": {
-          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
-          "definition": { "$ref": "#/components/schemas/AutomationDefinition" },
-          "status": { "type": "string", "enum": ["active", "paused", "disabled"] }
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "definition": {
+            "$ref": "#/components/schemas/AutomationDefinition"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "paused", "disabled"]
+          }
         }
       },
       "BookingPage": {
@@ -8500,7 +9217,7 @@
           },
           "catch_all_mailbox_id": {
             "type": ["string", "null"],
-            "description": "Mailbox receiving unmatched addresses, or null when catch-all is disabled."
+            "description": "Active mailbox in the same organization receiving unmatched addresses, or null when catch-all is disabled. The mailbox may use another domain."
           },
           "verified_at": {
             "type": ["string", "null"],
@@ -8791,6 +9508,148 @@
             "format": "date-time"
           }
         }
+      },
+      "MailboxDeliveryDestination": {
+        "type": "object",
+        "required": [
+          "id",
+          "address",
+          "display_name",
+          "status",
+          "out_of_office_end_at",
+          "responsible_member_count",
+          "push_ready_member_count"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "format": "email"
+          },
+          "display_name": {
+            "type": ["string", "null"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["available", "out_of_office", "suspended", "archived", "unavailable"]
+          },
+          "out_of_office_end_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "responsible_member_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "push_ready_member_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "MailboxDeliveryRouting": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": ["object", "mailbox_id", "source_address", "mode", "destinations"],
+            "properties": {
+              "object": {
+                "type": "string",
+                "const": "mailbox_delivery_routing"
+              },
+              "mailbox_id": {
+                "type": "string"
+              },
+              "source_address": {
+                "type": "string",
+                "format": "email"
+              },
+              "destinations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MailboxDeliveryDestination"
+                }
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["mode"],
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "const": "keep"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "mode",
+                  "destination_mailbox_id",
+                  "fallback_mailbox_id",
+                  "activation_state",
+                  "activation_error"
+                ],
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "const": "fixed"
+                  },
+                  "destination_mailbox_id": {
+                    "type": "string"
+                  },
+                  "fallback_mailbox_id": {
+                    "type": "string"
+                  },
+                  "activation_state": {
+                    "type": "string",
+                    "enum": ["pending", "active", "failed"]
+                  },
+                  "activation_error": {
+                    "type": ["string", "null"]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "mode",
+                  "destination_mailbox_ids",
+                  "fallback_mailbox_id",
+                  "activation_state",
+                  "activation_error"
+                ],
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "const": "round_robin"
+                  },
+                  "destination_mailbox_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "fallback_mailbox_id": {
+                    "type": "string"
+                  },
+                  "activation_state": {
+                    "type": "string",
+                    "enum": ["pending", "active", "failed"]
+                  },
+                  "activation_error": {
+                    "type": ["string", "null"]
+                  }
+                }
+              }
+            ]
+          }
+        ]
       },
       "MailboxAppPassword": {
         "type": "object",
@@ -9904,6 +10763,35 @@
           }
         }
       },
+      "Member": {
+        "type": "object",
+        "required": ["object", "id", "email", "name", "role", "created_at"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "member"
+          },
+          "id": {
+            "type": "string",
+            "description": "Plain member ID. Member IDs do not use a required prefix."
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "super_admin", "admin", "member"]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "Webhook": {
         "type": "object",
         "required": [
@@ -10337,7 +11225,7 @@
           "catch_all_mailbox_id": {
             "type": ["string", "null"],
             "format": "uuid",
-            "description": "Mailbox ID to receive catch-all email, or null to disable."
+            "description": "Active mailbox ID in the same organization to receive catch-all email, or null to disable. The mailbox may use another domain."
           }
         }
       },
@@ -10471,6 +11359,61 @@
           }
         }
       },
+      "UpdateMailboxDeliveryRoutingRequest": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["mode"],
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "type": "string",
+                "const": "keep"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["mode", "destination_mailbox_id", "fallback_mailbox_id"],
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "type": "string",
+                "const": "fixed"
+              },
+              "destination_mailbox_id": {
+                "type": "string"
+              },
+              "fallback_mailbox_id": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["mode", "destination_mailbox_ids", "fallback_mailbox_id"],
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "type": "string",
+                "const": "round_robin"
+              },
+              "destination_mailbox_ids": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 100,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "fallback_mailbox_id": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
       "UpdateSpamFilterRequest": {
         "type": "object",
         "required": ["threshold"],
@@ -10584,6 +11527,10 @@
             "type": "string",
             "format": "date-time",
             "description": "Optional UTC ISO 8601 time to send later. Past or near-immediate times are sent immediately."
+          },
+          "track_reply": {
+            "type": "boolean",
+            "description": "Track the conversation in the Waiting workflow. true tracks it, false explicitly untracks it, and omitting the field keeps the thread's current tracking: a reply sent on a tracked conversation stays tracked. A tracked conversation moves to Needs action when a human reply arrives; automated replies (out-of-office, auto-acknowledgements, delivery notifications) do not end the wait."
           },
           "sandbox_outcome": {
             "$ref": "#/components/schemas/SandboxOutcome"
@@ -10856,6 +11803,10 @@
             "type": "string",
             "format": "date-time",
             "description": "Optional UTC ISO 8601 time to send this reply later."
+          },
+          "track_reply": {
+            "type": "boolean",
+            "description": "Track the conversation in the Waiting workflow. true tracks it, false explicitly untracks it, and omitting the field keeps the thread's current tracking: a reply sent on a tracked conversation stays tracked. A tracked conversation moves to Needs action when a human reply arrives; automated replies (out-of-office, auto-acknowledgements, delivery notifications) do not end the wait."
           },
           "sandbox_outcome": {
             "$ref": "#/components/schemas/SandboxOutcome"
@@ -11557,8 +12508,8 @@
           "mailbox_id",
           "thread_id",
           "tracked_thread_id",
-          "reply_version",
-          "needs_reply_since"
+          "version",
+          "attention_since"
         ],
         "properties": {
           "object": {
@@ -11589,11 +12540,11 @@
           "latest_inbound_email_id": {
             "type": ["string", "null"]
           },
-          "reply_version": {
+          "version": {
             "type": "integer",
             "minimum": 1
           },
-          "needs_reply_since": {
+          "attention_since": {
             "type": "string",
             "format": "date-time"
           },
@@ -11624,9 +12575,16 @@
           }
         }
       },
-      "InboxThreadReplyState": {
+      "InboxThreadAttentionState": {
         "type": "string",
-        "enum": ["needs_reply", "waiting_on_contact", "resolved", "no_reply_expected"]
+        "enum": [
+          "needs_reply",
+          "waiting_on_them",
+          "done",
+          "follow_up_due",
+          "delivery_failed",
+          "no_action"
+        ]
       },
       "InboxThreadSummary": {
         "type": "object",
@@ -11634,9 +12592,12 @@
           "object",
           "id",
           "thread_id",
-          "reply_state",
-          "reply_version",
-          "needs_reply_since",
+          "attention_state",
+          "version",
+          "attention_since",
+          "done_at",
+          "follow_up_at",
+          "assigned_member_id",
           "subject",
           "latest_from_address",
           "message_count",
@@ -11662,16 +12623,27 @@
           "thread_id": {
             "type": "string"
           },
-          "reply_state": {
-            "$ref": "#/components/schemas/InboxThreadReplyState"
+          "attention_state": {
+            "$ref": "#/components/schemas/InboxThreadAttentionState"
           },
-          "reply_version": {
+          "version": {
             "type": "integer",
             "minimum": 1
           },
-          "needs_reply_since": {
+          "attention_since": {
             "type": ["string", "null"],
             "format": "date-time"
+          },
+          "done_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "follow_up_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "assigned_member_id": {
+            "type": ["string", "null"]
           },
           "subject": {
             "type": ["string", "null"]
@@ -11766,35 +12738,48 @@
           }
         }
       },
-      "UpdateInboxThreadReplyStateRequest": {
+      "UpdateInboxThreadAttentionRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["reply_state", "expected_reply_version"],
-        "properties": {
-          "reply_state": {
-            "type": "string",
-            "enum": ["needs_reply", "resolved", "no_reply_expected"]
+        "required": ["expected_version"],
+        "anyOf": [
+          {
+            "required": ["done"]
           },
-          "expected_reply_version": {
+          {
+            "required": ["follow_up_at"]
+          }
+        ],
+        "properties": {
+          "done": {
+            "type": "boolean"
+          },
+          "follow_up_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "expected_version": {
             "type": "integer",
             "minimum": 1
           }
         }
       },
-      "InboxThreadReplyStateResult": {
+      "InboxThreadAttentionResult": {
         "type": "object",
         "required": [
           "object",
           "id",
           "thread_id",
-          "reply_state",
-          "reply_version",
-          "needs_reply_since"
+          "attention_state",
+          "version",
+          "attention_since",
+          "done_at",
+          "follow_up_at"
         ],
         "properties": {
           "object": {
             "type": "string",
-            "const": "inbox_thread_reply_state"
+            "const": "inbox_thread_attention"
           },
           "id": {
             "type": "string"
@@ -11802,13 +12787,21 @@
           "thread_id": {
             "type": "string"
           },
-          "reply_state": {
-            "$ref": "#/components/schemas/InboxThreadReplyState"
+          "attention_state": {
+            "$ref": "#/components/schemas/InboxThreadAttentionState"
           },
-          "reply_version": {
+          "version": {
             "type": "integer"
           },
-          "needs_reply_since": {
+          "attention_since": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "done_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "follow_up_at": {
             "type": ["string", "null"],
             "format": "date-time"
           }
@@ -11817,7 +12810,7 @@
       "CreateInboxReplyDraftRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["expected_reply_version"],
+        "required": ["expected_version"],
         "anyOf": [
           {
             "required": ["text"]
@@ -11840,7 +12833,7 @@
             "enum": ["reply", "reply_all"],
             "default": "reply"
           },
-          "expected_reply_version": {
+          "expected_version": {
             "type": "integer",
             "minimum": 1
           }
@@ -11854,7 +12847,7 @@
           "mailbox_id",
           "thread_id",
           "based_on_message_id",
-          "expected_reply_version",
+          "expected_version",
           "reply_mode",
           "status",
           "to",
@@ -11878,7 +12871,7 @@
           "based_on_message_id": {
             "type": ["string", "null"]
           },
-          "expected_reply_version": {
+          "expected_version": {
             "type": "integer"
           },
           "reply_mode": {
@@ -12257,6 +13250,41 @@
               "$ref": "#/components/schemas/MailboxImportFolder"
             },
             "description": "Per-folder progress. Returned by getMailboxImport only."
+          },
+          "source_retention": {
+            "$ref": "#/components/schemas/MailboxImportSourceRetention",
+            "description": "Uploaded file source retention. Returned by getMailboxImport only."
+          }
+        }
+      },
+      "MailboxImportSourceRetention": {
+        "type": "object",
+        "required": ["state", "expires_at", "deleted_at"],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["available", "missing", "expired", "deleted", "not_applicable"]
+          },
+          "expires_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "deleted_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        }
+      },
+      "RestoreMailboxImportRequest": {
+        "type": "object",
+        "required": ["file_ids"],
+        "properties": {
+          "file_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Staged replacement file IDs from createMailboxImportUpload. Restore can bind a subset and queue the same job after the last required replacement is bound. Send an empty list to resume when every required source is already present."
           }
         }
       },
@@ -12358,6 +13386,7 @@
           },
           "options": {
             "type": "object",
+            "description": "Selection options for IMAP sources. File imports ignore these values and always import every date, including spam and trash.",
             "properties": {
               "folders": {
                 "type": ["array", "null"],
@@ -12385,21 +13414,44 @@
       },
       "CreateImportUploadRequest": {
         "type": "object",
-        "required": ["file_name", "size_bytes"],
+        "required": ["provider", "file_name", "size_bytes"],
         "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["takeout", "proton", "tuta", "file"],
+            "description": "File source provider. The staged upload can only be used by an import with this provider."
+          },
           "file_name": {
             "type": "string",
-            "description": "Name of the export file (.mbox, .mbox.gz, .zip, or .eml)."
+            "description": "Name of the export file (.mbox, .mbox.gz, .zip, or .eml; .vcf is also accepted for provider takeout)."
           },
           "size_bytes": {
             "type": "integer",
-            "description": "File size in bytes. Up to 4 GB per file."
+            "minimum": 1,
+            "maximum": 107374182400,
+            "description": "File size in bytes. Up to 100 GB per file."
+          }
+        }
+      },
+      "ImportUploadPart": {
+        "type": "object",
+        "required": ["part_number", "upload_url"],
+        "properties": {
+          "part_number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3200
+          },
+          "upload_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Presigned URL for a raw PUT of this part. Save the ETag response header."
           }
         }
       },
       "ImportUpload": {
         "type": "object",
-        "required": ["object", "file_id", "upload_url", "expires_in_seconds"],
+        "required": ["object", "file_id", "part_size_bytes", "parts", "expires_in_seconds"],
         "properties": {
           "object": {
             "type": "string",
@@ -12409,12 +13461,50 @@
             "type": "string",
             "example": "impf_abc123"
           },
-          "upload_url": {
-            "type": "string",
-            "description": "Presigned URL. PUT the raw file bytes to this URL, then create the import."
+          "part_size_bytes": {
+            "type": "integer",
+            "example": 33554432,
+            "description": "Slice size for every part except the final part."
+          },
+          "parts": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3200,
+            "items": {
+              "$ref": "#/components/schemas/ImportUploadPart"
+            }
           },
           "expires_in_seconds": {
-            "type": "integer"
+            "type": "integer",
+            "example": 518400
+          }
+        }
+      },
+      "CompleteImportUploadRequest": {
+        "type": "object",
+        "required": ["parts"],
+        "properties": {
+          "parts": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3200,
+            "items": {
+              "type": "object",
+              "required": ["part_number", "etag"],
+              "properties": {
+                "part_number": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3200
+                },
+                "etag": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "description": "ETag response header returned by this part's PUT request."
+                }
+              }
+            }
           }
         }
       },
@@ -12788,12 +13878,12 @@
         "required": [
           "object",
           "id",
-          "root_domain_id",
+          "root_domain_name",
           "domain_name",
           "from_local_part",
           "from_address",
           "mail_from_domain",
-          "reply_to_mailbox_id",
+          "reply_to_address",
           "status",
           "dkim_status",
           "mail_from_status",
@@ -12811,7 +13901,7 @@
           "id": {
             "type": "string"
           },
-          "root_domain_id": {
+          "root_domain_name": {
             "type": "string"
           },
           "domain_name": {
@@ -12827,7 +13917,7 @@
           "mail_from_domain": {
             "type": "string"
           },
-          "reply_to_mailbox_id": {
+          "reply_to_address": {
             "type": ["string", "null"]
           },
           "status": {
@@ -12937,6 +14027,7 @@
           "name",
           "status",
           "archive_visibility",
+          "feed_entry_url",
           "styling_mode",
           "preflight_status",
           "published_at",
@@ -12956,12 +14047,9 @@
             "type": ["string", "null"]
           },
           "sender_identity_id": {
-            "type": "string"
+            "type": ["string", "null"]
           },
           "newsletter_domain_id": {
-            "type": "string"
-          },
-          "reply_to_mailbox_id": {
             "type": ["string", "null"]
           },
           "name": {
@@ -13014,6 +14102,11 @@
           "archive_visibility": {
             "type": "string",
             "enum": ["private", "public"]
+          },
+          "feed_entry_url": {
+            "type": ["string", "null"],
+            "format": "uri",
+            "description": "Optional http(s) Atom entry destination. Feed readers link the issue title here instead of to its Shipmail web archive, including when the archive is private."
           },
           "styling_mode": {
             "type": "string",
@@ -13145,6 +14238,11 @@
             "enum": ["private", "public"],
             "default": "private"
           },
+          "feed_entry_url": {
+            "type": ["string", "null"],
+            "format": "uri",
+            "description": "Optional http(s) Atom entry destination. Overrides the public web archive link."
+          },
           "styling_mode": {
             "type": "string",
             "enum": ["styled", "plain"],
@@ -13157,7 +14255,7 @@
             "items": {
               "$ref": "#/components/schemas/NewsletterBlock"
             },
-            "description": "Preferred body format. Shipmail stores blocks and renders body_html and body_text from them. Public API block prose fields are plain text on input."
+            "description": "Preferred body format. Shipmail stores blocks and renders body_html and body_text from them. Rich prose fields accept bare text or sanitized inline HTML."
           }
         }
       },
@@ -13200,6 +14298,11 @@
             "enum": ["private", "public"],
             "default": "private"
           },
+          "feed_entry_url": {
+            "type": ["string", "null"],
+            "format": "uri",
+            "description": "Optional http(s) Atom entry destination. Send null to clear it."
+          },
           "styling_mode": {
             "type": "string",
             "enum": ["styled", "plain"],
@@ -13212,7 +14315,7 @@
             "items": {
               "$ref": "#/components/schemas/NewsletterBlock"
             },
-            "description": "Preferred body format. Shipmail stores blocks and renders body_html and body_text from them. Public API block prose fields are plain text on input."
+            "description": "Preferred body format. Shipmail stores blocks and renders body_html and body_text from them. Rich prose fields accept bare text or sanitized inline HTML."
           }
         }
       },
@@ -13356,7 +14459,7 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 10000,
-                "description": "Plain-text paragraph body. Newlines are converted to paragraph and line breaks."
+                "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks and HTML entities for literal tag-like text."
               }
             }
           },
@@ -13381,7 +14484,7 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 10000,
-                  "description": "Plain-text list item."
+                  "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u."
                 }
               }
             }
@@ -13404,7 +14507,7 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 10000,
-                "description": "Plain-text callout body. Newlines are converted to paragraph and line breaks."
+                "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks."
               },
               "variant": {
                 "type": "string",
@@ -13535,7 +14638,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 10000,
-                    "description": "Plain-text column body. Newlines are converted to paragraph and line breaks."
+                    "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks."
                   },
                   "image_url": {
                     "type": ["string", "null"],
@@ -13574,7 +14677,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 10000,
-                    "description": "Plain-text column body. Newlines are converted to paragraph and line breaks."
+                    "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks."
                   },
                   "image_url": {
                     "type": ["string", "null"],
@@ -13658,7 +14761,7 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 10000,
-                "description": "Plain-text quote body. Newlines are converted to paragraph and line breaks."
+                "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks."
               },
               "cite": {
                 "type": ["string", "null"],
@@ -13733,7 +14836,7 @@
         "discriminator": {
           "propertyName": "type"
         },
-        "description": "Structured newsletter block. Public API block prose fields are plain text on input; Shipmail renders blocks to email-safe HTML and text."
+        "description": "Structured newsletter block. paragraph.body, quote.body, callout.body, list items, and column bodies accept bare text or restricted inline HTML. Shipmail sanitizes these values when it stores the blocks and renders email-safe HTML and text."
       },
       "NewsletterCountedUrl": {
         "type": "object",
@@ -13921,6 +15024,177 @@
           "video_url": {
             "type": ["string", "null"],
             "format": "uri"
+          }
+        }
+      },
+      "PrepareNewsletterAssetUploadRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["filename", "content_type", "size", "sha256"],
+        "properties": {
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "image/gif",
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "video/mp4",
+              "video/quicktime",
+              "video/webm"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 26214400
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      },
+      "NewsletterAssetUpload": {
+        "type": "object",
+        "oneOf": [
+          {
+            "properties": {
+              "kind": {
+                "const": "image"
+              }
+            }
+          },
+          {
+            "required": [
+              "thumbnail_upload_url",
+              "thumbnail_upload_method",
+              "thumbnail_upload_headers"
+            ],
+            "properties": {
+              "kind": {
+                "const": "video"
+              }
+            }
+          }
+        ],
+        "required": [
+          "object",
+          "kind",
+          "filename",
+          "content_type",
+          "size",
+          "sha256",
+          "upload_url",
+          "upload_method",
+          "upload_headers",
+          "complete_url",
+          "complete_method",
+          "expires_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "newsletter_asset_upload"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["image", "video"]
+          },
+          "filename": {
+            "type": "string"
+          },
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "image/gif",
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "video/mp4",
+              "video/quicktime",
+              "video/webm"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 26214400
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "upload_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "upload_method": {
+            "type": "string",
+            "const": "PUT"
+          },
+          "upload_headers": {
+            "type": "object",
+            "required": ["Content-Type", "If-None-Match"],
+            "properties": {
+              "Content-Type": {
+                "type": "string",
+                "enum": [
+                  "image/gif",
+                  "image/jpeg",
+                  "image/png",
+                  "image/webp",
+                  "video/mp4",
+                  "video/quicktime",
+                  "video/webm"
+                ]
+              },
+              "If-None-Match": {
+                "type": "string",
+                "const": "*"
+              }
+            },
+            "additionalProperties": false
+          },
+          "thumbnail_upload_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "thumbnail_upload_method": {
+            "type": "string",
+            "const": "PUT"
+          },
+          "thumbnail_upload_headers": {
+            "type": "object",
+            "required": ["Content-Type", "If-None-Match"],
+            "properties": {
+              "Content-Type": {
+                "type": "string",
+                "const": "image/jpeg"
+              },
+              "If-None-Match": {
+                "type": "string",
+                "const": "*"
+              }
+            },
+            "additionalProperties": false
+          },
+          "complete_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "complete_method": {
+            "type": "string",
+            "const": "POST"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -14123,6 +15397,11 @@
             "enum": ["private", "public"],
             "default": "private"
           },
+          "feed_entry_url": {
+            "type": ["string", "null"],
+            "format": "uri",
+            "description": "Optional http(s) Atom entry destination. Overrides the public web archive link."
+          },
           "styling_mode": {
             "type": "string",
             "enum": ["styled", "plain"],
@@ -14264,6 +15543,10 @@
     {
       "name": "Threads",
       "description": "View and reply to email threads."
+    },
+    {
+      "name": "Members",
+      "description": "Organization members."
     },
     {
       "name": "Webhooks",

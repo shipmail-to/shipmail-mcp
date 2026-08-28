@@ -95,7 +95,7 @@ export type CrossOrganizationGrant = {
   readonly allowedTools: ReadonlySet<string>;
 };
 
-type CrossOrganizationListBehavior = {
+export type CrossOrganizationListBehavior = {
   readonly toolName: string;
   readonly baseToolName: string;
   readonly title: string;
@@ -207,7 +207,49 @@ export const CROSS_ORGANIZATION_TOOL_NAMES: ReadonlySet<string> = new Set(
   CROSS_ORGANIZATION_LIST_BEHAVIORS.map((behavior) => behavior.toolName),
 );
 
-function permissionError(behavior: CrossOrganizationListBehavior) {
+// One index over the behaviors, keyed by the single-organization tool a caller reaches for first.
+// Everything that needs the whole-connection form of a list, the routing refusal, the base tool
+// descriptions, and the list resources, reads it from here.
+const BEHAVIOR_BY_BASE_NAME: ReadonlyMap<string, CrossOrganizationListBehavior> = new Map(
+  CROSS_ORGANIZATION_LIST_BEHAVIORS.map((behavior) => [behavior.baseToolName, behavior]),
+);
+
+export function crossOrganizationListBehavior(
+  baseToolName: string,
+): CrossOrganizationListBehavior | undefined {
+  return BEHAVIOR_BY_BASE_NAME.get(baseToolName);
+}
+
+// Base list tool to the tool that answers it for every organization at once. A caller that omits
+// organization_id on a multi-organization connection has asked a whole-connection question, so the
+// routing refusal and the base tool's own description name this tool. Without it the caller obeys
+// the refusal, picks one organization, and reports a subset as if it were everything.
+export const CROSS_ORGANIZATION_TOOL_BY_BASE_NAME: ReadonlyMap<string, string> = new Map(
+  [...BEHAVIOR_BY_BASE_NAME].map(([baseToolName, behavior]) => [baseToolName, behavior.toolName]),
+);
+
+type CrossOrganizationSectionError = {
+  readonly type: string;
+  readonly message: string;
+  readonly status: number | null;
+  readonly request_id: string | null;
+  readonly retryable: boolean;
+};
+
+// One organization's answer. A failure is a section of its own rather than a failed call, so one
+// organization losing a permission or timing out never discards the organizations that succeeded.
+export type CrossOrganizationSection = {
+  readonly organization: { readonly id: string; readonly name: string };
+} & (
+  | {
+      readonly status: "ok";
+      readonly data: readonly unknown[];
+      readonly pagination: z.infer<typeof paginationSchema>;
+    }
+  | { readonly status: "error"; readonly error: CrossOrganizationSectionError }
+);
+
+function permissionError(behavior: CrossOrganizationListBehavior): CrossOrganizationSectionError {
   return {
     type: "authorization_error",
     message: `${behavior.baseToolName} is not permitted for this organization.`,
@@ -217,7 +259,7 @@ function permissionError(behavior: CrossOrganizationListBehavior) {
   };
 }
 
-function requestError(error: unknown) {
+function requestError(error: unknown): CrossOrganizationSectionError {
   if (error instanceof ShipmailError) {
     const isSafeMessage = error.type !== undefined && SAFE_ERROR_TYPES.has(error.type);
     return {
@@ -253,7 +295,7 @@ async function listOneOrganization(
   behavior: CrossOrganizationListBehavior,
   grant: CrossOrganizationGrant,
   args: CrossOrganizationListArgs,
-) {
+): Promise<CrossOrganizationSection> {
   const organization = { id: grant.id, name: grant.name };
   if (!grant.allowedTools.has(behavior.baseToolName)) {
     return {
@@ -310,12 +352,12 @@ async function listOneOrganization(
   }
 }
 
-async function listEveryOrganization(
+export async function listEveryOrganization(
   behavior: CrossOrganizationListBehavior,
   grants: readonly CrossOrganizationGrant[],
   args: CrossOrganizationListArgs,
-) {
-  const organizations: unknown[] = [];
+): Promise<{ readonly organizations: readonly CrossOrganizationSection[] }> {
+  const organizations: CrossOrganizationSection[] = [];
   for (let offset = 0; offset < grants.length; offset += MAX_CONCURRENT_ORGANIZATIONS) {
     const batch = grants.slice(offset, offset + MAX_CONCURRENT_ORGANIZATIONS);
     const sections = await Promise.all(

@@ -23,6 +23,7 @@ function eventPayload(overrides: Record<string, unknown> = {}) {
     calendar_id: "cal_1",
     uid: "uid-1",
     title: "Sync",
+    invitation_language: "fr",
     description: null,
     location: null,
     video_url: null,
@@ -109,6 +110,7 @@ describe("calendar + booking MCP tools", () => {
       arguments: {
         mailbox: ADDRESS,
         title: "Sync",
+        invitation_language: "fr",
         start: "2026-08-01T14:00:00",
         attendees: [{ email: "guest@example.com", name: "Guest" }],
       },
@@ -120,6 +122,7 @@ describe("calendar + booking MCP tools", () => {
     expect(req?.body).toMatchObject({
       mailbox: ADDRESS,
       title: "Sync",
+      invitation_language: "fr",
       start: "2026-08-01T14:00:00",
       attendees: [{ email: "guest@example.com", name: "Guest" }],
     });
@@ -142,13 +145,18 @@ describe("calendar + booking MCP tools", () => {
     const client = await buildPair(() => eventPayload());
     const result = await client.callTool({
       name: "shipmail_update_calendar_event",
-      arguments: { id: OPAQUE_EVENT_ID, mailbox: ADDRESS, location: null },
+      arguments: {
+        id: OPAQUE_EVENT_ID,
+        mailbox: ADDRESS,
+        invitation_language: "es",
+        location: null,
+      },
     });
     expect(result.isError).toBeFalsy();
     const req = captured[0];
     expect(req?.method).toBe("PATCH");
     expect(new URL(req?.url ?? "").pathname).toBe("/api/v1/calendar/events/evt%3Aopaque.123");
-    expect(req?.body).toEqual({ mailbox: ADDRESS, location: null });
+    expect(req?.body).toEqual({ mailbox: ADDRESS, invitation_language: "es", location: null });
   });
 
   test("get_calendar_availability joins days and returns slots", async () => {

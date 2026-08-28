@@ -5,11 +5,40 @@ import {
   ATTACHMENT_COMPOSER_HTML,
   ATTACHMENT_COMPOSER_RESOURCE_URI,
 } from "./attachment-component.js";
+import {
+  type CrossOrganizationGrant,
+  crossOrganizationListBehavior,
+  listEveryOrganization,
+} from "./cross-organization-tools.js";
 import { toInboxMessageSummaries } from "./inbox-summaries.js";
+import {
+  NEWSLETTER_ASSET_UPLOADER_HTML,
+  NEWSLETTER_ASSET_UPLOADER_RESOURCE_URI,
+} from "./newsletter-asset-component.js";
 import { asTextResource } from "./result.js";
 import { idSchema } from "./schemas.js";
 
 const JSON_MIME = "application/json";
+const LIST_RESOURCE_LIMIT = 100;
+const R2_UPLOAD_ORIGIN = "https://*.r2.cloudflarestorage.com";
+
+const STATUS_RESOURCE_URI = "shipmail://account/status";
+const DOMAINS_RESOURCE_URI = "shipmail://domains";
+const MAILBOXES_RESOURCE_URI = "shipmail://mailboxes";
+
+// Resource URIs that name no organization, so a connection covering several of them can serve a
+// read from any grant. The composer is static, status is API-wide, and the two list resources
+// answer for every grant at once (see registerListResource). Every other URI names a resource id
+// and is routed by the organization that owns it. Keep this in step with the registrations below:
+// treating an organization-scoped URI as connection-scoped would silently answer from one
+// organization instead of all of them.
+export const CONNECTION_SCOPED_RESOURCE_URIS: ReadonlySet<string> = new Set([
+  ATTACHMENT_COMPOSER_RESOURCE_URI,
+  NEWSLETTER_ASSET_UPLOADER_RESOURCE_URI,
+  STATUS_RESOURCE_URI,
+  DOMAINS_RESOURCE_URI,
+  MAILBOXES_RESOURCE_URI,
+]);
 
 function resourceConfig(title: string, description: string) {
   return {
@@ -39,10 +68,56 @@ function readId(variables: Record<string, unknown>): string {
   return readVariable(variables, "id");
 }
 
+// A list resource carries no organization_id, so on a connection that covers several
+// organizations the single-organization form can only ever answer for one of them. There it is
+// registered as one section per organization instead, the same shape the cross-organization tools
+// return, so a read covers the whole connection.
+function registerListResource(
+  server: McpServer,
+  client: ShipmailClient,
+  organizationGrants: readonly CrossOrganizationGrant[],
+  spec: {
+    readonly name: string;
+    readonly uri: string;
+    readonly title: string;
+    readonly description: string;
+    readonly acrossOrganizationsDescription: string;
+    readonly baseToolName: string;
+    readonly list: (client: ShipmailClient) => Promise<unknown>;
+  },
+): void {
+  const behavior =
+    organizationGrants.length > 1 ? crossOrganizationListBehavior(spec.baseToolName) : undefined;
+  if (!behavior) {
+    server.registerResource(
+      spec.name,
+      spec.uri,
+      resourceConfig(spec.title, spec.description),
+      async (uri) => asTextResource(uri.toString(), await spec.list(client)),
+    );
+    return;
+  }
+
+  server.registerResource(
+    spec.name,
+    spec.uri,
+    resourceConfig(spec.title, spec.acrossOrganizationsDescription),
+    async (uri) =>
+      asTextResource(
+        uri.toString(),
+        await listEveryOrganization(behavior, organizationGrants, { limit: LIST_RESOURCE_LIMIT }),
+      ),
+  );
+}
+
 export function registerResources(
   server: McpServer,
   client: ShipmailClient,
   componentConnectDomain = "https://shipmail.to",
+  // Present only on hosted OAuth connections. Two or more grants means the organization-agnostic
+  // list resources must answer for every organization rather than for whichever grant happened to
+  // serve the request.
+  organizationGrants: readonly CrossOrganizationGrant[] = [],
 ): void {
   server.registerResource(
     "shipmail_attachment_composer",
@@ -88,18 +163,67 @@ export function registerResources(
   );
 
   server.registerResource(
+    "shipmail_newsletter_asset_uploader",
+    NEWSLETTER_ASSET_UPLOADER_RESOURCE_URI,
+    {
+      title: "Shipmail newsletter media uploader",
+      description: "Review and securely upload a selected image or video to Shipmail.",
+      mimeType: "text/html;profile=mcp-app",
+    },
+    async (uri) => ({
+      contents: [
+        {
+          uri: uri.toString(),
+          mimeType: "text/html;profile=mcp-app",
+          text: NEWSLETTER_ASSET_UPLOADER_HTML,
+          _meta: {
+            ui: {
+              prefersBorder: true,
+              csp: {
+                connectDomains: [
+                  componentConnectDomain,
+                  R2_UPLOAD_ORIGIN,
+                  "https://*.openai.com",
+                  "https://*.oaiusercontent.com",
+                ],
+                resourceDomains: [],
+              },
+            },
+            "openai/widgetDescription":
+              "A Shipmail review card that securely uploads the selected image or video only after the user presses the action button.",
+            "openai/widgetPrefersBorder": true,
+            "openai/widgetCSP": {
+              connect_domains: [
+                componentConnectDomain,
+                R2_UPLOAD_ORIGIN,
+                "https://*.openai.com",
+                "https://*.oaiusercontent.com",
+              ],
+              resource_domains: [],
+            },
+          },
+        },
+      ],
+    }),
+  );
+
+  server.registerResource(
     "shipmail_status",
-    "shipmail://account/status",
+    STATUS_RESOURCE_URI,
     resourceConfig("Shipmail Status", "Current Shipmail API status and version."),
     async (uri) => asTextResource(uri.toString(), { status: await client.status.get() }),
   );
 
-  server.registerResource(
-    "shipmail_domains",
-    "shipmail://domains",
-    resourceConfig("Shipmail Domains", "First page of domains in this Shipmail organization."),
-    async (uri) => asTextResource(uri.toString(), await client.domains.list({ limit: 100 })),
-  );
+  registerListResource(server, client, organizationGrants, {
+    name: "shipmail_domains",
+    uri: DOMAINS_RESOURCE_URI,
+    title: "Shipmail Domains",
+    description: "First page of domains in this Shipmail organization.",
+    acrossOrganizationsDescription:
+      "First page of domains in every organization on this connection, as one section per organization.",
+    baseToolName: "shipmail_list_domains",
+    list: (shipmail) => shipmail.domains.list({ limit: LIST_RESOURCE_LIMIT }),
+  });
 
   server.registerResource(
     "shipmail_domain",
@@ -111,12 +235,16 @@ export function registerResources(
     },
   );
 
-  server.registerResource(
-    "shipmail_mailboxes",
-    "shipmail://mailboxes",
-    resourceConfig("Shipmail Mailboxes", "First page of mailboxes in this Shipmail organization."),
-    async (uri) => asTextResource(uri.toString(), await client.mailboxes.list({ limit: 100 })),
-  );
+  registerListResource(server, client, organizationGrants, {
+    name: "shipmail_mailboxes",
+    uri: MAILBOXES_RESOURCE_URI,
+    title: "Shipmail Mailboxes",
+    description: "First page of mailboxes in this Shipmail organization.",
+    acrossOrganizationsDescription:
+      "First page of mailboxes in every organization on this connection, as one section per organization.",
+    baseToolName: "shipmail_list_mailboxes",
+    list: (shipmail) => shipmail.mailboxes.list({ limit: LIST_RESOURCE_LIMIT }),
+  });
 
   server.registerResource(
     "shipmail_mailbox",

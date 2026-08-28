@@ -41,6 +41,7 @@ const SYSTEM_FOLDER_NAMES = [
 ] as const;
 const MAILBOX_RULE_MATCH_MODES = ["all", "any"] as const;
 const MAILBOX_RULE_SYSTEM_TARGET_ROLES = ["inbox", "archive", "junk", "trash"] as const;
+const MEMBER_ROLES = ["owner", "super_admin", "admin", "member"] as const;
 const JMAP_KEYWORDS = ["$flagged", "$seen", "$draft", "$answered", "$forwarded"] as const;
 const NEWSLETTER_STATUSES = [
   "draft",
@@ -113,6 +114,11 @@ const newsletterLinkUrlSchema = z
       return false;
     }
   }, "URL must be absolute http, https, or mailto.");
+
+const newsletterWebUrlSchema = newsletterLinkUrlSchema.refine((value) => {
+  const protocol = new URL(value).protocol;
+  return protocol === "http:" || protocol === "https:";
+}, "URL must be absolute http or https.");
 
 const newsletterVideoUrlSchema = publicHttpsUrlSchema.refine((value) => {
   try {
@@ -259,6 +265,41 @@ export const mailboxSchema = z.object({
   updated_at: z.string(),
 });
 
+export const mailboxDeliveryDestinationSchema = z.object({
+  id: z.string(),
+  address: z.string(),
+  display_name: z.string().nullable(),
+  status: z.enum(["available", "out_of_office", "suspended", "archived", "unavailable"]),
+  out_of_office_end_at: z.string().nullable(),
+  responsible_member_count: z.number().int().nonnegative(),
+  push_ready_member_count: z.number().int().nonnegative(),
+});
+
+const mailboxDeliveryRoutingBaseSchema = z.object({
+  object: z.literal("mailbox_delivery_routing"),
+  mailbox_id: z.string(),
+  source_address: z.string(),
+  destinations: z.array(mailboxDeliveryDestinationSchema),
+});
+
+export const mailboxDeliveryRoutingSchema = z.discriminatedUnion("mode", [
+  mailboxDeliveryRoutingBaseSchema.extend({ mode: z.literal("keep") }),
+  mailboxDeliveryRoutingBaseSchema.extend({
+    mode: z.literal("fixed"),
+    destination_mailbox_id: z.string(),
+    fallback_mailbox_id: z.string(),
+    activation_state: z.enum(["pending", "active", "failed"]),
+    activation_error: z.string().nullable(),
+  }),
+  mailboxDeliveryRoutingBaseSchema.extend({
+    mode: z.literal("round_robin"),
+    destination_mailbox_ids: z.array(z.string()),
+    fallback_mailbox_id: z.string(),
+    activation_state: z.enum(["pending", "active", "failed"]),
+    activation_error: z.string().nullable(),
+  }),
+]);
+
 export const mailboxExportSchema = z.object({
   object: z.literal("mailbox_export"),
   id: z.string(),
@@ -397,20 +438,23 @@ export const mailboxRuleActionSchema = z.union([
 
 export const mailboxRuleSchema = z.object({
   id: z.uuid("Rule ID must be a UUID."),
+  mailbox_id: idSchema.describe("Mailbox that owns this rule."),
   name: noControlString(120, "name").trim().min(1),
   enabled: z.boolean(),
-  position: z.number().int().min(0),
+  position: z.number().int().min(0).describe("Stable evaluation order. Lower runs first."),
   match_mode: z.enum(MAILBOX_RULE_MATCH_MODES),
   stop: z.boolean(),
   conditions: z.array(mailboxRuleConditionSchema).min(1).max(10),
   actions: z.array(mailboxRuleActionSchema).min(1).max(4),
 });
 
+export const mailboxRuleWireSchema = mailboxRuleSchema.omit({ mailbox_id: true });
+
 export const mailboxRulesSchema = z.object({
   object: z.literal("mailbox_rules"),
   mailbox_id: z.string(),
   address: z.string(),
-  rules: z.array(mailboxRuleSchema),
+  rules: z.array(mailboxRuleWireSchema),
   folders: z.array(
     z.object({
       id: z.string(),
@@ -538,20 +582,25 @@ export const inboxMessageSummariesSchema = inboxMessagesSchema.extend({
   data: z.array(inboxMessageSchema),
 });
 
-const inboxThreadReplyStateSchema = z.enum([
+const inboxThreadAttentionStateSchema = z.enum([
   "needs_reply",
-  "waiting_on_contact",
-  "resolved",
-  "no_reply_expected",
+  "waiting_on_them",
+  "done",
+  "follow_up_due",
+  "delivery_failed",
+  "no_action",
 ] as const);
 
 export const inboxThreadSummarySchema = z.object({
   object: z.literal("inbox_thread_summary"),
   id: z.string(),
   thread_id: z.string(),
-  reply_state: inboxThreadReplyStateSchema,
-  reply_version: z.number().int(),
-  needs_reply_since: z.string().nullable(),
+  attention_state: inboxThreadAttentionStateSchema,
+  version: z.number().int(),
+  attention_since: z.string().nullable(),
+  done_at: z.string().nullable(),
+  follow_up_at: z.string().nullable(),
+  assigned_member_id: z.string().nullable(),
   subject: z.string().nullable(),
   latest_from_address: z.string().nullable(),
   message_count: z.number().int(),
@@ -571,7 +620,7 @@ export const inboxThreadsSchema = z.object({
   object: z.literal("inbox_threads"),
   mailbox_id: z.string(),
   data: z.array(inboxThreadSummarySchema),
-  summary: z.record(inboxThreadReplyStateSchema, z.number().int()),
+  summary: z.record(inboxThreadAttentionStateSchema, z.number().int()),
   pagination: z.object({
     limit: z.number().int(),
     has_more: z.boolean(),
@@ -580,13 +629,15 @@ export const inboxThreadsSchema = z.object({
   }),
 });
 
-export const inboxThreadReplyStateResultSchema = z.object({
-  object: z.literal("inbox_thread_reply_state"),
+export const inboxThreadAttentionResultSchema = z.object({
+  object: z.literal("inbox_thread_attention"),
   id: z.string(),
   thread_id: z.string(),
-  reply_state: inboxThreadReplyStateSchema,
-  reply_version: z.number().int(),
-  needs_reply_since: z.string().nullable(),
+  attention_state: inboxThreadAttentionStateSchema,
+  version: z.number().int(),
+  attention_since: z.string().nullable(),
+  done_at: z.string().nullable(),
+  follow_up_at: z.string().nullable(),
 });
 
 const replyDraftStatusSchema = z.enum([
@@ -603,7 +654,7 @@ export const inboxReplyDraftSchema = z.object({
   mailbox_id: z.string(),
   thread_id: z.string(),
   based_on_message_id: z.string().nullable(),
-  expected_reply_version: z.number().int(),
+  expected_version: z.number().int(),
   reply_mode: z.enum(["reply", "reply_all"] as const),
   status: replyDraftStatusSchema,
   to: z.array(replyDraftRecipientSchema),
@@ -641,8 +692,8 @@ export const replyScanCandidateSchema = z.object({
   latest_email_id: z.string().nullable(),
   latest_inbound_message_id: z.string().nullable(),
   latest_inbound_email_id: z.string().nullable(),
-  reply_version: z.number().int(),
-  needs_reply_since: z.string(),
+  version: z.number().int(),
+  attention_since: z.string(),
   subject: z.string().nullable(),
 });
 
@@ -937,6 +988,15 @@ export const webhookSchema = z.object({
   updated_at: z.string(),
 });
 
+export const memberSchema = z.object({
+  object: z.literal("member"),
+  id: z.string(),
+  email: z.string(),
+  name: z.string(),
+  role: z.enum(MEMBER_ROLES),
+  created_at: z.string(),
+});
+
 export const webhookWithSecretSchema = webhookSchema.extend({
   secret: z.string(),
 });
@@ -982,6 +1042,9 @@ export const statusOutputSchema = z.object({
 export const domainOutputSchema = z.object({ domain: domainSchema });
 export const domainDnsRecordsOutputSchema = z.object({ dns_records: domainDnsRecordSetSchema });
 export const mailboxOutputSchema = z.object({ mailbox: mailboxSchema });
+export const mailboxDeliveryRoutingOutputSchema = z.object({
+  delivery_routing: mailboxDeliveryRoutingSchema,
+});
 export const mailboxExportOutputSchema = z.object({ export: mailboxExportSchema });
 export const mailboxAppPasswordOutputSchema = z.object({
   app_password: mailboxAppPasswordSchema,
@@ -1006,6 +1069,7 @@ export const partnerMailboxCredentialGrantsOutputSchema = z.object({
 export const mailboxFolderOutputSchema = z.object({ folder: mailboxFolderSchema });
 export const mailboxFoldersOutputSchema = z.object({ folders: mailboxFoldersSchema });
 export const mailboxRulesOutputSchema = z.object({ rules: mailboxRulesSchema });
+export const mailboxRuleOutputSchema = z.object({ rule: mailboxRuleSchema });
 export const mailboxIdentitiesOutputSchema = z.object({ identities: mailboxIdentitiesSchema });
 export const inboxMessagesOutputSchema = z.object({ inbox_messages: inboxMessagesSchema });
 export const inboxMessageSummariesOutputSchema = z.object({
@@ -1014,8 +1078,8 @@ export const inboxMessageSummariesOutputSchema = z.object({
 export const inboxMessageOutputSchema = z.object({ inbox_message: inboxFullMessageSchema });
 export const inboxThreadsOutputSchema = z.object({ inbox_threads: inboxThreadsSchema });
 export const inboxThreadOutputSchema = z.object({ inbox_thread: inboxThreadSchema });
-export const inboxThreadReplyStateOutputSchema = z.object({
-  inbox_thread_reply_state: inboxThreadReplyStateResultSchema,
+export const inboxThreadAttentionOutputSchema = z.object({
+  inbox_thread_attention: inboxThreadAttentionResultSchema,
 });
 export const inboxReplyDraftOutputSchema = z.object({ inbox_reply_draft: inboxReplyDraftSchema });
 export const inboxReplyDraftSendOutputSchema = z.object({
@@ -1081,6 +1145,11 @@ export const webhooksOutputSchema = z.object({
   data: z.array(webhookSchema),
   pagination: paginationSchema,
 });
+export const membersOutputSchema = z.object({
+  data: z.array(memberSchema),
+  pagination: paginationSchema,
+});
+export const memberOutputSchema = z.object({ member: memberSchema });
 export const webhookDeliveriesOutputSchema = z.object({
   data: z.array(webhookDeliverySchema),
   pagination: paginationSchema,
@@ -1158,6 +1227,13 @@ export const importScopedInputSchema = z.object({
   import_id: z.string().min(1).describe("Import ID, starts with imp_"),
 });
 
+export const restoreMailboxImportInputSchema = importScopedInputSchema.extend({
+  file_ids: z
+    .array(z.string().min(1))
+    .max(20)
+    .describe("Staged replacement file IDs from createMailboxImportUpload."),
+});
+
 export const mailboxExportScopedInputSchema = z.object({
   id: idSchema.describe("Mailbox ID."),
   export_id: idSchema.describe("Mailbox export ID, starts with mbexp_."),
@@ -1214,6 +1290,13 @@ export const importSchema = z.object({
   started_at: z.string().nullable(),
   completed_at: z.string().nullable(),
   folders: z.array(importFolderSchema).optional(),
+  source_retention: z
+    .object({
+      state: z.enum(["available", "missing", "expired", "deleted", "not_applicable"]),
+      expires_at: z.string().nullable(),
+      deleted_at: z.string().nullable(),
+    })
+    .optional(),
 });
 
 export const importOutputSchema = z.object({ import: importSchema });
@@ -1232,7 +1315,9 @@ export const updateDomainInputSchema = z.object({
   id: idSchema,
   catch_all_mailbox_id: idSchema
     .nullable()
-    .describe("Mailbox ID to receive catch-all mail, or null to clear."),
+    .describe(
+      "Active mailbox ID in the same organization to receive catch-all mail, or null to clear. The mailbox may use another domain.",
+    ),
   idempotency_key: idempotencyKeySchema,
 });
 export const searchDomainsInputSchema = z.object({
@@ -1315,10 +1400,83 @@ export const deleteMailboxFolderInputSchema = z.object({
   id: idSchema,
   folder_id: folderIdSchema,
 });
-export const updateMailboxRulesInputSchema = z.object({
-  id: idSchema,
-  rules: z.array(mailboxRuleSchema).max(50),
+export const getMailboxRuleInputSchema = z.object({
+  id: idSchema.describe("Mailbox ID."),
+  rule_id: z.uuid("Rule ID must be a UUID.").describe("Exact rule ID to fetch."),
+});
+export const createMailboxRuleInputSchema = z.object({
+  id: idSchema.describe("Mailbox ID."),
+  name: noControlString(120, "name").trim().min(1).describe("Unique rule name within the mailbox."),
+  enabled: z.boolean().default(true),
+  match_mode: z.enum(MAILBOX_RULE_MATCH_MODES).default("all"),
+  stop: z.boolean().default(false).describe("Stop evaluating later rules after this one matches."),
+  conditions: z
+    .array(mailboxRuleConditionSchema)
+    .min(1)
+    .max(10)
+    .describe(
+      "Sender, recipient, subject, attachment, List-Unsubscribe, and nested any/all groups accepted by Shipmail inbox rules.",
+    ),
+  actions: z
+    .array(mailboxRuleActionSchema)
+    .min(1)
+    .max(4)
+    .describe(
+      "move to a system role or custom folder_id from this mailbox, mark_read, star, or send_webhook.",
+    ),
+  position: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("Optional insert index. Defaults to the end of the rule list."),
   idempotency_key: idempotencyKeySchema,
+});
+export const updateMailboxRuleInputSchema = z
+  .object({
+    id: idSchema.describe("Mailbox ID."),
+    rule_id: z.uuid("Rule ID must be a UUID.").describe("Existing exact rule ID to update."),
+    name: noControlString(120, "name").trim().min(1).optional(),
+    enabled: z.boolean().optional(),
+    match_mode: z.enum(MAILBOX_RULE_MATCH_MODES).optional(),
+    stop: z.boolean().optional(),
+    conditions: z.array(mailboxRuleConditionSchema).min(1).max(10).optional(),
+    actions: z.array(mailboxRuleActionSchema).min(1).max(4).optional(),
+    position: z.number().int().min(0).optional().describe("New evaluation order."),
+    expected_position: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .describe(
+        "Optional optimistic check. Fail with conflict when the rule's current position differs.",
+      ),
+    idempotency_key: idempotencyKeySchema,
+  })
+  .refine(
+    (value) =>
+      value.name !== undefined ||
+      value.enabled !== undefined ||
+      value.match_mode !== undefined ||
+      value.stop !== undefined ||
+      value.conditions !== undefined ||
+      value.actions !== undefined ||
+      value.position !== undefined,
+    { message: "Provide at least one field to update." },
+  );
+export const deleteMailboxRuleInputSchema = z.object({
+  id: idSchema.describe("Mailbox ID."),
+  rule_id: z
+    .uuid("Rule ID must be a UUID.")
+    .describe("Exact rule ID to delete. Bulk delete is not supported."),
+  expected_position: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe(
+      "Optional optimistic check. Fail with conflict when the rule's current position differs.",
+    ),
 });
 export const resetPasswordInputSchema = z.object({
   id: idSchema,
@@ -1354,6 +1512,44 @@ export const autoReplyInputSchema = z
     message: "body is required when enabling auto-reply.",
   });
 
+export const updateMailboxDeliveryRoutingInputSchema = z
+  .discriminatedUnion("mode", [
+    z.object({
+      id: idSchema,
+      mode: z.literal("keep"),
+      idempotency_key: idempotencyKeySchema,
+    }),
+    z.object({
+      id: idSchema,
+      mode: z.literal("fixed"),
+      destination_mailbox_id: idSchema,
+      fallback_mailbox_id: idSchema,
+      idempotency_key: idempotencyKeySchema,
+    }),
+    z.object({
+      id: idSchema,
+      mode: z.literal("round_robin"),
+      destination_mailbox_ids: z.array(idSchema).min(2).max(100),
+      fallback_mailbox_id: idSchema,
+      idempotency_key: idempotencyKeySchema,
+    }),
+  ])
+  .superRefine((value, context) => {
+    const overlaps =
+      value.mode === "fixed"
+        ? value.destination_mailbox_id === value.fallback_mailbox_id
+        : value.mode === "round_robin"
+          ? value.destination_mailbox_ids.includes(value.fallback_mailbox_id)
+          : false;
+    if (overlaps && value.mode !== "keep" && value.fallback_mailbox_id !== value.id) {
+      context.addIssue({
+        code: "custom",
+        path: ["fallback_mailbox_id"],
+        message: "Only the source mailbox can be both a destination and the fallback.",
+      });
+    }
+  });
+
 export const spamFilterInputSchema = z.object({
   id: idSchema,
   threshold: z.number().int().min(1).max(14),
@@ -1384,8 +1580,8 @@ export const getMailboxInboxMessageInputSchema = z.object({
 
 export const listMailboxInboxThreadsInputSchema = z.object({
   id: idSchema.describe("Mailbox ID."),
-  reply_state: inboxThreadReplyStateSchema.default("needs_reply"),
-  sort_by: z.enum(["needs_reply_since", "last_message_at"] as const).default("needs_reply_since"),
+  attention_state: inboxThreadAttentionStateSchema.default("needs_reply"),
+  sort_by: z.enum(["attention_since", "last_message_at"] as const).default("attention_since"),
   order: z.enum(["asc", "desc"] as const).default("asc"),
   after: z.iso.datetime().optional(),
   before: z.iso.datetime().optional(),
@@ -1398,13 +1594,18 @@ export const getMailboxInboxThreadInputSchema = z.object({
   thread_id: noControlString(256, "thread_id").min(1).describe("JMAP inbox thread ID."),
 });
 
-export const updateInboxThreadReplyStateInputSchema = z.object({
-  id: idSchema.describe("Mailbox ID."),
-  thread_id: noControlString(256, "thread_id").min(1),
-  reply_state: z.enum(["needs_reply", "resolved", "no_reply_expected"] as const),
-  expected_reply_version: z.number().int().min(1),
-  idempotency_key: idempotencyKeySchema,
-});
+export const updateInboxThreadAttentionInputSchema = z
+  .object({
+    id: idSchema.describe("Mailbox ID."),
+    thread_id: noControlString(256, "thread_id").min(1),
+    done: z.boolean().optional(),
+    follow_up_at: z.iso.datetime().nullable().optional(),
+    expected_version: z.number().int().min(1),
+    idempotency_key: idempotencyKeySchema,
+  })
+  .refine((value) => value.done !== undefined || value.follow_up_at !== undefined, {
+    message: "Provide done or follow_up_at.",
+  });
 
 export const createInboxReplyDraftInputSchema = z
   .object({
@@ -1413,7 +1614,7 @@ export const createInboxReplyDraftInputSchema = z
     text: z.string().max(256_000).optional(),
     html: z.string().max(512_000).optional(),
     reply_mode: z.enum(["reply", "reply_all"] as const).default("reply"),
-    expected_reply_version: z.number().int().min(1),
+    expected_version: z.number().int().min(1),
     idempotency_key: idempotencyKeySchema,
   })
   .refine((value) => Boolean(value.text || value.html), {
@@ -1451,6 +1652,12 @@ const inboxReplyFields = {
   source_rfc_message_id: sourceRfcMessageIdSchema.optional(),
   headers: outboundHeadersSchema.optional(),
   scheduled_at: z.iso.datetime().optional(),
+  track_reply: z
+    .boolean()
+    .optional()
+    .describe(
+      "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
+    ),
   idempotency_key: idempotencyKeySchema,
 } as const;
 
@@ -1564,6 +1771,12 @@ export const composeMessageWithFileInputSchema = z
     source_rfc_message_id: sourceRfcMessageIdSchema.optional(),
     headers: outboundHeadersSchema.optional(),
     scheduled_at: z.iso.datetime().optional(),
+    track_reply: z
+      .boolean()
+      .optional()
+      .describe(
+        "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
+      ),
     file: openAiFileInputSchema,
   })
   .strict()
@@ -1626,6 +1839,12 @@ export const sendMessageInputSchema = z
     source_rfc_message_id: sourceRfcMessageIdSchema.optional(),
     headers: outboundHeadersSchema.optional(),
     scheduled_at: z.iso.datetime().optional(),
+    track_reply: z
+      .boolean()
+      .optional()
+      .describe(
+        "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
+      ),
     sandbox_outcome: z.enum(["delivered", "bounced", "complained"] as const).optional(),
     idempotency_key: idempotencyKeySchema,
   })
@@ -1675,6 +1894,12 @@ export const replyToMessageInputSchema = z
     source_rfc_message_id: sourceRfcMessageIdSchema.optional(),
     headers: outboundHeadersSchema.optional(),
     scheduled_at: z.iso.datetime().optional(),
+    track_reply: z
+      .boolean()
+      .optional()
+      .describe(
+        "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
+      ),
     sandbox_outcome: z.enum(["delivered", "bounced", "complained"] as const).optional(),
     idempotency_key: idempotencyKeySchema,
   })
@@ -1718,6 +1943,12 @@ export const replyToThreadInputSchema = z
     html: z.string().max(512_000).optional(),
     text: z.string().max(256_000).optional(),
     scheduled_at: z.iso.datetime().optional(),
+    track_reply: z
+      .boolean()
+      .optional()
+      .describe(
+        "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
+      ),
     sandbox_outcome: z.enum(["delivered", "bounced", "complained"] as const).optional(),
     idempotency_key: idempotencyKeySchema,
   })
@@ -1728,6 +1959,7 @@ export const replyToThreadInputSchema = z
 export const webhookEventSchema = z.enum(WEBHOOK_EVENT_TYPES);
 export const webhookDeliveryStatusSchema = z.enum(WEBHOOK_DELIVERY_STATUSES);
 export const listWebhooksInputSchema = paginationInputSchema;
+export const listMembersInputSchema = paginationInputSchema;
 export const createWebhookInputSchema = z.object({
   url: publicHttpsUrlSchema,
   events: z.array(webhookEventSchema).min(1).max(WEBHOOK_EVENT_TYPES.length),
@@ -1994,12 +2226,12 @@ export const resubscribeSubscriberInputSchema = subscriberActionInputSchema.exte
 export const newsletterDomainSchema = z.object({
   object: z.literal("newsletter_domain"),
   id: z.string(),
-  root_domain_id: z.string(),
+  root_domain_name: z.string(),
   domain_name: z.string(),
   from_local_part: z.string(),
   from_address: z.string(),
   mail_from_domain: z.string(),
-  reply_to_mailbox_id: z.string().nullable(),
+  reply_to_address: z.string().nullable(),
   status: z.enum(NEWSLETTER_DOMAIN_STATUSES),
   dkim_status: z.enum(NEWSLETTER_DOMAIN_RECORD_STATUSES),
   mail_from_status: z.enum(NEWSLETTER_DOMAIN_RECORD_STATUSES),
@@ -2029,9 +2261,8 @@ export const newsletterSchema = z.object({
   object: z.literal("newsletter"),
   id: z.string(),
   audience_id: z.string().nullable(),
-  sender_identity_id: z.string(),
-  newsletter_domain_id: z.string(),
-  reply_to_mailbox_id: z.string().nullable(),
+  sender_identity_id: z.string().nullable(),
+  newsletter_domain_id: z.string().nullable(),
   name: z.string(),
   subject: z.string().nullable(),
   preview_text: z.string().nullable(),
@@ -2043,6 +2274,7 @@ export const newsletterSchema = z.object({
   body_text: z.string().nullable(),
   status: z.enum(NEWSLETTER_STATUSES),
   archive_visibility: z.enum(NEWSLETTER_ARCHIVE_VISIBILITIES),
+  feed_entry_url: newsletterWebUrlSchema.nullable(),
   styling_mode: z
     .enum(NEWSLETTER_STYLING_MODES)
     .describe(
@@ -2197,6 +2429,9 @@ export const newsletterTestSendOutputSchema = z.object({
 });
 
 const newsletterBlockTextSchema = noControlString(10_000, "newsletter block text").min(1);
+const newsletterBlockRichProseSchema = newsletterBlockTextSchema.describe(
+  "Bare text or sanitized inline HTML. Use p or br for line breaks. Allowed tags are a, b, br, code, em, i, p, s, span, strong, and u.",
+);
 const newsletterBlockOptionalTextSchema = noControlString(
   10_000,
   "newsletter block text",
@@ -2207,7 +2442,7 @@ const newsletterButtonAlignSchema = z.enum(["left", "center", "right"]);
 
 const newsletterColumnContentInputSchema = z.object({
   title: newsletterBlockOptionalTextSchema,
-  body: newsletterBlockTextSchema,
+  body: newsletterBlockRichProseSchema,
   image_url: publicHttpsUrlSchema.nullish(),
   image_alt: newsletterBlockOptionalTextSchema,
   cta_label: newsletterBlockOptionalTextSchema,
@@ -2222,17 +2457,17 @@ const newsletterBlockInputSchema: z.ZodType<NewsletterBlock> = z.discriminatedUn
   }),
   z.object({
     type: z.literal("paragraph"),
-    body: newsletterBlockTextSchema,
+    body: newsletterBlockRichProseSchema,
   }),
   z.object({
     type: z.literal("list"),
     ordered: z.boolean().optional(),
-    items: z.array(newsletterBlockTextSchema).min(1).max(50),
+    items: z.array(newsletterBlockRichProseSchema).min(1).max(50),
   }),
   z.object({
     type: z.literal("callout"),
     title: newsletterBlockOptionalTextSchema,
-    body: newsletterBlockTextSchema,
+    body: newsletterBlockRichProseSchema,
     variant: newsletterCalloutVariantSchema.optional(),
   }),
   z.object({
@@ -2277,7 +2512,7 @@ const newsletterBlockInputSchema: z.ZodType<NewsletterBlock> = z.discriminatedUn
   }),
   z.object({
     type: z.literal("quote"),
-    body: newsletterBlockTextSchema,
+    body: newsletterBlockRichProseSchema,
     cite: newsletterBlockOptionalTextSchema,
   }),
   z.object({
@@ -2308,6 +2543,11 @@ const newsletterDraftFieldsInputSchema = {
   blocks: z.array(newsletterBlockInputSchema).min(1).max(200).optional(),
   send_window_hours: z.number().int().min(1).max(24).optional(),
   archive_visibility: z.enum(NEWSLETTER_ARCHIVE_VISIBILITIES).optional(),
+  feed_entry_url: newsletterWebUrlSchema
+    .nullish()
+    .describe(
+      "Optional Atom entry destination. Feed readers link the issue title here instead of to its web archive, including when the archive is private.",
+    ),
   styling_mode: z
     .enum(NEWSLETTER_STYLING_MODES)
     .optional()
@@ -2373,6 +2613,7 @@ export const createNewsletterFromChangelogInputSchema = z.object({
     .optional(),
   send_window_hours: z.number().int().min(1).max(24).optional(),
   archive_visibility: z.enum(NEWSLETTER_ARCHIVE_VISIBILITIES).optional(),
+  feed_entry_url: newsletterWebUrlSchema.nullish(),
   styling_mode: z
     .enum(NEWSLETTER_STYLING_MODES)
     .optional()
@@ -2395,6 +2636,7 @@ export const updateNewsletterInputSchema = z
     blocks: newsletterDraftFieldsInputSchema.blocks,
     send_window_hours: newsletterDraftFieldsInputSchema.send_window_hours,
     archive_visibility: newsletterDraftFieldsInputSchema.archive_visibility,
+    feed_entry_url: newsletterDraftFieldsInputSchema.feed_entry_url,
     styling_mode: newsletterDraftFieldsInputSchema.styling_mode,
     idempotency_key: idempotencyKeySchema,
   })
@@ -2410,6 +2652,7 @@ export const updateNewsletterInputSchema = z
       value.blocks !== undefined ||
       value.send_window_hours !== undefined ||
       value.archive_visibility !== undefined ||
+      value.feed_entry_url !== undefined ||
       value.styling_mode !== undefined,
     {
       message: "Provide at least one newsletter field to update.",
@@ -2431,6 +2674,87 @@ export const registerNewsletterAssetInputSchema = z.object({
     .describe("For a video, its Shipmail-hosted thumbnail image URL."),
   idempotency_key: idempotencyKeySchema,
 });
+const newsletterAssetUploadContentTypeSchema = z.enum([
+  "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+]);
+const newsletterImageUploadContentTypes: ReadonlySet<string> = new Set([
+  "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+export const uploadNewsletterAssetWithFileInputSchema = z
+  .object({ file: openAiFileInputSchema })
+  .strict();
+export const newsletterAssetUploaderOutputSchema = z.object({
+  ready: z.literal(true),
+  filename: z.string(),
+});
+export const prepareNewsletterAssetUploadInputSchema = z
+  .object({
+    filename: noControlString(240, "filename")
+      .min(1)
+      .refine(
+        (value) => !value.includes("..") && !value.includes("/") && !value.includes("\\"),
+        "Invalid filename.",
+      ),
+    content_type: newsletterAssetUploadContentTypeSchema,
+    size: z
+      .number()
+      .int()
+      .min(1)
+      .max(25 * 1024 * 1024),
+    sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (newsletterImageUploadContentTypes.has(value.content_type) && value.size > 5 * 1024 * 1024) {
+      ctx.addIssue({
+        code: "too_big",
+        maximum: 5 * 1024 * 1024,
+        origin: "number",
+        inclusive: true,
+        path: ["size"],
+        message: "Newsletter images can be up to 5 MB.",
+      });
+    }
+  });
+const newsletterAssetUploadHeadersSchema = z.object({
+  "Content-Type": newsletterAssetUploadContentTypeSchema,
+  "If-None-Match": z.literal("*"),
+});
+const newsletterAssetUploadPreparationBaseSchema = z.object({
+  filename: z.string(),
+  content_type: newsletterAssetUploadContentTypeSchema,
+  size: z.number().int(),
+  sha256: z.string(),
+  upload_url: z.url(),
+  upload_method: z.literal("PUT"),
+  upload_headers: newsletterAssetUploadHeadersSchema,
+  complete_url: z.url(),
+  complete_method: z.literal("POST"),
+  expires_at: z.string(),
+});
+export const newsletterAssetUploadPreparationOutputSchema = z.object({
+  prepared_upload: z.discriminatedUnion("kind", [
+    newsletterAssetUploadPreparationBaseSchema.extend({ kind: z.literal("image") }),
+    newsletterAssetUploadPreparationBaseSchema.extend({
+      kind: z.literal("video"),
+      thumbnail_upload_url: z.url(),
+      thumbnail_upload_method: z.literal("PUT"),
+      thumbnail_upload_headers: z.object({
+        "Content-Type": z.literal("image/jpeg"),
+        "If-None-Match": z.literal("*"),
+      }),
+    }),
+  ]),
+});
 export const previewNewsletterInputSchema = z.object({
   id: idSchema.describe("Newsletter ID."),
 });
@@ -2450,6 +2774,7 @@ export const scheduleNewsletterInputSchema = z.object({
 const CALENDAR_EVENT_STATUSES = ["confirmed", "tentative", "cancelled"] as const;
 const CALENDAR_FREE_BUSY_STATUSES = ["free", "busy"] as const;
 const CALENDAR_PRIVACIES = ["public", "private", "secret"] as const;
+const CALENDAR_INVITATION_LANGUAGES = ["en", "fr", "es"] as const;
 const RECURRENCE_FREQUENCIES = [
   "yearly",
   "monthly",
@@ -2495,6 +2820,9 @@ const calendarPersonSchema = z.object({ email: z.string(), name: z.string().null
 const calendarAttendeeSchema = calendarPersonSchema.extend({
   status: z.enum(["needs-action", "accepted", "declined", "tentative"]),
 });
+const calendarInvitationLanguageSchema = z
+  .enum(CALENDAR_INVITATION_LANGUAGES)
+  .describe("Language for invitation, update, cancellation, and RSVP interface copy.");
 
 export const calendarEventSchema = z.object({
   object: z.literal("calendar_event"),
@@ -2503,6 +2831,7 @@ export const calendarEventSchema = z.object({
   calendar_id: z.string().nullable(),
   uid: z.string().nullable(),
   title: z.string().nullable(),
+  invitation_language: calendarInvitationLanguageSchema,
   description: z.string().nullable(),
   location: z.string().nullable(),
   video_url: z.string().nullable(),
@@ -2833,6 +3162,7 @@ export const createCalendarEventInputSchema = z.object({
     .optional()
     .describe("Target calendar. Defaults to the default calendar."),
   title: noControlString(1024, "title").min(1),
+  invitation_language: calendarInvitationLanguageSchema.optional(),
   start: localDateTimeSchema.describe("Local date-time; its zone is given by timezone."),
   description: noControlString(32768, "description").optional(),
   timezone: ianaTimeZoneSchema.optional(),
@@ -2854,6 +3184,7 @@ export const updateCalendarEventInputSchema = z.object({
   id: calendarEventIdInputSchema.describe("Calendar event ID."),
   mailbox: mailboxAddressInputSchema,
   title: noControlString(1024, "title").min(1).optional(),
+  invitation_language: calendarInvitationLanguageSchema.optional(),
   description: noControlString(32768, "description").nullish(),
   start: localDateTimeSchema.optional(),
   timezone: ianaTimeZoneSchema.nullish(),

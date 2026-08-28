@@ -59,6 +59,8 @@ Use availability and event-listing tools for read-only questions. Before creatin
 
 Draft and preview before any publication or test send. Confirm the sender identity, audience, exclusions, subject, final content, and delivery timing. Treat webhook destinations and signing secrets as security-sensitive; verify the target URL and event set before creation or update.
 
+For a hosted conversation or library image or video, use `shipmail_upload_newsletter_asset_with_file`. For a user-approved local media file, compute its exact byte size and SHA-256 digest, call `shipmail_prepare_newsletter_asset_upload`, PUT the unmodified bytes with the returned upload headers, upload a generated JPEG poster for video, and POST an empty body to the completion URL. Use the returned newsletter asset URL in the draft. Never put base64 media bytes in MCP arguments or print the prepared URLs.
+
 ## Connection guidance
 
 If the client asks the user to connect Shipmail:
