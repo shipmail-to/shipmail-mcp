@@ -59,20 +59,38 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 async function verifyRegistry(): Promise<void> {
-  const registry = await fetchJson<RegistryResponse>(REGISTRY_URL);
-  const release = registry.servers?.find(
-    ({ server }) =>
-      server?.name === SERVER_NAME &&
-      server.version === packageMetadata.version,
-  );
-  const metadata =
-    release?._meta?.["io.modelcontextprotocol.registry/official"];
+  let lastError: unknown;
 
-  if (!release || metadata?.status !== "active" || metadata.isLatest !== true) {
-    throw new Error(
-      `MCP Registry does not report ${SERVER_NAME}@${packageMetadata.version} as the latest active release.`,
-    );
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const registry = await fetchJson<RegistryResponse>(REGISTRY_URL);
+      const release = registry.servers?.find(
+        ({ server }) =>
+          server?.name === SERVER_NAME &&
+          server.version === packageMetadata.version,
+      );
+      const metadata =
+        release?._meta?.["io.modelcontextprotocol.registry/official"];
+
+      if (
+        !release ||
+        metadata?.status !== "active" ||
+        metadata.isLatest !== true
+      ) {
+        throw new Error(
+          `MCP Registry does not report ${SERVER_NAME}@${packageMetadata.version} as the latest active release.`,
+        );
+      }
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt < MAX_ATTEMPTS) {
+        await Bun.sleep(RETRY_DELAY_MS);
+      }
+    }
   }
+
+  throw lastError;
 }
 
 async function verifySmithery(): Promise<void> {
