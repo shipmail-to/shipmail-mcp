@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.14](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.13...shipmail-mcp-v0.7.14) (2026-08-28)
+
+
+### Bug Fixes
+
+* **mcp:** restore public release sync ([#1747](https://github.com/shipmail-to/Shipmail/issues/1747)) ([337f29b](https://github.com/shipmail-to/Shipmail/commit/337f29b85c832cd476d874aa0e55fe3c995313ea))
+
 ## [0.7.13](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.12...shipmail-mcp-v0.7.13) (2026-08-21)
 
 
