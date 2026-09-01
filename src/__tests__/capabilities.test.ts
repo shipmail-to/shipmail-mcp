@@ -77,6 +77,23 @@ describe("MCP transport capability derivation", () => {
     }
   });
 
+  test("classifies inbox attachment reads as read-only", () => {
+    expect(
+      MCP_CAPABILITIES.find(
+        (capability) => capability.toolName === "shipmail_read_mailbox_inbox_attachment",
+      ),
+    ).toMatchObject({
+      effect: "read",
+      idempotency: "none",
+      auditAction: null,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        openWorldHint: true,
+      },
+    });
+  });
+
   test("derives hosted OAuth permission groups from the hosted tool catalog", () => {
     expect(MCP_HOSTED_OAUTH_PERMISSION_GROUP_NAMES).not.toContain("partner_admin");
     for (const group of MCP_HOSTED_OAUTH_PERMISSION_GROUP_NAMES) {

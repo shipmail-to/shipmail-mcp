@@ -62,6 +62,8 @@ describe("registerTools", () => {
       "shipmail_delete_mailbox_rule",
       "shipmail_list_mailbox_identities",
       "shipmail_list_mailbox_inbox_messages",
+      "shipmail_get_mailbox_inbox_message",
+      "shipmail_read_mailbox_inbox_attachment",
       "shipmail_get_mailbox_inbox_thread",
       "shipmail_reply_to_inbox_message",
       "shipmail_reply_to_inbox_thread",

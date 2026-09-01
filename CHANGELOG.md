@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.15](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.14...shipmail-mcp-v0.7.15) (2026-08-31)
+
+
+### Features
+
+* **mailboxes:** add sender-filtered forwarding ([#1801](https://github.com/shipmail-to/Shipmail/issues/1801)) ([f2c4b06](https://github.com/shipmail-to/Shipmail/commit/f2c4b061129039e0e1fc8b1e360154148ee169df))
+* **mcp:** support reading inbox attachments ([#1797](https://github.com/shipmail-to/Shipmail/issues/1797)) ([6767366](https://github.com/shipmail-to/Shipmail/commit/676736645f471ec6142cc647022f92947d86f91a))
+
 ## [0.7.14](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.13...shipmail-mcp-v0.7.14) (2026-08-28)
 
 

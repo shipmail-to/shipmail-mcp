@@ -25,8 +25,6 @@ const INTENTIONALLY_EXCLUDED: Readonly<Record<string, string>> = {
     "Capability discovery describes the MCP catalog and cannot itself be an MCP business tool.",
   registerDomain:
     "Domain registration charges a saved payment method and requires explicit pricing, contact, and legal confirmation.",
-  downloadMailboxInboxAttachment:
-    "Attachment downloads return untrusted binary data that can be large and unsafe to inline into a model transcript.",
   stageMailboxAttachment:
     "Raw binary staging is exposed through SDKs and host components; JSON MCP calls consume only the resulting staged ID.",
   consumeStagedAttachmentUpload:

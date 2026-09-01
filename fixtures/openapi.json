@@ -9966,6 +9966,7 @@
           "id",
           "mailbox_id",
           "destination",
+          "sender",
           "status",
           "verification_sent_at",
           "verified_at",
@@ -9987,6 +9988,11 @@
           "destination": {
             "type": "string",
             "format": "email"
+          },
+          "sender": {
+            "type": ["string", "null"],
+            "format": "email",
+            "description": "Exact From address to forward, or null to forward every non-spam message."
           },
           "status": {
             "type": "string",
@@ -10039,6 +10045,12 @@
             "type": "string",
             "format": "email",
             "maxLength": 320
+          },
+          "sender": {
+            "type": ["string", "null"],
+            "format": "email",
+            "maxLength": 320,
+            "description": "Optional exact From address. Omit or set null to forward every non-spam message."
           }
         }
       },

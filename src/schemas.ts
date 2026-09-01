@@ -562,6 +562,14 @@ export const inboxFullMessageSchema = inboxMessageSchema.omit({ object: true }).
   attachments: z.array(inboxAttachmentSchema),
 });
 
+export const inboxAttachmentContentSchema = inboxAttachmentSchema
+  .omit({ download_path: true })
+  .extend({
+    object: z.literal("inbox_attachment_content"),
+    mailbox_id: z.string(),
+    message_id: z.string(),
+  });
+
 export const inboxMessagesSchema = z.object({
   object: z.literal("inbox_messages"),
   mailbox_id: z.string(),
@@ -748,6 +756,7 @@ export const mailboxForwardingSchema = z.object({
   id: z.string(),
   mailbox_id: z.string(),
   destination: emailSchema,
+  sender: emailSchema.nullable(),
   status: z.enum(["pending", "active"] as const),
   verification_sent_at: z.string().nullable(),
   verified_at: z.string().nullable(),
@@ -1076,6 +1085,9 @@ export const inboxMessageSummariesOutputSchema = z.object({
   inbox_messages: inboxMessageSummariesSchema,
 });
 export const inboxMessageOutputSchema = z.object({ inbox_message: inboxFullMessageSchema });
+export const inboxAttachmentContentOutputSchema = z.object({
+  attachment: inboxAttachmentContentSchema,
+});
 export const inboxThreadsOutputSchema = z.object({ inbox_threads: inboxThreadsSchema });
 export const inboxThreadOutputSchema = z.object({ inbox_thread: inboxThreadSchema });
 export const inboxThreadAttentionOutputSchema = z.object({
@@ -1492,6 +1504,7 @@ export const resetPasswordInputSchema = z.object({
 export const createMailboxForwardingInputSchema = z.object({
   id: idSchema,
   destination: emailSchema,
+  sender: emailSchema.nullable().optional(),
   idempotency_key: idempotencyKeySchema,
 });
 export const deleteMailboxForwardingInputSchema = z.object({
@@ -1576,6 +1589,14 @@ export const listMailboxInboxMessagesInputSchema = z
 export const getMailboxInboxMessageInputSchema = z.object({
   id: idSchema.describe("Mailbox ID."),
   message_id: noControlString(256, "message_id").min(1).describe("JMAP inbox message ID."),
+});
+
+export const readMailboxInboxAttachmentInputSchema = z.object({
+  id: idSchema.describe("Mailbox ID."),
+  message_id: noControlString(256, "message_id").min(1).describe("JMAP inbox message ID."),
+  part_id: noControlString(256, "part_id")
+    .min(1)
+    .describe("Attachment part ID returned by shipmail_get_mailbox_inbox_message."),
 });
 
 export const listMailboxInboxThreadsInputSchema = z.object({

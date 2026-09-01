@@ -256,6 +256,7 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_mailbox_identities", "listMailboxIdentities", "mailboxes:read"],
   ["shipmail_list_mailbox_inbox_messages", "listMailboxInboxMessages", "messages:read"],
   ["shipmail_get_mailbox_inbox_message", "getMailboxInboxMessage", "messages:read"],
+  ["shipmail_read_mailbox_inbox_attachment", "downloadMailboxInboxAttachment", "messages:read"],
   ["shipmail_list_mailbox_inbox_threads", "listMailboxInboxThreads", "messages:read"],
   ["shipmail_get_mailbox_inbox_thread", "getMailboxInboxThread", "messages:read"],
   ["shipmail_update_inbox_thread_attention", "updateMailboxInboxThreadAttention", "messages:write"],
@@ -543,6 +544,7 @@ function effectFor(toolName: McpToolName): McpCapabilityEffect {
     toolName === "shipmail_upload_newsletter_asset_with_file" ||
     toolName.startsWith("shipmail_list_") ||
     toolName.startsWith("shipmail_get_") ||
+    toolName.startsWith("shipmail_read_") ||
     toolName.startsWith("shipmail_search_") ||
     toolName.startsWith("shipmail_preview_")
   ) {
