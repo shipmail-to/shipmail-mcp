@@ -5,7 +5,7 @@
 [![node](https://img.shields.io/node/v/shipmail-mcp.svg)](https://www.npmjs.com/package/shipmail-mcp)
 [![license](https://img.shields.io/npm/l/shipmail-mcp.svg)](./LICENSE)
 [![source](https://img.shields.io/badge/source-GitHub-black.svg)](https://github.com/shipmail-to/shipmail-mcp)
-[![smithery badge](https://smithery.ai/badge/shipmail-to/shipmail-mcp)](https://smithery.ai/servers/shipmail-to/shipmail-mcp)
+[![LightNow](https://lightnow.ai/badge/io.github.shipmail-to/shipmail-mcp)](https://lightnow.ai/servers/io.github.shipmail-to/shipmail-mcp)
 
 Official Model Context Protocol server for [Shipmail](https://shipmail.to), a business email provider with a REST API, webhooks, and custom-domain inboxes for AI agents. Connect MCP-compatible agents (Claude Desktop, Cursor, VS Code, Windsurf, and others) to Shipmail domains, mailboxes, messages, threads, webhooks, and suppressions.
 The public source and npm publishing repository is [shipmail-to/shipmail-mcp](https://github.com/shipmail-to/shipmail-mcp).
