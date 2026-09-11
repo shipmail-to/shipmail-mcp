@@ -45,6 +45,7 @@ const MEMBER_ROLES = ["owner", "super_admin", "admin", "member"] as const;
 const JMAP_KEYWORDS = ["$flagged", "$seen", "$draft", "$answered", "$forwarded"] as const;
 const NEWSLETTER_STATUSES = [
   "draft",
+  "imported",
   "pending_approval",
   "approved",
   "scheduled",
@@ -259,7 +260,6 @@ export const mailboxSchema = z.object({
   display_name: z.string().nullable(),
   suspended_at: z.string().nullable(),
   suspension_reasons: z.array(z.enum(["billing", "manual", "security"] as const)),
-  spam_filter_threshold: z.number(),
   auto_reply: autoReplySchema,
   created_at: z.string(),
   updated_at: z.string(),
@@ -534,7 +534,15 @@ export const emailAuthenticationResultsSchema = z.object({
 export const inboxMessageSchema = z.object({
   object: z.literal("inbox_message"),
   id: z.string(),
-  thread_id: z.string(),
+  thread_id: z
+    .string()
+    .describe(
+      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+    ),
+  conversation_id: z
+    .string()
+    .nullable()
+    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
   mailbox_id: z.string(),
   address: z.string(),
   folder_ids: z.array(z.string()),
@@ -602,7 +610,14 @@ const inboxThreadAttentionStateSchema = z.enum([
 export const inboxThreadSummarySchema = z.object({
   object: z.literal("inbox_thread_summary"),
   id: z.string(),
-  thread_id: z.string(),
+  thread_id: z
+    .string()
+    .describe(
+      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+    ),
+  conversation_id: z
+    .string()
+    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
   attention_state: inboxThreadAttentionStateSchema,
   version: z.number().int(),
   attention_since: z.string().nullable(),
@@ -640,7 +655,14 @@ export const inboxThreadsSchema = z.object({
 export const inboxThreadAttentionResultSchema = z.object({
   object: z.literal("inbox_thread_attention"),
   id: z.string(),
-  thread_id: z.string(),
+  thread_id: z
+    .string()
+    .describe(
+      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+    ),
+  conversation_id: z
+    .string()
+    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
   attention_state: inboxThreadAttentionStateSchema,
   version: z.number().int(),
   attention_since: z.string().nullable(),
@@ -660,7 +682,14 @@ export const inboxReplyDraftSchema = z.object({
   object: z.literal("inbox_reply_draft"),
   id: z.string(),
   mailbox_id: z.string(),
-  thread_id: z.string(),
+  thread_id: z
+    .string()
+    .describe(
+      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+    ),
+  conversation_id: z
+    .string()
+    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
   based_on_message_id: z.string().nullable(),
   expected_version: z.number().int(),
   reply_mode: z.enum(["reply", "reply_all"] as const),
@@ -694,8 +723,15 @@ export const replyScanCandidateSchema = z.object({
   object: z.literal("reply_scan_candidate"),
   id: z.string(),
   mailbox_id: z.string(),
-  thread_id: z.string(),
-  tracked_thread_id: z.string(),
+  thread_id: z
+    .string()
+    .describe(
+      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+    ),
+  conversation_id: z
+    .string()
+    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+  tracked_thread_id: z.string().describe("Same value as conversation_id, kept for compatibility."),
   latest_message_id: z.string().nullable(),
   latest_email_id: z.string().nullable(),
   latest_inbound_message_id: z.string().nullable(),
@@ -720,7 +756,15 @@ export const inboxThreadSchema = z.object({
   object: z.literal("inbox_thread"),
   mailbox_id: z.string(),
   address: z.string(),
-  thread_id: z.string(),
+  thread_id: z
+    .string()
+    .describe(
+      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+    ),
+  conversation_id: z
+    .string()
+    .nullable()
+    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
   data: z.array(inboxFullMessageSchema),
 });
 
@@ -803,6 +847,7 @@ const outboundHeaderSchema = z
       name === "list-unsubscribe" ||
       name === "list-unsubscribe-post" ||
       (name.startsWith("x-") &&
+        !name.startsWith("x-spam-") &&
         !name.startsWith("x-ses-") &&
         !name.startsWith("x-sm-") &&
         !name.startsWith("x-shipmail-"));
@@ -826,7 +871,16 @@ export const messageSchema = z.object({
   object: z.literal("message"),
   id: z.string(),
   mailbox_id: z.string(),
-  thread_id: z.string().nullable(),
+  thread_id: z
+    .string()
+    .nullable()
+    .describe(
+      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+    ),
+  conversation_id: z
+    .string()
+    .nullable()
+    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
   source_rfc_message_id: z.string().nullable(),
   delivered_rfc_message_id: z.string().nullable(),
   client_reference: z.string().nullable(),
@@ -870,7 +924,16 @@ export const messageAnalyticsSchema = z.object({
   object: z.literal("message_analytics"),
   id: z.string(),
   mailbox_id: z.string(),
-  thread_id: z.string().nullable(),
+  thread_id: z
+    .string()
+    .nullable()
+    .describe(
+      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+    ),
+  conversation_id: z
+    .string()
+    .nullable()
+    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
   client_reference: z.string().nullable(),
   direction: z.enum(["inbound", "outbound"] as const),
   contact_addresses: z.array(z.string().email()),
@@ -930,6 +993,9 @@ export const scheduledMessageSchema = z.object({
 export const threadSchema = z.object({
   object: z.literal("thread"),
   id: z.string(),
+  conversation_id: z
+    .string()
+    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
   mailbox_id: z.string(),
   subject: z.string().nullable(),
   message_count: z.number(),
@@ -1563,12 +1629,6 @@ export const updateMailboxDeliveryRoutingInputSchema = z
     }
   });
 
-export const spamFilterInputSchema = z.object({
-  id: idSchema,
-  threshold: z.number().int().min(1).max(14),
-  idempotency_key: idempotencyKeySchema,
-});
-
 export const listMailboxInboxMessagesInputSchema = z
   .object({
     id: idSchema.describe("Mailbox ID."),
@@ -1612,7 +1672,9 @@ export const listMailboxInboxThreadsInputSchema = z.object({
 
 export const getMailboxInboxThreadInputSchema = z.object({
   id: idSchema.describe("Mailbox ID."),
-  thread_id: noControlString(256, "thread_id").min(1).describe("JMAP inbox thread ID."),
+  thread_id: noControlString(256, "thread_id")
+    .min(1)
+    .describe("Conversation ID (thd_...) or the mail server thread ID. Either resolves."),
 });
 
 export const updateInboxThreadAttentionInputSchema = z
@@ -1695,7 +1757,9 @@ export const replyToInboxMessageInputSchema = z
 export const replyToInboxThreadInputSchema = z
   .object({
     id: idSchema.describe("Mailbox ID."),
-    thread_id: noControlString(256, "thread_id").min(1).describe("JMAP inbox thread ID."),
+    thread_id: noControlString(256, "thread_id")
+      .min(1)
+      .describe("Conversation ID (thd_...) or the mail server thread ID. Either resolves."),
     ...inboxReplyFields,
   })
   .refine((value) => Boolean(value.html || value.text), {
@@ -2407,8 +2471,8 @@ export const newsletterAssetSchema = z.object({
 
 export const newsletterAssetStorageUsageSchema = z.object({
   used_bytes: z.number().int(),
-  limit_bytes: z.number().int(),
-  remaining_bytes: z.number().int(),
+  limit_bytes: z.number().int().nullable(),
+  remaining_bytes: z.number().int().nullable(),
   over_limit: z.boolean(),
   plan: z.string(),
   is_in_trial: z.boolean(),
@@ -2453,6 +2517,9 @@ const newsletterBlockTextSchema = noControlString(10_000, "newsletter block text
 const newsletterBlockRichProseSchema = newsletterBlockTextSchema.describe(
   "Bare text or sanitized inline HTML. Use p or br for line breaks. Allowed tags are a, b, br, code, em, i, p, s, span, strong, and u.",
 );
+const newsletterColumnBodySchema = noControlString(10_000, "newsletter column body").describe(
+  "Optional bare text or sanitized inline HTML. Use p or br for line breaks. Allowed tags are a, b, br, code, em, i, p, s, span, strong, and u.",
+);
 const newsletterBlockOptionalTextSchema = noControlString(
   10_000,
   "newsletter block text",
@@ -2460,15 +2527,37 @@ const newsletterBlockOptionalTextSchema = noControlString(
 const newsletterCalloutVariantSchema = z.enum(["accent", "info", "warning", "success"]);
 const newsletterColumnRatioSchema = z.enum(["50-50", "33-67", "67-33"]);
 const newsletterButtonAlignSchema = z.enum(["left", "center", "right"]);
+const newsletterColumnImageFitSchema = z.enum(["natural", "contain", "cover"]);
 
-const newsletterColumnContentInputSchema = z.object({
-  title: newsletterBlockOptionalTextSchema,
-  body: newsletterBlockRichProseSchema,
-  image_url: publicHttpsUrlSchema.nullish(),
-  image_alt: newsletterBlockOptionalTextSchema,
-  cta_label: newsletterBlockOptionalTextSchema,
-  cta_url: newsletterLinkUrlSchema.nullish(),
-});
+const newsletterColumnContentInputSchema = z
+  .object({
+    title: newsletterBlockOptionalTextSchema,
+    body: newsletterColumnBodySchema.optional(),
+    image_url: publicHttpsUrlSchema.nullish(),
+    image_alt: newsletterBlockOptionalTextSchema,
+    image_fit: newsletterColumnImageFitSchema.optional(),
+    cta_label: newsletterBlockOptionalTextSchema,
+    cta_url: newsletterLinkUrlSchema.nullish(),
+  })
+  .superRefine((column, context) => {
+    const hasCtaLabel = !!column.cta_label?.trim();
+    const hasCtaUrl = !!column.cta_url;
+    const hasCta = hasCtaLabel && hasCtaUrl;
+
+    if (hasCtaLabel !== hasCtaUrl) {
+      context.addIssue({
+        code: "custom",
+        message: "CTA label and URL must be provided together.",
+      });
+    }
+
+    if (!column.title?.trim() && !column.body?.trim() && !column.image_url && !hasCta) {
+      context.addIssue({
+        code: "custom",
+        message: "Add a heading, text, image, or CTA to this column.",
+      });
+    }
+  });
 
 const newsletterBlockInputSchema: z.ZodType<NewsletterBlock> = z.discriminatedUnion("type", [
   z.object({

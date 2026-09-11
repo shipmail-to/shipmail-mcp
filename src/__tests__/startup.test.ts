@@ -18,18 +18,9 @@ function capabilitiesResponse(
       mailbox_ids: null,
       domain_ids: null,
       audience_ids: null,
-      allowed_recipient_addresses: null,
-      allowed_recipient_domains: null,
+      resource_semantics: "legacy-intersection",
     },
     allowed_mcp_tools: allowedMcpTools,
-    transactional_recipient_budget: {
-      unlimited: true,
-      limit: null,
-      used: 0,
-      remaining: null,
-      window_hours: 24,
-    },
-    undo_hold_seconds: 0,
   };
 }
 

@@ -6,6 +6,7 @@ import { type ShipmailClient, ShipmailError } from "shipmail";
 import { z } from "zod/v4";
 
 import { getMcpCapability } from "./capabilities.js";
+import { openOutputSchema } from "./output-schema.js";
 import { jsonResult } from "./result.js";
 import { sanitizeString } from "./sanitize.js";
 import {
@@ -390,7 +391,9 @@ export function registerCrossOrganizationTools(
         title: behavior.title,
         description: behavior.description,
         inputSchema: crossOrganizationListInputSchema,
-        outputSchema,
+        // Opened for the same reason as every other tool's: a client holding an older schema must
+        // not reject a response that carries a field added after it cached the schema.
+        outputSchema: openOutputSchema(outputSchema),
         annotations: {
           ...baseCapability.annotations,
           readOnlyHint: true,

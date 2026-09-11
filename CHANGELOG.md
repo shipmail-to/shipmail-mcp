@@ -1,5 +1,44 @@
 # Changelog
 
+## [0.8.3](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.2...shipmail-mcp-v0.8.3) (2026-09-11)
+
+
+### Bug Fixes
+
+* **mcp:** let tool output schemas accept fields added later ([#2121](https://github.com/shipmail-to/Shipmail/issues/2121)) ([323ef4b](https://github.com/shipmail-to/Shipmail/commit/323ef4bcc62baddd79338df4b622569d77e1c931))
+
+## [0.8.2](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.1...shipmail-mcp-v0.8.2) (2026-09-11)
+
+
+### Features
+
+* **api:** add conversation_id and deprecate thread_id ([#2111](https://github.com/shipmail-to/Shipmail/issues/2111)) ([1961326](https://github.com/shipmail-to/Shipmail/commit/19613264c5745decc0cc05cb186736c755df5053))
+
+## [0.8.1](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.0...shipmail-mcp-v0.8.1) (2026-09-04)
+
+
+### Features
+
+* **newsletters:** add self-service migration center ([#1922](https://github.com/shipmail-to/Shipmail/issues/1922)) ([3ac5fba](https://github.com/shipmail-to/Shipmail/commit/3ac5fbafe9a725d71596cb67392647aa9661c5c3))
+
+## [0.8.0](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.15...shipmail-mcp-v0.8.0) (2026-09-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **spam:** make Stalwart placement authoritative ([#1783](https://github.com/shipmail-to/Shipmail/issues/1783))
+
+### Features
+
+* **dashboard:** polish UX and add developer workspace ([#1838](https://github.com/shipmail-to/Shipmail/issues/1838)) ([9c123da](https://github.com/shipmail-to/Shipmail/commit/9c123da059512c5617a14d0e024fb0a34a92f48c))
+* **spam:** make Stalwart placement authoritative ([#1783](https://github.com/shipmail-to/Shipmail/issues/1783)) ([041bba0](https://github.com/shipmail-to/Shipmail/commit/041bba0129e89aec094db3b99f4eeca3eac4b238))
+
+
+### Bug Fixes
+
+* **api:** reserve Stalwart spam verdict headers ([#1840](https://github.com/shipmail-to/Shipmail/issues/1840)) ([b403847](https://github.com/shipmail-to/Shipmail/commit/b403847ea1f721ccc11757ebbd77cb035170ca05))
+* **spam:** reserve X-Spam-Flag header ([#1843](https://github.com/shipmail-to/Shipmail/issues/1843)) ([053ee5f](https://github.com/shipmail-to/Shipmail/commit/053ee5fe5191bb306394fa8fa91bc3ae3fc58465))
+
 ## [0.7.15](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.14...shipmail-mcp-v0.7.15) (2026-08-31)
 
 

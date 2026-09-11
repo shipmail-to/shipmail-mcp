@@ -35,7 +35,6 @@ function mailboxRow(id: string, address: string) {
     display_name: null,
     suspended_at: null,
     suspension_reasons: [],
-    spam_filter_threshold: 6,
     auto_reply: { enabled: false, subject: null, body: null, from_date: null, to_date: null },
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",

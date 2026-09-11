@@ -6,7 +6,7 @@
     "url": "https://github.com/shipmail-to/shipmail-mcp",
     "source": "github"
   },
-  "version": "0.7.15",
+  "version": "0.8.3",
   "websiteUrl": "https://shipmail.to/docs/mcp",
   "remotes": [
     {
@@ -15,7 +15,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Bearer <Shipmail API key> (sm_live_...). Create one at https://shipmail.to/docs/quick-start.",
+          "description": "Bearer <Shipmail API key> (sm_live_...). Create one at https://shipmail.to/docs/api/quick-start.",
           "isRequired": true,
           "isSecret": true
         }
@@ -27,14 +27,14 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "shipmail-mcp",
-      "version": "0.7.15",
+      "version": "0.8.3",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "SHIPMAIL_API_KEY",
-          "description": "Your Shipmail API key (sm_live_...). Create one at https://shipmail.to/docs/quick-start.",
+          "description": "Your Shipmail API key (sm_live_...). Create one at https://shipmail.to/docs/api/quick-start.",
           "isRequired": true,
           "isSecret": true
         }

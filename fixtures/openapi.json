@@ -852,7 +852,7 @@
       "get": {
         "operationId": "getCapabilities",
         "summary": "Get effective API and MCP capabilities",
-        "description": "Return the authenticated API key's effective scopes, resource constraints, MCP tool catalog, transactional recipient budget, undo hold, and capability contract version.",
+        "description": "Return the authenticated API key's effective scopes, resource constraints, MCP tool catalog, and capability contract version.",
         "tags": ["Capabilities"],
         "x-rate-limit-tier": "read",
         "x-scope": "authenticated",
@@ -912,6 +912,9 @@
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/QuotaExceededError"
           },
           "429": {
             "$ref": "#/components/responses/RateLimitError"
@@ -1649,13 +1652,13 @@
       "post": {
         "operationId": "createMailboxExport",
         "summary": "Create a mailbox export",
-        "description": "Queue a fail-closed ZIP snapshot of one mailbox. Archived mailboxes reuse their exact current billing snapshot without restoring the mailbox. Poll the returned export until completed.",
+        "description": "Queue a fail-closed ZIP snapshot of one mailbox. If a completed export for this mailbox is younger than 15 minutes, that export is returned with status 200 instead of creating a new one. Archived mailboxes reuse their exact current billing snapshot without restoring the mailbox. Poll the returned export until completed. Exports are for backups, not for polling for new mail: use GET /messages, GET /mailboxes/{id}/inbox/messages, or webhooks to keep inbound mail in sync.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:export",
         "responses": {
           "200": {
-            "description": "Existing active export returned.",
+            "description": "Existing active export, or a completed export younger than 15 minutes, returned.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1868,58 +1871,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MailboxDeliveryRouting"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationError"
-          },
-          "403": {
-            "$ref": "#/components/responses/AuthorizationError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      }
-    },
-    "/mailboxes/{id}/spam-filter": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/ResourceId"
-        }
-      ],
-      "patch": {
-        "operationId": "updateSpamFilter",
-        "summary": "Update spam filter threshold",
-        "description": "Set the mailbox spam filter threshold. Lower values are stricter; messages at or above the threshold are moved to junk.",
-        "tags": ["Mailboxes"],
-        "x-rate-limit-tier": "write",
-        "x-scope": "mailboxes:write",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSpamFilterRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated mailbox.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Mailbox"
                 }
               }
             }
@@ -3156,7 +3107,7 @@
     "/threads/{id}": {
       "parameters": [
         {
-          "$ref": "#/components/parameters/ResourceId"
+          "$ref": "#/components/parameters/ThreadResourceId"
         }
       ],
       "get": {
@@ -3218,7 +3169,7 @@
     "/threads/{id}/reply": {
       "parameters": [
         {
-          "$ref": "#/components/parameters/ResourceId"
+          "$ref": "#/components/parameters/ThreadResourceId"
         }
       ],
       "post": {
@@ -7417,6 +7368,15 @@
           "type": "string"
         }
       },
+      "ThreadResourceId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Conversation ID (thd_...) or the thread ID returned as the thread object's id. Both resolve to the same conversation.",
+        "schema": {
+          "type": "string"
+        }
+      },
       "FolderId": {
         "name": "folder_id",
         "in": "path",
@@ -7471,7 +7431,7 @@
         "name": "thread_id",
         "in": "path",
         "required": true,
-        "description": "JMAP inbox thread ID.",
+        "description": "Conversation ID (thd_...) or the mail server's thread ID. Both resolve to the same conversation.",
         "schema": {
           "type": "string",
           "minLength": 1,
@@ -9434,7 +9394,6 @@
           "display_name",
           "suspended_at",
           "suspension_reasons",
-          "spam_filter_threshold",
           "auto_reply",
           "created_at",
           "updated_at"
@@ -9469,12 +9428,6 @@
               "type": "string",
               "enum": ["billing", "manual", "security"]
             }
-          },
-          "spam_filter_threshold": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 14,
-            "description": "Spam score threshold for moving messages to junk. Lower is stricter."
           },
           "auto_reply": {
             "type": "object",
@@ -10502,6 +10455,7 @@
           "id",
           "mailbox_id",
           "thread_id",
+          "conversation_id",
           "source_rfc_message_id",
           "delivered_rfc_message_id",
           "client_reference",
@@ -10533,7 +10487,13 @@
             "type": "string"
           },
           "thread_id": {
-            "type": ["string", "null"]
+            "type": ["string", "null"],
+            "deprecated": true,
+            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+          },
+          "conversation_id": {
+            "type": ["string", "null"],
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "source_rfc_message_id": {
             "type": ["string", "null"],
@@ -10646,6 +10606,7 @@
           "id",
           "mailbox_id",
           "thread_id",
+          "conversation_id",
           "client_reference",
           "direction",
           "contact_addresses",
@@ -10670,7 +10631,13 @@
             "type": "string"
           },
           "thread_id": {
-            "type": ["string", "null"]
+            "type": ["string", "null"],
+            "deprecated": true,
+            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+          },
+          "conversation_id": {
+            "type": ["string", "null"],
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "client_reference": {
             "type": ["string", "null"],
@@ -10737,6 +10704,7 @@
         "required": [
           "object",
           "id",
+          "conversation_id",
           "mailbox_id",
           "subject",
           "message_count",
@@ -10751,6 +10719,10 @@
           },
           "id": {
             "type": "string"
+          },
+          "conversation_id": {
+            "type": "string",
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "mailbox_id": {
             "type": "string"
@@ -11064,14 +11036,7 @@
       },
       "CapabilitiesResponse": {
         "type": "object",
-        "required": [
-          "capability_version",
-          "scopes",
-          "constraints",
-          "allowed_mcp_tools",
-          "transactional_recipient_budget",
-          "undo_hold_seconds"
-        ],
+        "required": ["capability_version", "scopes", "constraints", "allowed_mcp_tools"],
         "properties": {
           "capability_version": {
             "type": "string",
@@ -11085,13 +11050,7 @@
           },
           "constraints": {
             "type": "object",
-            "required": [
-              "mailbox_ids",
-              "domain_ids",
-              "audience_ids",
-              "allowed_recipient_addresses",
-              "allowed_recipient_domains"
-            ],
+            "required": ["mailbox_ids", "domain_ids", "audience_ids", "resource_semantics"],
             "properties": {
               "mailbox_ids": {
                 "type": ["array", "null"],
@@ -11111,18 +11070,10 @@
                   "type": "string"
                 }
               },
-              "allowed_recipient_addresses": {
-                "type": ["array", "null"],
-                "items": {
-                  "type": "string",
-                  "format": "email"
-                }
-              },
-              "allowed_recipient_domains": {
-                "type": ["array", "null"],
-                "items": {
-                  "type": "string"
-                }
+              "resource_semantics": {
+                "type": "string",
+                "enum": ["legacy-intersection", "union-v2"],
+                "description": "How mailbox_ids and domain_ids combine. union-v2 grants the union; legacy-intersection preserves older keys."
               }
             }
           },
@@ -11131,35 +11082,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "transactional_recipient_budget": {
-            "type": "object",
-            "required": ["unlimited", "limit", "used", "remaining", "window_hours"],
-            "properties": {
-              "unlimited": {
-                "type": "boolean"
-              },
-              "limit": {
-                "type": ["integer", "null"]
-              },
-              "used": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "remaining": {
-                "type": ["integer", "null"],
-                "minimum": 0
-              },
-              "window_hours": {
-                "type": "integer",
-                "const": 24
-              }
-            }
-          },
-          "undo_hold_seconds": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 30
           }
         }
       },
@@ -11425,18 +11347,6 @@
             }
           }
         ]
-      },
-      "UpdateSpamFilterRequest": {
-        "type": "object",
-        "required": ["threshold"],
-        "properties": {
-          "threshold": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 14,
-            "description": "Spam score threshold for moving messages to junk. Lower is stricter."
-          }
-        }
       },
       "SendMessageRequest": {
         "type": "object",
@@ -11976,6 +11886,7 @@
                   "not_found",
                   "rate_limit_error",
                   "conflict",
+                  "reconciliation_required",
                   "internal_error"
                 ]
               },
@@ -12007,6 +11918,10 @@
               "retry_after": {
                 "type": "integer",
                 "description": "Seconds to wait before retrying (present on 429 responses)."
+              },
+              "message_id": {
+                "type": "string",
+                "description": "Present only on a reconciliation_required error. The tracking message the interrupted send attempt left behind; quote it in support rather than retrying, because the original may already have gone out."
               }
             }
           }
@@ -12142,6 +12057,7 @@
           "object",
           "id",
           "thread_id",
+          "conversation_id",
           "mailbox_id",
           "address",
           "folder_ids",
@@ -12164,7 +12080,13 @@
             "type": "string"
           },
           "thread_id": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+          },
+          "conversation_id": {
+            "type": ["string", "null"],
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "mailbox_id": {
             "type": "string"
@@ -12233,6 +12155,7 @@
           "object",
           "id",
           "thread_id",
+          "conversation_id",
           "mailbox_id",
           "address",
           "folder_ids",
@@ -12264,7 +12187,13 @@
             "type": "string"
           },
           "thread_id": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+          },
+          "conversation_id": {
+            "type": ["string", "null"],
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "mailbox_id": {
             "type": "string"
@@ -12519,6 +12448,7 @@
           "id",
           "mailbox_id",
           "thread_id",
+          "conversation_id",
           "tracked_thread_id",
           "version",
           "attention_since"
@@ -12535,10 +12465,17 @@
             "type": "string"
           },
           "thread_id": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+          },
+          "conversation_id": {
+            "type": "string",
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "tracked_thread_id": {
-            "type": "string"
+            "type": "string",
+            "description": "Same value as conversation_id, kept for compatibility."
           },
           "latest_message_id": {
             "type": ["string", "null"]
@@ -12604,6 +12541,7 @@
           "object",
           "id",
           "thread_id",
+          "conversation_id",
           "attention_state",
           "version",
           "attention_since",
@@ -12633,7 +12571,13 @@
             "type": "string"
           },
           "thread_id": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+          },
+          "conversation_id": {
+            "type": "string",
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "attention_state": {
             "$ref": "#/components/schemas/InboxThreadAttentionState"
@@ -12782,6 +12726,7 @@
           "object",
           "id",
           "thread_id",
+          "conversation_id",
           "attention_state",
           "version",
           "attention_since",
@@ -12797,7 +12742,13 @@
             "type": "string"
           },
           "thread_id": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+          },
+          "conversation_id": {
+            "type": "string",
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "attention_state": {
             "$ref": "#/components/schemas/InboxThreadAttentionState"
@@ -12858,6 +12809,7 @@
           "id",
           "mailbox_id",
           "thread_id",
+          "conversation_id",
           "based_on_message_id",
           "expected_version",
           "reply_mode",
@@ -12878,7 +12830,13 @@
             "type": "string"
           },
           "thread_id": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+          },
+          "conversation_id": {
+            "type": "string",
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "based_on_message_id": {
             "type": ["string", "null"]
@@ -12954,7 +12912,7 @@
       },
       "InboxThread": {
         "type": "object",
-        "required": ["object", "mailbox_id", "address", "thread_id", "data"],
+        "required": ["object", "mailbox_id", "address", "thread_id", "conversation_id", "data"],
         "properties": {
           "object": {
             "type": "string",
@@ -12968,7 +12926,13 @@
             "format": "email"
           },
           "thread_id": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+          },
+          "conversation_id": {
+            "type": ["string", "null"],
+            "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
           },
           "data": {
             "type": "array",
@@ -14101,6 +14065,7 @@
             "type": "string",
             "enum": [
               "draft",
+              "imported",
               "pending_approval",
               "approved",
               "scheduled",
@@ -14639,7 +14604,54 @@
               "left": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["body"],
+                "description": "Left column content. Include at least one heading, body, image, or CTA field.",
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "required": ["title"],
+                        "properties": { "title": { "type": "string", "minLength": 1 } }
+                      },
+                      {
+                        "required": ["body"],
+                        "properties": { "body": { "type": "string", "minLength": 1 } }
+                      },
+                      {
+                        "required": ["image_url"],
+                        "properties": {
+                          "image_url": { "type": "string", "format": "uri", "minLength": 1 }
+                        }
+                      },
+                      {
+                        "required": ["cta_label", "cta_url"],
+                        "properties": {
+                          "cta_label": { "type": "string", "minLength": 1 },
+                          "cta_url": { "type": "string", "minLength": 1 }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "if": {
+                      "required": ["cta_label"],
+                      "properties": { "cta_label": { "type": "string", "minLength": 1 } }
+                    },
+                    "then": {
+                      "required": ["cta_url"],
+                      "properties": { "cta_url": { "type": "string", "minLength": 1 } }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": ["cta_url"],
+                      "properties": { "cta_url": { "type": "string", "minLength": 1 } }
+                    },
+                    "then": {
+                      "required": ["cta_label"],
+                      "properties": { "cta_label": { "type": "string", "minLength": 1 } }
+                    }
+                  }
+                ],
                 "properties": {
                   "title": {
                     "type": ["string", "null"],
@@ -14648,9 +14660,8 @@
                   },
                   "body": {
                     "type": "string",
-                    "minLength": 1,
                     "maxLength": 10000,
-                    "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks."
+                    "description": "Optional bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks."
                   },
                   "image_url": {
                     "type": ["string", "null"],
@@ -14662,6 +14673,12 @@
                     "type": ["string", "null"],
                     "maxLength": 10000,
                     "description": "Alt text for image_url."
+                  },
+                  "image_fit": {
+                    "type": "string",
+                    "enum": ["natural", "contain", "cover"],
+                    "default": "natural",
+                    "description": "Optional image sizing. Natural preserves the source ratio; contain shows the whole image in a 4:3 frame; cover crops to fill a 4:3 frame."
                   },
                   "cta_label": {
                     "type": ["string", "null"],
@@ -14678,7 +14695,54 @@
               "right": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["body"],
+                "description": "Right column content. Include at least one heading, body, image, or CTA field.",
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "required": ["title"],
+                        "properties": { "title": { "type": "string", "minLength": 1 } }
+                      },
+                      {
+                        "required": ["body"],
+                        "properties": { "body": { "type": "string", "minLength": 1 } }
+                      },
+                      {
+                        "required": ["image_url"],
+                        "properties": {
+                          "image_url": { "type": "string", "format": "uri", "minLength": 1 }
+                        }
+                      },
+                      {
+                        "required": ["cta_label", "cta_url"],
+                        "properties": {
+                          "cta_label": { "type": "string", "minLength": 1 },
+                          "cta_url": { "type": "string", "minLength": 1 }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "if": {
+                      "required": ["cta_label"],
+                      "properties": { "cta_label": { "type": "string", "minLength": 1 } }
+                    },
+                    "then": {
+                      "required": ["cta_url"],
+                      "properties": { "cta_url": { "type": "string", "minLength": 1 } }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": ["cta_url"],
+                      "properties": { "cta_url": { "type": "string", "minLength": 1 } }
+                    },
+                    "then": {
+                      "required": ["cta_label"],
+                      "properties": { "cta_label": { "type": "string", "minLength": 1 } }
+                    }
+                  }
+                ],
                 "properties": {
                   "title": {
                     "type": ["string", "null"],
@@ -14687,9 +14751,8 @@
                   },
                   "body": {
                     "type": "string",
-                    "minLength": 1,
                     "maxLength": 10000,
-                    "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks."
+                    "description": "Optional bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks."
                   },
                   "image_url": {
                     "type": ["string", "null"],
@@ -14701,6 +14764,12 @@
                     "type": ["string", "null"],
                     "maxLength": 10000,
                     "description": "Alt text for image_url."
+                  },
+                  "image_fit": {
+                    "type": "string",
+                    "enum": ["natural", "contain", "cover"],
+                    "default": "natural",
+                    "description": "Optional image sizing. Natural preserves the source ratio; contain shows the whole image in a 4:3 frame; cover crops to fill a 4:3 frame."
                   },
                   "cta_label": {
                     "type": ["string", "null"],
@@ -15226,10 +15295,12 @@
             "type": "integer"
           },
           "limit_bytes": {
-            "type": "integer"
+            "type": ["integer", "null"],
+            "description": "Storage limit in bytes, or null when storage is unlimited."
           },
           "remaining_bytes": {
-            "type": "integer"
+            "type": ["integer", "null"],
+            "description": "Remaining storage in bytes, or null when storage is unlimited."
           },
           "over_limit": {
             "type": "boolean"

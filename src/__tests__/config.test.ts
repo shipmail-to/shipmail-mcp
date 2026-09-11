@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import { readConfig } from "../config.js";
+import { HELP_TEXT, readConfig } from "../config.js";
 
 const ENV_KEYS = [
   "SHIPMAIL_API_KEY",
@@ -48,7 +48,14 @@ describe("readConfig", () => {
 
   test("rejects the removed --tools selector with an actionable error", () => {
     process.env["SHIPMAIL_API_KEY"] = "sk_test";
-    expect(() => readConfig(["--tools", "shipmail_send_message"])).toThrow(/removed.*permissions/i);
+    expect(() => readConfig(["--tools", "shipmail_send_message"])).toThrow(
+      /removed.*Developer > API keys/i,
+    );
+  });
+
+  test("points permission help to the current dashboard sections", () => {
+    expect(HELP_TEXT).toContain("Developer > API keys");
+    expect(HELP_TEXT).toContain("Settings > Connections");
   });
 
   test("rejects unknown command-line arguments", () => {

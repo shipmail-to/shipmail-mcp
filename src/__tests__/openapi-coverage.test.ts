@@ -12,7 +12,17 @@ import { MCP_CAPABILITIES, MCP_PERMISSION_GROUPS, MCP_TOOL_NAMES } from "../capa
 import {
   audienceFeedSchema,
   createNewsletterInputSchema,
+  inboxFullMessageSchema,
+  inboxMessageSchema,
+  inboxReplyDraftSchema,
+  inboxThreadAttentionResultSchema,
+  inboxThreadSchema,
+  inboxThreadSummarySchema,
   memberSchema,
+  messageAnalyticsSchema,
+  messageSchema,
+  replyScanCandidateSchema,
+  threadSchema,
   updateAudienceFeedInputSchema,
   updateNewsletterInputSchema,
 } from "../schemas.js";
@@ -87,6 +97,42 @@ const OPENAPI_SCHEMA_COVERAGE = [
     componentName: "UpdateNewsletterRequest",
     mcpKeys: updateNewsletterInputSchema.keyof().options,
     mcpOnlyKeys: ["id", "idempotency_key"],
+  },
+  // Every object that names a conversation, so `conversation_id` cannot be
+  // added on one side of the contract and forgotten on the other.
+  { componentName: "Message", mcpKeys: messageSchema.keyof().options, mcpOnlyKeys: [] },
+  {
+    componentName: "MessageAnalytics",
+    mcpKeys: messageAnalyticsSchema.keyof().options,
+    mcpOnlyKeys: [],
+  },
+  { componentName: "Thread", mcpKeys: threadSchema.keyof().options, mcpOnlyKeys: [] },
+  { componentName: "InboxMessage", mcpKeys: inboxMessageSchema.keyof().options, mcpOnlyKeys: [] },
+  {
+    componentName: "InboxFullMessage",
+    mcpKeys: inboxFullMessageSchema.keyof().options,
+    mcpOnlyKeys: [],
+  },
+  {
+    componentName: "InboxThreadSummary",
+    mcpKeys: inboxThreadSummarySchema.keyof().options,
+    mcpOnlyKeys: [],
+  },
+  {
+    componentName: "InboxThreadAttentionResult",
+    mcpKeys: inboxThreadAttentionResultSchema.keyof().options,
+    mcpOnlyKeys: [],
+  },
+  {
+    componentName: "InboxReplyDraft",
+    mcpKeys: inboxReplyDraftSchema.keyof().options,
+    mcpOnlyKeys: [],
+  },
+  { componentName: "InboxThread", mcpKeys: inboxThreadSchema.keyof().options, mcpOnlyKeys: [] },
+  {
+    componentName: "ReplyScanCandidate",
+    mcpKeys: replyScanCandidateSchema.keyof().options,
+    mcpOnlyKeys: [],
   },
 ] as const;
 

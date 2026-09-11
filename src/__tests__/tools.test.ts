@@ -72,7 +72,6 @@ describe("registerTools", () => {
       "shipmail_delete_inbox_message",
       "shipmail_reset_mailbox_password",
       "shipmail_set_auto_reply",
-      "shipmail_set_spam_filter",
       "shipmail_create_mailbox_import",
       "shipmail_list_mailbox_imports",
       "shipmail_get_mailbox_import",

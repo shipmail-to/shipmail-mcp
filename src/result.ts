@@ -1,5 +1,5 @@
 import type { CallToolResult } from "@modelcontextprotocol/server";
-import { ShipmailError, ValidationError } from "shipmail";
+import { ReconciliationRequiredError, ShipmailError, ValidationError } from "shipmail";
 
 import { sanitizeRecord, sanitizeString, sanitizeValue } from "./sanitize.js";
 
@@ -12,6 +12,7 @@ const SAFE_ERROR_TYPES = new Set([
   "authentication_error",
   "authorization_error",
   "quota_exceeded",
+  "reconciliation_required",
 ]);
 const GENERIC_INTERNAL_MESSAGE =
   "Internal MCP error. The original message is logged on the MCP server stderr.";
@@ -48,6 +49,11 @@ function formatShipmailError(error: ShipmailError): string {
   if (error.type) parts.push(`type=${error.type}`);
   if (error.status !== undefined) parts.push(`status=${error.status}`);
   if (error.requestId) parts.push(`request_id=${error.requestId}`);
+  // The tracking row an interrupted send left behind. Without it the agent is
+  // told to reconcile and given nothing to reconcile against.
+  if (error instanceof ReconciliationRequiredError && error.messageId) {
+    parts.push(`message_id=${sanitizeString(error.messageId, 200)}`);
+  }
   if (isSafeMessage && error instanceof ValidationError && error.details?.length) {
     const fields = error.details
       .map((detail) => sanitizeString(detail.field, 100))

@@ -10,6 +10,7 @@ export function toInboxMessageSummary(message: InboxFullMessage): InboxMessage {
     object: "inbox_message",
     id: message.id,
     thread_id: message.thread_id,
+    conversation_id: message.conversation_id,
     mailbox_id: message.mailbox_id,
     address: message.address,
     folder_ids: message.folder_ids,

@@ -33,6 +33,7 @@ function inboxMessage(contentType = "application/pdf", attachmentSize = 4) {
     object: "inbox_message_full",
     id: "eml_123",
     thread_id: "thr_123",
+    conversation_id: "thd_123",
     mailbox_id: "mbx_123",
     address: "hello@example.com",
     folder_ids: ["inbox"],

@@ -1,6 +1,6 @@
 import { API_KEY_SCOPES, type ApiKeyScope, apiKeyScopesGrant } from "shipmail/api-key-scopes";
 
-export const MCP_CAPABILITY_VERSION = "1.0.0";
+export const MCP_CAPABILITY_VERSION = "1.1.0";
 
 export const MCP_PERMISSION_GROUP_NAMES = [
   "account_status",
@@ -274,7 +274,6 @@ const CAPABILITY_ROWS = [
   ["shipmail_set_auto_reply", "updateAutoReply", "mailboxes:write"],
   ["shipmail_get_mailbox_delivery_routing", "getMailboxDeliveryRouting", "mailboxes:read"],
   ["shipmail_update_mailbox_delivery_routing", "updateMailboxDeliveryRouting", "mailboxes:write"],
-  ["shipmail_set_spam_filter", "updateSpamFilter", "mailboxes:write"],
   ["shipmail_create_mailbox_import", "createMailboxImport", "mailboxes:write"],
   ["shipmail_list_mailbox_imports", "listMailboxImports", "mailboxes:read"],
   ["shipmail_get_mailbox_import", "getMailboxImport", "mailboxes:read"],

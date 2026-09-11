@@ -18,6 +18,7 @@ function fullMessagePayload(id: string) {
     object: "inbox_message_full",
     id,
     thread_id: `thread-${id}`,
+    conversation_id: `thd_${id}`,
     mailbox_id: MAILBOX_ID,
     address: "valerian@example.com",
     folder_ids: ["folder-inbox"],

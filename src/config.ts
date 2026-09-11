@@ -25,8 +25,8 @@ Environment:
   SHIPMAIL_ALLOW_INSECURE_BASE_URL=1
                         Permit non-https or non-shipmail.to base URL (development only).
 
-Shipmail discovers tools from the API key's live permissions at startup. Change scopes, resources,
-recipient rules, and send budgets in Shipmail Settings.`;
+Shipmail discovers tools from the API key's live permissions at startup. Change direct-key scopes
+and resource limits under Developer > API keys. Manage OAuth grants under Settings > Connections.`;
 
 const API_KEY_HELP =
   "SHIPMAIL_API_KEY (or SHIPMAIL_API_KEY_FILE) is required. Create an API key in Shipmail, then run `SHIPMAIL_API_KEY=sm_live_... shipmail-mcp`.";
@@ -86,7 +86,7 @@ function validateBaseUrl(rawValue: string, allowInsecure: boolean): string {
 export function readConfig(argv: readonly string[] = process.argv.slice(2)): McpConfig {
   if (argv.includes("--tools")) {
     throw new Error(
-      "--tools was removed. Shipmail MCP tools now follow the API key permissions configured in Shipmail Settings.",
+      "--tools was removed. Shipmail MCP tools now follow the permissions configured under Developer > API keys.",
     );
   }
   const unknownArgs = argv.filter((arg) => arg !== "--help" && arg !== "-h");

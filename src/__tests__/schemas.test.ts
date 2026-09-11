@@ -34,7 +34,6 @@ import {
   scheduleNewsletterInputSchema,
   sendMessageInputSchema,
   sendNewsletterTestInputSchema,
-  spamFilterInputSchema,
   suppressionSchema,
   updateAudienceFeedInputSchema,
   updateAutomationInputSchema,
@@ -56,6 +55,7 @@ describe("messageSchema", () => {
       id: "msg_123",
       mailbox_id: "mbx_456",
       thread_id: "thr_789",
+      conversation_id: "thd_789",
       source_rfc_message_id: "<inbound@example.com>",
       delivered_rfc_message_id: null,
       client_reference: null,
@@ -699,15 +699,6 @@ describe("update schemas use nullable instead of refine", () => {
     ).not.toThrow();
   });
 
-  test("spam_filter threshold is bounded", () => {
-    expect(
-      spamFilterInputSchema.parse({ id: "mbx_abc", threshold: 8, idempotency_key: "k" }).threshold,
-    ).toBe(8);
-    expect(() =>
-      spamFilterInputSchema.parse({ id: "mbx_abc", threshold: 15, idempotency_key: "k" }),
-    ).toThrow();
-  });
-
   test("reset_password requires a strong enough password", () => {
     expect(
       resetPasswordInputSchema.parse({
@@ -887,15 +878,24 @@ describe("sendMessageInputSchema", () => {
   });
 
   test("rejects reserved mixed-case headers and nested metadata", () => {
-    expect(() =>
-      sendMessageInputSchema.parse({
-        mailbox_id: "mbx_abc",
-        to: ["u@example.com"],
-        subject: "hi",
-        text: "body",
-        headers: [{ name: "X-SeS-Tenant", value: "spoofed" }],
-      }),
-    ).toThrow();
+    for (const name of [
+      "X-SeS-Tenant",
+      "X-Spam-Status",
+      "x-SPAM-result",
+      "X-Spam-Score",
+      "X-Spam-Flag",
+      "X-Spam-LLM",
+    ]) {
+      expect(() =>
+        sendMessageInputSchema.parse({
+          mailbox_id: "mbx_abc",
+          to: ["u@example.com"],
+          subject: "hi",
+          text: "body",
+          headers: [{ name, value: "spoofed" }],
+        }),
+      ).toThrow();
+    }
     expect(() =>
       sendMessageInputSchema.parse({
         mailbox_id: "mbx_abc",
@@ -1017,7 +1017,11 @@ describe("newsletter schemas", () => {
       {
         type: "columns",
         ratio: "50-50",
-        left: { title: "For teams", body: "Shared inbox improvements." },
+        left: {
+          title: "For teams",
+          body: "Shared inbox improvements.",
+          image_fit: "contain",
+        },
         right: { title: "For agents", body: "API and MCP improvements." },
       },
     ] as const;
@@ -1031,6 +1035,10 @@ describe("newsletter schemas", () => {
     expect(out.blocks?.[1]).toEqual({
       type: "paragraph",
       body: '<p>Read the <a href="https://example.com/launch">launch notes</a>.</p>',
+    });
+    expect(out.blocks?.[4]).toMatchObject({
+      type: "columns",
+      left: { image_fit: "contain" },
     });
 
     expect(() =>

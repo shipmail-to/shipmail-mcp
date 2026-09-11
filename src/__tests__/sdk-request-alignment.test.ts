@@ -39,7 +39,6 @@ import type {
   UpdateMailboxFolderParams,
   UpdateMailboxParams,
   UpdateNewsletterParams,
-  UpdateSpamFilterParams,
   UpdateWebhookParams,
 } from "shipmail";
 import type { z } from "zod/v4";
@@ -66,7 +65,6 @@ import type {
   searchDomainsInputSchema,
   sendMessageInputSchema,
   sendNewsletterTestInputSchema,
-  spamFilterInputSchema,
   updateAudienceFeedInputSchema,
   updateAutomationInputSchema,
   updateBookingPageInputSchema,
@@ -170,9 +168,6 @@ type _ResetMailboxPassword = AssertTrue<
 type _UpdateAutoReply = AssertTrue<
   KeysMatch<UpdateAutoReplyParams, StripMcpOnly<z.infer<typeof autoReplyInputSchema>>>
 >;
-type _UpdateSpamFilter = AssertTrue<
-  KeysMatch<UpdateSpamFilterParams, StripMcpOnly<z.infer<typeof spamFilterInputSchema>>>
->;
 type _ListInboxMessages = AssertTrue<
   KeysMatch<
     ListInboxMessagesParams,
@@ -242,7 +237,6 @@ type _AllChecks = [
   _UpdateMailboxFolder,
   _ResetMailboxPassword,
   _UpdateAutoReply,
-  _UpdateSpamFilter,
   _ListInboxMessages,
   _UpdateInboxMessage,
   _MoveInboxMessage,
@@ -291,8 +285,7 @@ describe("SDK request params / MCP input schema alignment", () => {
       true,
       true,
       true,
-      true,
     ];
-    if (checks.length !== 31) throw new Error("alignment matrix size changed");
+    if (checks.length !== 30) throw new Error("alignment matrix size changed");
   });
 });
