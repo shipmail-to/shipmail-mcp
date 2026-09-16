@@ -1652,7 +1652,7 @@
       "post": {
         "operationId": "createMailboxExport",
         "summary": "Create a mailbox export",
-        "description": "Queue a fail-closed ZIP snapshot of one mailbox. If a completed export for this mailbox is younger than 15 minutes, that export is returned with status 200 instead of creating a new one. Archived mailboxes reuse their exact current billing snapshot without restoring the mailbox. Poll the returned export until completed. Exports are for backups, not for polling for new mail: use GET /messages, GET /mailboxes/{id}/inbox/messages, or webhooks to keep inbound mail in sync.",
+        "description": "Queue a fail-closed ZIP snapshot of one mailbox. If a completed export for this mailbox is younger than 15 minutes, that export is returned with status 200 instead of creating a new one. Archived mailboxes reuse their exact current billing snapshot without restoring the mailbox. Subscribe to the mailbox.export.completed and mailbox.export.failed webhook events instead of polling the returned export. At most 24 exports per mailbox per rolling 24 hours; beyond that the endpoint returns 429 with Retry-After. Exports are for backups, not for polling for new mail: use GET /messages, GET /mailboxes/{id}/inbox/messages, or webhooks to keep inbound mail in sync.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:export",
@@ -2980,7 +2980,7 @@
       "patch": {
         "operationId": "updateScheduledMessage",
         "summary": "Update a scheduled message",
-        "description": "Replace recipients, content, staged attachments, and delivery time before dispatch begins.",
+        "description": "Replace recipients, content, staged attachments, and delivery time before dispatch begins. Omitting both html and text moves the send in time and keeps the stored body, so a rich HTML send does not have to be resent to be rescheduled.",
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
@@ -10911,6 +10911,8 @@
           "message.bounced",
           "message.complained",
           "mailbox.rule_matched",
+          "mailbox.export.completed",
+          "mailbox.export.failed",
           "domain.verified",
           "domain.verification_failed",
           "domain.degraded",
@@ -10929,6 +10931,8 @@
           "message.bounced",
           "message.complained",
           "mailbox.rule_matched",
+          "mailbox.export.completed",
+          "mailbox.export.failed",
           "domain.verified",
           "domain.verification_failed",
           "domain.degraded",
@@ -11355,8 +11359,8 @@
         "properties": {
           "from": {
             "type": "string",
-            "format": "email",
-            "description": "Email address of the sending mailbox. Shipmail resolves it to a mailbox ID server-side."
+            "description": "Sending mailbox, as a bare address (hello@example.com) or RFC 5322 name-addr (Acme Support <hello@example.com>). Shipmail resolves the address to a mailbox ID server-side. A display name applies to this send only; a bare address uses the mailbox display name.",
+            "examples": ["hello@example.com", "Acme Support <hello@example.com>"]
           },
           "mailbox_id": {
             "type": "string",
@@ -11649,10 +11653,12 @@
             "maxLength": 998
           },
           "html": {
+            "description": "HTML body. Omit both html and text to keep the scheduled draft's stored body; sending either one replaces the body as a unit.",
             "type": "string",
             "maxLength": 524288
           },
           "text": {
+            "description": "Plain text body. Omit both html and text to keep the scheduled draft's stored body; sending either one replaces the body as a unit.",
             "type": "string",
             "maxLength": 262144
           },
@@ -13050,7 +13056,8 @@
           },
           "state": {
             "type": "string",
-            "enum": ["pending", "importing", "completed", "failed"]
+            "description": "Transfer state of this source folder. \"skipped\" means the source server refused the folder; the import finished without it.",
+            "enum": ["pending", "importing", "completed", "failed", "skipped"]
           },
           "found": {
             "type": "integer"

@@ -6,7 +6,7 @@
       "name": "shipmail-mcp",
       "dependencies": {
         "@modelcontextprotocol/server": "2.0.0",
-        "shipmail": "0.5.3",
+        "shipmail": "0.5.6",
         "zod": "4.4.3",
       },
       "devDependencies": {
@@ -304,7 +304,7 @@
 
     "shebang-regex": ["shebang-regex@3.0.0", "", {}, "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A=="],
 
-    "shipmail": ["shipmail@0.5.3", "", {}, "sha512-P9p+9Bq8seWgJ8n/RqrLQjHwwZOqM+Yq5Fx5mthGrLCvD5Nu8OzKEAn2Wlsxd5WtEvkt8qWjWDr+Ew3ejm93Cg=="],
+    "shipmail": ["shipmail@0.5.6", "", {}, "sha512-6Pe66vU/lizQK8iZBrgu7WnbHLBhIZS7Ae76eb9wh2FscAOiYESNtLRW5NaBTaRGUH+nqIpmIqSDVf8kdWPlrw=="],
 
     "signal-exit": ["signal-exit@4.1.0", "", {}, "sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw=="],
 

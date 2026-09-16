@@ -1331,7 +1331,8 @@ const importFolderSchema = z.object({
   source_folder: z.string(),
   target_folder: z.string().nullable(),
   role: z.string().nullable(),
-  state: z.enum(["pending", "importing", "completed", "failed"]),
+  // "skipped": the source server refused the folder; the import finished without it.
+  state: z.enum(["pending", "importing", "completed", "failed", "skipped"]),
   found: z.number(),
   imported: z.number(),
   duplicates: z.number(),
@@ -1964,9 +1965,17 @@ export const updateScheduledMessageInputSchema = z
     idempotency_key: idempotencyKeySchema,
   })
   .strict()
-  .refine((value) => Boolean(value.html || value.text), {
-    message: "At least one of html or text is required.",
-  });
+  // Omit both to keep the scheduled draft's stored body; sending either one
+  // replaces the body as a unit.
+  .refine(
+    (value) =>
+      (value.html === undefined && value.text === undefined) ||
+      Boolean(value.html) ||
+      Boolean(value.text),
+    {
+      message: "Provide a non-empty html or text, or omit both to keep the stored body.",
+    },
+  );
 export const replyToMessageInputSchema = z
   .object({
     id: idSchema.describe("Message ID to reply to."),

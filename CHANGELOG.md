@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.8.6](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.5...shipmail-mcp-v0.8.6) (2026-09-16)
+
+
+### Bug Fixes
+
+* **inbox:** keep a scheduled send's stored body when only its time changes ([#2190](https://github.com/shipmail-to/Shipmail/issues/2190)) ([32a4bb7](https://github.com/shipmail-to/Shipmail/commit/32a4bb70821e69b350b5d366d0a4f40bfe2f632a))
+
+## [0.8.5](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.4...shipmail-mcp-v0.8.5) (2026-09-12)
+
+
+### Bug Fixes
+
+* **mcp:** let published output schemas accept enum values added later ([#2141](https://github.com/shipmail-to/Shipmail/issues/2141)) ([8e2633d](https://github.com/shipmail-to/Shipmail/commit/8e2633d4aada15cb2087b73991faceb491698ef4))
+
+## [0.8.4](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.3...shipmail-mcp-v0.8.4) (2026-09-11)
+
+
+### Bug Fixes
+
+* **import:** skip a source folder the server refuses instead of failing the import ([#2133](https://github.com/shipmail-to/Shipmail/issues/2133)) ([4367422](https://github.com/shipmail-to/Shipmail/commit/4367422ed07209d2f44dfb905c9922ec47263063))
+
 ## [0.8.3](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.2...shipmail-mcp-v0.8.3) (2026-09-11)
 
 
