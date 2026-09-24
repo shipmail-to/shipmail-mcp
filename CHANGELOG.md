@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.7](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.6...shipmail-mcp-v0.8.7) (2026-09-24)
+
+
+### Features
+
+* **api:** save new-message drafts from the API and MCP ([#2440](https://github.com/shipmail-to/Shipmail/issues/2440)) ([4d2ee44](https://github.com/shipmail-to/Shipmail/commit/4d2ee4448b762a29833b0a0c37ef82340f70c684))
+
 ## [0.8.6](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.5...shipmail-mcp-v0.8.6) (2026-09-16)
 
 

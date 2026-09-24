@@ -76,6 +76,7 @@ import {
   createdMailboxAppPasswordOutputSchema,
   createDomainInputSchema,
   createdPartnerOrganizationOutputSchema,
+  createInboxDraftInputSchema,
   createInboxReplyDraftInputSchema,
   createMailboxAppPasswordInputSchema,
   createMailboxFolderInputSchema,
@@ -113,6 +114,7 @@ import {
   importScopedInputSchema,
   importsOutputSchema,
   inboxAttachmentContentOutputSchema,
+  inboxDraftOutputSchema,
   inboxFullMessageSchema,
   inboxMessageActionOutputSchema,
   inboxMessageOutputSchema,
@@ -270,6 +272,7 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_reply_to_thread: 10,
   shipmail_reply_to_inbox_message: 10,
   shipmail_reply_to_inbox_thread: 10,
+  shipmail_create_draft: 20,
   shipmail_create_inbox_reply_draft: 20,
   shipmail_send_inbox_reply_draft: 10,
   shipmail_update_inbox_thread_attention: 50,
@@ -1761,6 +1764,32 @@ export function registerTools(
             };
           },
         ),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_draft", () => {
+    server.registerTool(
+      "shipmail_create_draft",
+      {
+        title: "Save New Email Draft",
+        description:
+          "Save a new email (not a reply) to the mailbox's Drafts folder. This only saves a draft: it sends nothing, and there is no tool to send it. The user reviews, edits, and sends it from Drafts in Shipmail or any mail client. Use shipmail_create_inbox_reply_draft to reply to an existing conversation.",
+        inputSchema: createInboxDraftInputSchema,
+        outputSchema: inboxDraftOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_create_draft", inboxDraftOutputSchema, async () => {
+          const { id, ...params } = stripIdempotencyKey(args);
+          return {
+            inbox_draft: await client.mailboxes.createInboxDraft(id, params, mutationOptions(args)),
+          };
+        }),
     );
   });
 

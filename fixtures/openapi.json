@@ -2685,7 +2685,7 @@
       "post": {
         "operationId": "sendMessage",
         "summary": "Send a message",
-        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Attachments are base64-encoded, max 20 files, 3 MB per file, 3 MB total.",
+        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Attachments are base64-encoded, max 20 files, 3 MB per file, 3 MB total. To send from a transactional sender (https://shipmail.to/docs/features/transactional-email), set from to its bare address; mailbox_id is optional and, when set, must be the sender's mailbox. Shipmail adds the sender name and Reply-To. Transactional senders send immediately only and refuse scheduled_at, track_reply: true, staged_attachment_ids, a different reply_to and a different display name. A transactional email send that reaches a ceiling returns 429 with details[].code application_daily_limit (daily ceiling for transactional email, a share of the organization's daily sending limit), application_unique_recipients (hourly ceiling of different recipients) or application_storage_full (the sender's mailbox has no transactional email storage left).",
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
@@ -2716,13 +2716,27 @@
             }
           },
           "403": {
-            "$ref": "#/components/responses/QuotaExceededError"
+            "description": "Plan quota exceeded (type quota_exceeded), or the from address is a transactional sender that is turned off, that this API key cannot send from, or whose mailbox differs from mailbox_id (type authorization_error, details[].code transactional_sender_unavailable).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "409": {
             "$ref": "#/components/responses/ConflictError"
           },
           "422": {
-            "$ref": "#/components/responses/ValidationError"
+            "description": "Validation failed. For a transactional sender, details[].code is transactional_sender_immediate_only (scheduled_at set), transactional_sender_no_reply_tracking (track_reply true), transactional_sender_reply_to (reply_to differs from the sender's Reply-To), transactional_sender_staged_attachments (staged_attachment_ids set) or transactional_sender_display_name (from carries a different display name).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/RateLimitError"
@@ -2839,7 +2853,7 @@
       "post": {
         "operationId": "replyToMessage",
         "summary": "Reply to a message",
-        "description": "Reply to a stored Shipmail message by its msg_ ID. Looks up the message's thread and sends a reply using the same mailbox. JMAP IDs returned by mailbox inbox endpoints must use the mailbox-scoped inbox reply endpoint.",
+        "description": "Reply to a stored Shipmail message by its msg_ ID. Looks up the message's thread and sends a reply using the same mailbox. JMAP IDs returned by mailbox inbox endpoints must use the mailbox-scoped inbox reply endpoint. Replies to transactional email are not supported and return 422 with details[].code transactional_reply_unsupported.",
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
@@ -2879,7 +2893,14 @@
             "$ref": "#/components/responses/ConflictError"
           },
           "422": {
-            "$ref": "#/components/responses/ValidationError"
+            "description": "Validation failed. details[].code transactional_reply_unsupported means the message is a transactional email, which cannot be replied to through the API; send a new message instead.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/RateLimitError"
@@ -4500,6 +4521,58 @@
           },
           "409": {
             "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/mailboxes/{id}/inbox/drafts": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "post": {
+        "operationId": "createMailboxInboxDraft",
+        "summary": "Save a new message draft",
+        "description": "Save a new message (not a reply) to the mailbox's Drafts folder for a person to review, edit, and send from Shipmail or any mail client. Nothing is sent, and there is no endpoint to send it. The returned id is an inbox message ID, so the draft can be read or deleted with the inbox message endpoints. Recipients must be allowed by the API key's recipient limits.",
+        "tags": ["Mailboxes", "Messages"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "drafts:compose",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInboxDraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Draft saved to the Drafts folder.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxDraft"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
@@ -11359,7 +11432,7 @@
         "properties": {
           "from": {
             "type": "string",
-            "description": "Sending mailbox, as a bare address (hello@example.com) or RFC 5322 name-addr (Acme Support <hello@example.com>). Shipmail resolves the address to a mailbox ID server-side. A display name applies to this send only; a bare address uses the mailbox display name.",
+            "description": "Sending mailbox, as a bare address (hello@example.com) or RFC 5322 name-addr (Acme Support <hello@example.com>). Shipmail resolves the address to a mailbox ID server-side. A display name applies to this send only; a bare address uses the mailbox display name. For a transactional sender, pass the bare sender address; the sender's display name is added, and a different name is refused.",
             "examples": ["hello@example.com", "Acme Support <hello@example.com>"]
           },
           "mailbox_id": {
@@ -12772,6 +12845,128 @@
           },
           "follow_up_at": {
             "type": ["string", "null"],
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateInboxDraftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["to"],
+        "anyOf": [
+          {
+            "required": ["text"]
+          },
+          {
+            "required": ["html"]
+          }
+        ],
+        "description": "A new message. Total recipients (to + cc + bcc) must not exceed 50. Threading fields such as in_reply_to are not accepted.",
+        "properties": {
+          "to": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recipient"
+            },
+            "minItems": 1,
+            "description": "To recipients (at least one)."
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recipient"
+            },
+            "description": "CC recipients."
+          },
+          "bcc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recipient"
+            },
+            "description": "BCC recipients."
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 998,
+            "default": "",
+            "description": "Email subject. May be empty."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 256000,
+            "description": "Plain text body. At least one of html or text is required."
+          },
+          "html": {
+            "type": "string",
+            "maxLength": 512000,
+            "description": "HTML body. At least one of html or text is required."
+          }
+        }
+      },
+      "InboxDraftRecipient": {
+        "type": "object",
+        "required": ["address", "name"],
+        "properties": {
+          "address": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "InboxDraft": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "mailbox_id",
+          "from",
+          "to",
+          "cc",
+          "bcc",
+          "subject",
+          "created_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "inbox_draft"
+          },
+          "id": {
+            "type": "string",
+            "description": "Inbox message ID of the saved draft. Read it with GET /mailboxes/{id}/inbox/messages/{message_id}."
+          },
+          "mailbox_id": {
+            "type": "string"
+          },
+          "from": {
+            "$ref": "#/components/schemas/InboxDraftRecipient"
+          },
+          "to": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InboxDraftRecipient"
+            }
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InboxDraftRecipient"
+            }
+          },
+          "bcc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InboxDraftRecipient"
+            }
+          },
+          "subject": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
             "format": "date-time"
           }
         }

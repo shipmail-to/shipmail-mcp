@@ -7,6 +7,7 @@ export const MCP_PERMISSION_GROUP_NAMES = [
   "automations",
   "mail_read",
   "drafts",
+  "compose_drafts",
   "mail_organize",
   "send_mail",
   "calendar_read",
@@ -32,6 +33,7 @@ export const MCP_MEMBER_PERMISSION_GROUP_NAMES = [
   "account_status",
   "mail_read",
   "drafts",
+  "compose_drafts",
   "mail_organize",
   "mailbox_rules",
   "send_mail",
@@ -81,6 +83,13 @@ export const MCP_PERMISSION_GROUPS = [
     label: "Create drafts",
     description: "Create reply drafts whose recipients are derived by Shipmail.",
     scopes: ["drafts:write"],
+    persistent: false,
+  },
+  {
+    name: "compose_drafts",
+    label: "Compose drafts",
+    description: "Save new messages to Drafts for review. Cannot send.",
+    scopes: ["drafts:compose"],
     persistent: false,
   },
   {
@@ -260,6 +269,7 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_mailbox_inbox_threads", "listMailboxInboxThreads", "messages:read"],
   ["shipmail_get_mailbox_inbox_thread", "getMailboxInboxThread", "messages:read"],
   ["shipmail_update_inbox_thread_attention", "updateMailboxInboxThreadAttention", "messages:write"],
+  ["shipmail_create_draft", "createMailboxInboxDraft", "drafts:compose"],
   ["shipmail_create_inbox_reply_draft", "createMailboxInboxReplyDraft", "drafts:write"],
   ["shipmail_send_inbox_reply_draft", "sendMailboxInboxReplyDraft", "messages:send"],
   ["shipmail_reply_to_inbox_message", "replyToMailboxInboxMessage", "messages:send"],
@@ -491,6 +501,7 @@ const SERVER_DERIVED_RECIPIENT_TOOLS: ReadonlySet<string> = new Set([
 
 const CALLER_SUPPLIED_RECIPIENT_TOOLS: ReadonlySet<string> = new Set([
   "shipmail_send_message",
+  "shipmail_create_draft",
   "shipmail_create_mailbox_forwarding",
   "shipmail_create_webhook",
   "shipmail_update_webhook",
@@ -518,6 +529,7 @@ function permissionGroupFor(
   if (requiredScope.startsWith("mailbox_rules:")) return "mailbox_rules";
   if (requiredScope === "mailboxes:export") return "mailbox_export";
   if (requiredScope === "drafts:write") return "drafts";
+  if (requiredScope === "drafts:compose") return "compose_drafts";
   if (requiredScope === "messages:send") return "send_mail";
   if (requiredScope === "messages:write") return "mail_organize";
   if (requiredScope === "messages:read" || requiredScope === "threads:read") return "mail_read";

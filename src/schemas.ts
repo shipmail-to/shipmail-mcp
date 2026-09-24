@@ -699,6 +699,22 @@ export const inboxReplyDraftSchema = z.object({
   created_at: z.string(),
 });
 
+export const inboxDraftSchema = z.object({
+  object: z.literal("inbox_draft"),
+  id: z
+    .string()
+    .describe(
+      "Inbox message ID of the saved draft. Read it with shipmail_get_mailbox_inbox_message.",
+    ),
+  mailbox_id: z.string(),
+  from: replyDraftRecipientSchema,
+  to: z.array(replyDraftRecipientSchema),
+  cc: z.array(replyDraftRecipientSchema),
+  bcc: z.array(replyDraftRecipientSchema),
+  subject: z.string(),
+  created_at: z.string(),
+});
+
 export const inboxReplyDraftSendSchema = z.object({
   object: z.literal("inbox_reply_draft_send"),
   draft_id: z.string(),
@@ -1159,6 +1175,7 @@ export const inboxThreadOutputSchema = z.object({ inbox_thread: inboxThreadSchem
 export const inboxThreadAttentionOutputSchema = z.object({
   inbox_thread_attention: inboxThreadAttentionResultSchema,
 });
+export const inboxDraftOutputSchema = z.object({ inbox_draft: inboxDraftSchema });
 export const inboxReplyDraftOutputSchema = z.object({ inbox_reply_draft: inboxReplyDraftSchema });
 export const inboxReplyDraftSendOutputSchema = z.object({
   inbox_reply_draft_send: inboxReplyDraftSendSchema,
@@ -1689,6 +1706,25 @@ export const updateInboxThreadAttentionInputSchema = z
   })
   .refine((value) => value.done !== undefined || value.follow_up_at !== undefined, {
     message: "Provide done or follow_up_at.",
+  });
+
+export const createInboxDraftInputSchema = z
+  .object({
+    id: idSchema.describe("Mailbox ID whose Drafts folder receives the draft."),
+    to: z.array(recipientInputSchema).min(1).max(50),
+    cc: z.array(recipientInputSchema).max(50).optional(),
+    bcc: z.array(recipientInputSchema).max(50).optional(),
+    subject: noControlString(998, "subject").optional(),
+    text: z.string().max(256_000).optional(),
+    html: z.string().max(512_000).optional(),
+    idempotency_key: idempotencyKeySchema,
+  })
+  .strict()
+  .refine((value) => Boolean(value.text || value.html), {
+    message: "At least one of html or text is required.",
+  })
+  .refine((value) => value.to.length + (value.cc?.length ?? 0) + (value.bcc?.length ?? 0) <= 50, {
+    message: "Total recipients (to + cc + bcc) must not exceed 50.",
   });
 
 export const createInboxReplyDraftInputSchema = z

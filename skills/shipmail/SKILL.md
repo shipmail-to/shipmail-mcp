@@ -30,7 +30,7 @@ Use Shipmail's hosted MCP server at `https://shipmail.to/api/mcp`. Prefer the na
 
 For inbox replies, prefer `shipmail_create_inbox_reply_draft`. Present the draft to the user and stop. After explicit approval, use `shipmail_send_inbox_reply_draft`.
 
-For a new message, assemble the sender identity, To/Cc/Bcc recipients, subject, text or HTML body, and attachments. Present those fields for approval before `shipmail_send_message`. Use `shipmail_reply_to_inbox_message`, `shipmail_reply_to_inbox_thread`, `shipmail_reply_to_message`, or `shipmail_reply_to_thread` only after the user approves the exact reply.
+For a new message, assemble the sender identity, To/Cc/Bcc recipients, subject, text or HTML body, and attachments. Present those fields for approval before `shipmail_send_message`. When the user wants a new message to review and send themselves, or the connection cannot send, use `shipmail_create_draft`: it saves the message to the mailbox's Drafts folder and sends nothing. Use `shipmail_reply_to_inbox_message`, `shipmail_reply_to_inbox_thread`, `shipmail_reply_to_message`, or `shipmail_reply_to_thread` only after the user approves the exact reply.
 
 When the user asks to schedule a message, state the exact delivery time and timezone before approval.
 

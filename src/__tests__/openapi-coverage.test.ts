@@ -12,6 +12,7 @@ import { MCP_CAPABILITIES, MCP_PERMISSION_GROUPS, MCP_TOOL_NAMES } from "../capa
 import {
   audienceFeedSchema,
   createNewsletterInputSchema,
+  inboxDraftSchema,
   inboxFullMessageSchema,
   inboxMessageSchema,
   inboxReplyDraftSchema,
@@ -121,6 +122,11 @@ const OPENAPI_SCHEMA_COVERAGE = [
   {
     componentName: "InboxThreadAttentionResult",
     mcpKeys: inboxThreadAttentionResultSchema.keyof().options,
+    mcpOnlyKeys: [],
+  },
+  {
+    componentName: "InboxDraft",
+    mcpKeys: inboxDraftSchema.keyof().options,
     mcpOnlyKeys: [],
   },
   {
