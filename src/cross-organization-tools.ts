@@ -50,7 +50,7 @@ const crossOrganizationListInputSchema = z.object({
     .record(z.string().min(1).max(128), cursorSchema)
     .optional()
     .describe(
-      "Independent pagination cursors keyed by organization ID. Copy each successful section's next_cursor into the matching key on the next call.",
+      "Independent pagination cursors keyed by organization ID. Successful sections return next_cursor values.",
     ),
 });
 
@@ -208,9 +208,8 @@ export const CROSS_ORGANIZATION_TOOL_NAMES: ReadonlySet<string> = new Set(
   CROSS_ORGANIZATION_LIST_BEHAVIORS.map((behavior) => behavior.toolName),
 );
 
-// One index over the behaviors, keyed by the single-organization tool a caller reaches for first.
-// Everything that needs the whole-connection form of a list, the routing refusal, the base tool
-// descriptions, and the list resources, reads it from here.
+// Index the connection-wide list behavior by its single-organization counterpart.
+// Connection-scoped resources use this mapping.
 const BEHAVIOR_BY_BASE_NAME: ReadonlyMap<string, CrossOrganizationListBehavior> = new Map(
   CROSS_ORGANIZATION_LIST_BEHAVIORS.map((behavior) => [behavior.baseToolName, behavior]),
 );
@@ -221,10 +220,8 @@ export function crossOrganizationListBehavior(
   return BEHAVIOR_BY_BASE_NAME.get(baseToolName);
 }
 
-// Base list tool to the tool that answers it for every organization at once. A caller that omits
-// organization_id on a multi-organization connection has asked a whole-connection question, so the
-// routing refusal and the base tool's own description name this tool. Without it the caller obeys
-// the refusal, picks one organization, and reports a subset as if it were everything.
+// Map each single-organization list tool to its connection-wide list tool. Multi-organization
+// routing uses this mapping when a request needs results for every granted organization.
 export const CROSS_ORGANIZATION_TOOL_BY_BASE_NAME: ReadonlyMap<string, string> = new Map(
   [...BEHAVIOR_BY_BASE_NAME].map(([baseToolName, behavior]) => [baseToolName, behavior.toolName]),
 );
@@ -398,6 +395,7 @@ export function registerCrossOrganizationTools(
           ...baseCapability.annotations,
           readOnlyHint: true,
           destructiveHint: false,
+          title: behavior.title,
         },
       },
       async (args): Promise<CallToolResult> => {

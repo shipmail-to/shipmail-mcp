@@ -1,7 +1,7 @@
 {
   "displayName": "Shipmail",
   "name": "shipmail",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "description": "Triage custom-domain inboxes, draft replies, send approved messages, and manage calendars with Shipmail.",
   "author": {
     "name": "Shipmail",

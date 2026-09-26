@@ -1235,6 +1235,10 @@
             "description": "Active subscription required to register domains.",
             "$ref": "#/components/responses/AuthorizationError"
           },
+          "409": {
+            "description": "The purchase conflicts, or it was charged and needs support. Type `conflict`: \"Domain already exists in shipmail.\", \"A purchase for this domain is already in progress.\", or \"This domain purchase was closed before registration. Contact support for a refund.\" Type `reconciliation_required`: \"The registrar did not confirm this registration. Support will check it, then finish the setup or refund the payment.\" or \"Domain was registered but could not be saved. Support must reconcile it.\" Do not retry a `reconciliation_required` response: support settles the purchase.",
+            "$ref": "#/components/responses/ConflictError"
+          },
           "422": {
             "$ref": "#/components/responses/ValidationError"
           },
@@ -14743,6 +14747,12 @@
                 "minLength": 1,
                 "maxLength": 300,
                 "description": "Image alt text."
+              },
+              "align": {
+                "type": "string",
+                "enum": ["left", "center", "right"],
+                "default": "left",
+                "description": "Horizontal alignment of the image and its caption."
               },
               "link_url": {
                 "type": ["string", "null"],

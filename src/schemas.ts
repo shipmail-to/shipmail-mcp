@@ -537,12 +537,12 @@ export const inboxMessageSchema = z.object({
   thread_id: z
     .string()
     .describe(
-      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+      "Deprecated mail-server thread ID. Unchanged and still supported; conversation_id is the stable identifier.",
     ),
   conversation_id: z
     .string()
     .nullable()
-    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+    .describe("Stable Shipmail conversation ID. thread_id is deprecated."),
   mailbox_id: z.string(),
   address: z.string(),
   folder_ids: z.array(z.string()),
@@ -613,11 +613,9 @@ export const inboxThreadSummarySchema = z.object({
   thread_id: z
     .string()
     .describe(
-      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+      "Deprecated mail-server thread ID. Unchanged and still supported; conversation_id is the stable identifier.",
     ),
-  conversation_id: z
-    .string()
-    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+  conversation_id: z.string().describe("Stable Shipmail conversation ID. thread_id is deprecated."),
   attention_state: inboxThreadAttentionStateSchema,
   version: z.number().int(),
   attention_since: z.string().nullable(),
@@ -658,11 +656,9 @@ export const inboxThreadAttentionResultSchema = z.object({
   thread_id: z
     .string()
     .describe(
-      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+      "Deprecated mail-server thread ID. Unchanged and still supported; conversation_id is the stable identifier.",
     ),
-  conversation_id: z
-    .string()
-    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+  conversation_id: z.string().describe("Stable Shipmail conversation ID. thread_id is deprecated."),
   attention_state: inboxThreadAttentionStateSchema,
   version: z.number().int(),
   attention_since: z.string().nullable(),
@@ -685,11 +681,9 @@ export const inboxReplyDraftSchema = z.object({
   thread_id: z
     .string()
     .describe(
-      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+      "Deprecated mail-server thread ID. Unchanged and still supported; conversation_id is the stable identifier.",
     ),
-  conversation_id: z
-    .string()
-    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+  conversation_id: z.string().describe("Stable Shipmail conversation ID. thread_id is deprecated."),
   based_on_message_id: z.string().nullable(),
   expected_version: z.number().int(),
   reply_mode: z.enum(["reply", "reply_all"] as const),
@@ -701,11 +695,7 @@ export const inboxReplyDraftSchema = z.object({
 
 export const inboxDraftSchema = z.object({
   object: z.literal("inbox_draft"),
-  id: z
-    .string()
-    .describe(
-      "Inbox message ID of the saved draft. Read it with shipmail_get_mailbox_inbox_message.",
-    ),
+  id: z.string().describe("Inbox message ID of the saved draft."),
   mailbox_id: z.string(),
   from: replyDraftRecipientSchema,
   to: z.array(replyDraftRecipientSchema),
@@ -742,11 +732,9 @@ export const replyScanCandidateSchema = z.object({
   thread_id: z
     .string()
     .describe(
-      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+      "Deprecated mail-server thread ID. Unchanged and still supported; conversation_id is the stable identifier.",
     ),
-  conversation_id: z
-    .string()
-    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+  conversation_id: z.string().describe("Stable Shipmail conversation ID. thread_id is deprecated."),
   tracked_thread_id: z.string().describe("Same value as conversation_id, kept for compatibility."),
   latest_message_id: z.string().nullable(),
   latest_email_id: z.string().nullable(),
@@ -775,12 +763,12 @@ export const inboxThreadSchema = z.object({
   thread_id: z
     .string()
     .describe(
-      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+      "Deprecated mail-server thread ID. Unchanged and still supported; conversation_id is the stable identifier.",
     ),
   conversation_id: z
     .string()
     .nullable()
-    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+    .describe("Stable Shipmail conversation ID. thread_id is deprecated."),
   data: z.array(inboxFullMessageSchema),
 });
 
@@ -891,12 +879,12 @@ export const messageSchema = z.object({
     .string()
     .nullable()
     .describe(
-      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+      "Deprecated mail-server thread ID. Unchanged and still supported; conversation_id is the stable identifier.",
     ),
   conversation_id: z
     .string()
     .nullable()
-    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+    .describe("Stable Shipmail conversation ID. thread_id is deprecated."),
   source_rfc_message_id: z.string().nullable(),
   delivered_rfc_message_id: z.string().nullable(),
   client_reference: z.string().nullable(),
@@ -944,12 +932,12 @@ export const messageAnalyticsSchema = z.object({
     .string()
     .nullable()
     .describe(
-      "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+      "Deprecated mail-server thread ID. Unchanged and still supported; conversation_id is the stable identifier.",
     ),
   conversation_id: z
     .string()
     .nullable()
-    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+    .describe("Stable Shipmail conversation ID. thread_id is deprecated."),
   client_reference: z.string().nullable(),
   direction: z.enum(["inbound", "outbound"] as const),
   contact_addresses: z.array(z.string().email()),
@@ -1009,9 +997,7 @@ export const scheduledMessageSchema = z.object({
 export const threadSchema = z.object({
   object: z.literal("thread"),
   id: z.string(),
-  conversation_id: z
-    .string()
-    .describe("Stable Shipmail conversation ID. Store this; thread_id is deprecated."),
+  conversation_id: z.string().describe("Stable Shipmail conversation ID. thread_id is deprecated."),
   mailbox_id: z.string(),
   subject: z.string().nullable(),
   message_count: z.number(),
@@ -1674,7 +1660,7 @@ export const readMailboxInboxAttachmentInputSchema = z.object({
   message_id: noControlString(256, "message_id").min(1).describe("JMAP inbox message ID."),
   part_id: noControlString(256, "part_id")
     .min(1)
-    .describe("Attachment part ID returned by shipmail_get_mailbox_inbox_message."),
+    .describe("Attachment part ID from the inbox message response."),
 });
 
 export const listMailboxInboxThreadsInputSchema = z.object({
@@ -1937,9 +1923,7 @@ export const stagedAttachmentUploadPreparationOutputSchema = z.object({
 });
 export const sendMessageInputSchema = z
   .object({
-    mailbox_id: idSchema.describe(
-      "Mailbox ID to send from. Prefer this over email address lookup.",
-    ),
+    mailbox_id: idSchema.describe("Mailbox ID to send from."),
     to: z.array(recipientInputSchema).min(1).max(50),
     cc: z.array(recipientInputSchema).max(50).optional(),
     bcc: z.array(recipientInputSchema).max(50).optional(),
@@ -2560,10 +2544,10 @@ export const newsletterTestSendOutputSchema = z.object({
 
 const newsletterBlockTextSchema = noControlString(10_000, "newsletter block text").min(1);
 const newsletterBlockRichProseSchema = newsletterBlockTextSchema.describe(
-  "Bare text or sanitized inline HTML. Use p or br for line breaks. Allowed tags are a, b, br, code, em, i, p, s, span, strong, and u.",
+  "Bare text or sanitized inline HTML. Allowed tags are a, b, br, code, em, i, p, s, span, strong, and u.",
 );
 const newsletterColumnBodySchema = noControlString(10_000, "newsletter column body").describe(
-  "Optional bare text or sanitized inline HTML. Use p or br for line breaks. Allowed tags are a, b, br, code, em, i, p, s, span, strong, and u.",
+  "Optional bare text or sanitized inline HTML. Allowed tags are a, b, br, code, em, i, p, s, span, strong, and u.",
 );
 const newsletterBlockOptionalTextSchema = noControlString(
   10_000,
@@ -2635,6 +2619,7 @@ const newsletterBlockInputSchema: z.ZodType<NewsletterBlock> = z.discriminatedUn
     type: z.literal("image"),
     url: publicHttpsUrlSchema,
     alt: newsletterBlockTextSchema.max(300),
+    align: newsletterButtonAlignSchema.optional(),
     link_url: newsletterLinkUrlSchema.nullish(),
     caption: newsletterBlockOptionalTextSchema,
     caption_url: newsletterLinkUrlSchema.nullish(),

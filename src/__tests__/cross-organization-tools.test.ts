@@ -111,6 +111,27 @@ const organizationResultSchema = z.object({
 });
 
 describe("cross-organization tool allowlist", () => {
+  test("publishes factual cross-organization cursor metadata", async () => {
+    const fetchImpl = stubFetch(async () => Response.json(page));
+    const { server, client } = await connectedClient([
+      grant("org_a", fetchImpl),
+      grant("org_b", fetchImpl),
+    ]);
+
+    try {
+      const tool = (await client.listTools()).tools.find(
+        ({ name }) => name === "shipmail_list_domains_across_organizations",
+      );
+      const cursorSchema = tool?.inputSchema?.properties?.["cursor_by_organization"];
+      expect(cursorSchema).toMatchObject({
+        description:
+          "Independent pagination cursors keyed by organization ID. Successful sections return next_cursor values.",
+      });
+    } finally {
+      await Promise.all([client.close(), server.close()]);
+    }
+  });
+
   test("contains only the organization-rooted list operations audited for fan-out", () => {
     expect(CROSS_ORGANIZATION_LIST_BEHAVIORS.map((behavior) => behavior.toolName)).toEqual([
       "shipmail_list_domains_across_organizations",
@@ -150,6 +171,7 @@ describe("cross-organization tool allowlist", () => {
     expect(shipmailTools.map((tool) => tool.name)).toEqual([
       "shipmail_list_domains_across_organizations",
     ]);
+    expect(shipmailTools[0]?.annotations?.title).toBe(shipmailTools[0]?.title);
     expect(shipmailTools[0]?.inputSchema.properties?.["organization_id"]).toBeUndefined();
     expect(shipmailTools[0]?.inputSchema.properties?.["cursor_by_organization"]).toBeDefined();
     await Promise.all([client.close(), server.close()]);

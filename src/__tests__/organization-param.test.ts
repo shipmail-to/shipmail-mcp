@@ -77,6 +77,19 @@ describe("organization_id tool parameter", () => {
     const withParam = tools.filter((tool) => tool.inputSchema?.properties?.["organization_id"]);
     expect(withParam).toEqual([]);
   });
+
+  test("keeps base tool descriptions identical for single- and multi-organization catalogs", async () => {
+    const [single, multi] = await Promise.all([
+      listTools(["org_only"]),
+      listTools(["org_a", "org_b"]),
+    ]);
+    const singleDescriptions = new Map(single.map((tool) => [tool.name, tool.description]));
+
+    for (const tool of multi) {
+      expect(tool.description).toBe(singleDescriptions.get(tool.name));
+      expect(tool.description).not.toMatch(/across_organizations|shipmail_[a-z_]+/);
+    }
+  });
 });
 
 describe("organizations reported by shipmail_status", () => {

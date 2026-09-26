@@ -1015,6 +1015,12 @@ describe("newsletter schemas", () => {
         body: "A <em>short</em> intro.",
       },
       {
+        type: "image",
+        url: "https://cdn.example.com/hero.png",
+        alt: "Hero",
+        align: "right",
+      },
+      {
         type: "columns",
         ratio: "50-50",
         left: {
@@ -1036,7 +1042,8 @@ describe("newsletter schemas", () => {
       type: "paragraph",
       body: '<p>Read the <a href="https://example.com/launch">launch notes</a>.</p>',
     });
-    expect(out.blocks?.[4]).toMatchObject({
+    expect(out.blocks?.[4]).toMatchObject({ type: "image", align: "right" });
+    expect(out.blocks?.[5]).toMatchObject({
       type: "columns",
       left: { image_fit: "contain" },
     });
