@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.8](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.7...shipmail-mcp-v0.8.8) (2026-09-26)
+
+### Bug Fixes
+
+* centralize MCP tool guidance ([#2520](https://github.com/shipmail-to/Shipmail/issues/2520)) ([3c60a5c](https://github.com/shipmail-to/Shipmail/commit/3c60a5cdacff84273cbca4f4b4b7d0ea6a2a6db3))
+
 ## [0.8.7](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.6...shipmail-mcp-v0.8.7) (2026-09-24)
 
 

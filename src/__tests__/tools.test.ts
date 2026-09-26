@@ -1,4 +1,5 @@
-import { McpServer } from "@modelcontextprotocol/server";
+import { Client } from "@modelcontextprotocol/client";
+import { InMemoryTransport, McpServer } from "@modelcontextprotocol/server";
 import { describe, expect, test } from "bun:test";
 import { ShipmailClient } from "shipmail";
 
@@ -20,7 +21,80 @@ function setup(allowedTools?: ReadonlySet<string>): {
   return { server, client, result };
 }
 
+function schemaDescriptions(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap(schemaDescriptions);
+  }
+  if (value === null || typeof value !== "object") {
+    return [];
+  }
+
+  return [
+    ...("description" in value && typeof value.description === "string" ? [value.description] : []),
+    ...Object.values(value).flatMap(schemaDescriptions),
+  ];
+}
+
 describe("registerTools", () => {
+  test("publishes every tool title in its annotations", async () => {
+    const { server } = setup();
+    const client = new Client({ name: "test-client", version: "0.0.0" });
+    const [serverTransport, clientTransport] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    try {
+      const listed = await client.listTools();
+      expect(listed.tools.length).toBeGreaterThan(0);
+      for (const tool of listed.tools) {
+        expect(tool.title).toBeDefined();
+        expect(tool.annotations?.title).toBe(tool.title);
+      }
+    } finally {
+      await Promise.all([client.close(), server.close()]);
+    }
+  });
+
+  test("publishes capability metadata without cross-tool or model-behavior instructions", async () => {
+    const { server } = setup();
+    const client = new Client({ name: "test-client", version: "0.0.0" });
+    const [serverTransport, clientTransport] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    try {
+      const { tools } = await client.listTools();
+      expect(tools.length).toBeGreaterThan(0);
+      for (const tool of tools) {
+        expect(tool.description).not.toMatch(/shipmail_[a-z_]+/);
+        expect(tool.description).not.toMatch(/\b(approval|untrusted)\b/i);
+        expect(tool.description).not.toMatch(/treat as destructive/i);
+      }
+    } finally {
+      await Promise.all([client.close(), server.close()]);
+    }
+  });
+
+  test("publishes factual thread identifiers in serialized output schemas", async () => {
+    const { server } = setup();
+    const client = new Client({ name: "test-client", version: "0.0.0" });
+    const [serverTransport, clientTransport] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    try {
+      const { tools } = await client.listTools();
+      const descriptions = tools.flatMap((tool) => schemaDescriptions(tool.outputSchema));
+      const threadIdentifierDescription =
+        "Deprecated mail-server thread ID. Unchanged and still supported; conversation_id is the stable identifier.";
+
+      expect(descriptions).toContain(threadIdentifierDescription);
+      expect(descriptions).not.toContain(
+        "Deprecated mail-server thread ID. Unchanged and still supported; store conversation_id.",
+      );
+      expect(descriptions.join("\n")).not.toMatch(/store conversation_id/i);
+    } finally {
+      await Promise.all([client.close(), server.close()]);
+    }
+  });
+
   test("registers all known tools for introspection when no policy set is given", () => {
     const { result } = setup();
     expect(result.knownTools.length).toBeGreaterThan(0);

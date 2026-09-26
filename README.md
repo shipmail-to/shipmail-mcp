@@ -94,9 +94,6 @@ This repository is also a portable agent plugin. It combines the hosted MCP conn
 safety-focused Shipmail skill, so supported clients can install the server and its operating
 guidance together:
 
-Claude users can install the hosted plugin from the
-[nested Shipmail plugin bundle](./distribution/shipmail).
-
 | Client or standard  | Manifest                     |
 | ------------------- | ---------------------------- |
 | OpenAI Codex        | `.codex-plugin/plugin.json`  |
