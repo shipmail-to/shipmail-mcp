@@ -37,7 +37,7 @@ Operational instructions:
 - Do not create or change mailbox rules without explicit user intent. List rules and folders before rule changes; custom folder IDs must belong to the target mailbox. Read the latest rule before updating or deleting it, and retain expected_position to detect concurrent reordering.
 - Do not create or delete a custom mailbox folder without explicit user intent. List folders before creating or deleting one. Deleting a custom folder moves its remaining messages to Trash and conflicts while an inbox rule or automation references it. For inbox messages, use the exact inbox ID, list folders before a custom-folder move, and move a message to Trash before permanent deletion.
 - Do not change a domain catch-all or enable an auto-reply without explicit user intent. A catch-all retargets unmatched-recipient mail, and an enabled auto-reply can send replies.
-- Do not reset a mailbox password unless the operator supplied the replacement password. Do not create an app password without explicit operator approval; store its one-time secret securely. Do not consume a partner mailbox credential grant without explicit partner approval.
+- Do not reset a mailbox password unless the operator supplied the replacement password. Do not create an app password without explicit operator approval; store its one-time secret securely.
 - Webhook signing secrets appear once in the conversation log. Treat that log as sensitive and store each secret in the user's chosen secret manager.
 - Confirm that a recipient should receive mail again before removing a suppression. Use the subscriber state tools for subscription changes rather than a profile update. Prefer unsubscribing to removing a subscriber when opt-out history must be preserved.
 - Do not create, send, schedule, resume, or otherwise mutate a newsletter without the user's explicit approval. A test send requires approval of the exact draft and test recipient. Scheduling requires approval of the content, audience, and scheduled time. Resume requires confirmation that delivery should continue. Run newsletter preflight before test sending or scheduling, and obtain sender identities and existing asset IDs from their list tools.
@@ -76,7 +76,6 @@ export function createShipmailMcpServer(
   const client = new ShipmailClient({
     apiKey: config.apiKey,
     ...(config.baseUrl ? { baseUrl: config.baseUrl } : {}),
-    ...(config.organizationId ? { organizationId: config.organizationId } : {}),
     defaultHeaders,
   });
 

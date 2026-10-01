@@ -24,7 +24,6 @@ export const MCP_PERMISSION_GROUP_NAMES = [
   "newsletters",
   "audiences",
   "suppressions",
-  "partner_admin",
 ] as const;
 
 export type McpPermissionGroupName = (typeof MCP_PERMISSION_GROUP_NAMES)[number];
@@ -205,19 +204,6 @@ export const MCP_PERMISSION_GROUPS = [
     scopes: ["suppressions:read", "suppressions:write"],
     persistent: false,
   },
-  {
-    name: "partner_admin",
-    label: "Partner administration",
-    description: "Manage delegated partner organizations, credential grants, and usage.",
-    scopes: [
-      "partner:organizations:read",
-      "partner:organizations:write",
-      "partner:organizations:access",
-      "partner:mailbox_credentials:issue",
-      "partner:usage:read",
-    ],
-    persistent: true,
-  },
 ] as const satisfies readonly McpPermissionGroup[];
 
 type CapabilityRow = readonly [
@@ -381,49 +367,6 @@ const CAPABILITY_ROWS = [
   ["shipmail_get_booking_page", "getBookingPage", "booking_pages:read"],
   ["shipmail_update_booking_page", "updateBookingPage", "booking_pages:write"],
   ["shipmail_delete_booking_page", "deleteBookingPage", "booking_pages:write"],
-  ["shipmail_list_partner_organizations", "listPartnerOrganizations", "partner:organizations:read"],
-  [
-    "shipmail_create_partner_organization",
-    "createPartnerOrganization",
-    "partner:organizations:write",
-  ],
-  ["shipmail_get_partner_organization", "getPartnerOrganization", "partner:organizations:read"],
-  [
-    "shipmail_update_partner_organization",
-    "updatePartnerOrganization",
-    "partner:organizations:write",
-  ],
-  [
-    "shipmail_resend_partner_ownership_invitation",
-    "resendPartnerOwnershipInvitation",
-    "partner:organizations:write",
-  ],
-  [
-    "shipmail_suspend_partner_organization",
-    "suspendPartnerOrganization",
-    "partner:organizations:write",
-  ],
-  [
-    "shipmail_resume_partner_organization",
-    "resumePartnerOrganization",
-    "partner:organizations:write",
-  ],
-  [
-    "shipmail_offboard_partner_organization",
-    "offboardPartnerOrganization",
-    "partner:organizations:write",
-  ],
-  [
-    "shipmail_list_partner_mailbox_credential_grants",
-    "listPartnerMailboxCredentialGrants",
-    "partner:mailbox_credentials:issue",
-  ],
-  [
-    "shipmail_consume_partner_mailbox_credential_grant",
-    "consumePartnerMailboxCredentialGrant",
-    "partner:mailbox_credentials:issue",
-  ],
-  ["shipmail_get_partner_usage", "getPartnerUsage", "partner:usage:read"],
 ] as const satisfies readonly CapabilityRow[];
 
 export type McpToolName = (typeof CAPABILITY_ROWS)[number][0];
@@ -459,7 +402,6 @@ const DESTRUCTIVE_PREFIXES = [
   "shipmail_delete_",
   "shipmail_remove_",
   "shipmail_revoke_",
-  "shipmail_offboard_",
   "shipmail_cancel_",
 ] as const;
 
@@ -467,7 +409,6 @@ const DESTRUCTIVE_TOOLS: ReadonlySet<string> = new Set([
   "shipmail_create_mailbox_app_password",
   "shipmail_create_mailbox_export",
   "shipmail_rotate_webhook_secret",
-  "shipmail_consume_partner_mailbox_credential_grant",
   "shipmail_rotate_audience_feed",
   "shipmail_revoke_audience_feed",
 ]);
@@ -522,7 +463,6 @@ function permissionGroupFor(
   requiredScope: ApiKeyScope | "public",
 ): McpPermissionGroupName {
   if (requiredScope === "public") return "account_status";
-  if (requiredScope.startsWith("partner:")) return "partner_admin";
   if (requiredScope.startsWith("domains:")) return "domain_admin";
   if (requiredScope.startsWith("mailbox_credentials:")) return "credentials";
   if (requiredScope.startsWith("mailbox_forwarding:")) return "forwarding";
@@ -575,11 +515,7 @@ function recipientControlFor(toolName: McpToolName): McpRecipientControl {
 
 function durationFor(toolName: McpToolName): McpCapabilityDuration {
   if (toolName === "shipmail_run_automation") return "one_shot";
-  if (
-    toolName.includes("app_password") ||
-    toolName.includes("credential_grant") ||
-    toolName === "shipmail_rotate_webhook_secret"
-  ) {
+  if (toolName.includes("app_password") || toolName === "shipmail_rotate_webhook_secret") {
     return "credential";
   }
   if (
@@ -608,7 +544,6 @@ function idempotencyFor(
   if (effect === "read") return "none";
   if (
     toolName === "shipmail_create_mailbox_app_password" ||
-    toolName === "shipmail_consume_partner_mailbox_credential_grant" ||
     toolName === "shipmail_prepare_newsletter_asset_upload" ||
     toolName === "shipmail_prepare_staged_attachment_upload"
   ) {
@@ -651,7 +586,7 @@ function defineCapability(row: (typeof CAPABILITY_ROWS)[number]): McpCapability 
     },
     auditAction: effect === "read" ? null : "api.mutation",
     transports: {
-      hostedOAuth: permissionGroup !== "partner_admin",
+      hostedOAuth: true,
       directApiKeyHttp: true,
       stdio:
         toolName !== "shipmail_compose_message_with_file" &&

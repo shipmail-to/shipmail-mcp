@@ -44,7 +44,6 @@ import type {
   NewsletterPreflightItem,
   NewsletterPreview,
   NewsletterTestSend,
-  PartnerMailboxCredential,
   Suppression,
   Webhook,
   WebhookDelivery,
@@ -83,7 +82,6 @@ import {
   newsletterPreviewSchema,
   newsletterSchema,
   newsletterTestSendSchema,
-  partnerMailboxCredentialSchema,
   suppressionSchema,
   webhookDeliveryDetailSchema,
   webhookDeliverySchema,
@@ -115,9 +113,6 @@ type _MailboxAppPasswordKeys = AssertTrue<
 >;
 type _CreatedMailboxAppPasswordKeys = AssertTrue<
   KeysMatch<CreatedMailboxAppPassword, z.infer<typeof createdMailboxAppPasswordSchema>>
->;
-type _PartnerMailboxCredentialKeys = AssertTrue<
-  KeysMatch<PartnerMailboxCredential, z.infer<typeof partnerMailboxCredentialSchema>>
 >;
 type _MailboxExportKeys = AssertTrue<KeysMatch<MailboxExport, z.infer<typeof mailboxExportSchema>>>;
 type _MailboxFolderKeys = AssertTrue<KeysMatch<MailboxFolder, z.infer<typeof mailboxFolderSchema>>>;
@@ -187,7 +182,6 @@ type _AllChecks = [
   _MailboxKeys,
   _MailboxAppPasswordKeys,
   _CreatedMailboxAppPasswordKeys,
-  _PartnerMailboxCredentialKeys,
   _MailboxExportKeys,
   _MailboxFolderKeys,
   _MailboxFoldersKeys,
@@ -255,8 +249,7 @@ describe("SDK / MCP schema alignment", () => {
       true,
       true,
       true,
-      true,
     ];
-    if (checks.length !== 35) throw new Error("alignment matrix size changed");
+    if (checks.length !== 34) throw new Error("alignment matrix size changed");
   });
 });

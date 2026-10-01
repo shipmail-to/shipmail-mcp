@@ -276,3 +276,32 @@ describe("OpenAPI, capability registry, and MCP registration", () => {
     }
   });
 });
+
+describe("the scheduled message contract", () => {
+  const scheduledContractSchema = z.object({
+    paths: z.object({
+      "/scheduled-messages/{id}": z.object({
+        delete: z.object({ responses: z.record(z.string(), z.unknown()) }),
+      }),
+    }),
+    components: z.object({
+      schemas: z.object({
+        ScheduledMessage: z.object({
+          required: z.array(z.string()),
+          properties: z.object({ status: z.object({ enum: z.array(z.string()) }) }),
+        }),
+      }),
+    }),
+  });
+  const doc = scheduledContractSchema.parse(JSON.parse(readFileSync(OPENAPI_PATH, "utf8")));
+
+  test("status is optional, as in the SDK and the MCP schema", () => {
+    const scheduled = doc.components.schemas.ScheduledMessage;
+    expect(scheduled.properties.status.enum).toEqual(["scheduled", "settling"]);
+    expect(scheduled.required).not.toContain("status");
+  });
+
+  test("cancelling declares the conflict a settling message answers with", () => {
+    expect(Object.keys(doc.paths["/scheduled-messages/{id}"].delete.responses)).toContain("409");
+  });
+});

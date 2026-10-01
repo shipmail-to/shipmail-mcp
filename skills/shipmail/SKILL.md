@@ -49,7 +49,7 @@ Never put base64 file data in MCP arguments, invent a remote file URL, or print 
 
 List current state before changing a domain, mailbox, alias, folder, forwarding rule, suppression, or webhook. For creates and updates, summarize what will change. For deletes or replacements, identify the exact object and consequences and wait for approval.
 
-App passwords and credential grants are sensitive. Create them only when explicitly requested, show the minimal storage guidance, and never place them in source code or chat history beyond the unavoidable one-time result.
+App passwords are sensitive. Create them only when explicitly requested, show the minimal storage guidance, and never place them in source code or chat history beyond the unavoidable one-time result.
 
 ## Calendars and booking
 
@@ -68,6 +68,6 @@ If the client asks the user to connect Shipmail:
 - Use hosted OAuth whenever available.
 - Recommend read-and-draft access for triage and drafting.
 - Recommend the interactive mail assistant profile only when the user wants the agent to send approved messages.
-- Use custom scopes for administration, newsletters, partner operations, or credential management.
+- Use custom scopes for administration, newsletters, or credential management.
 
 For full tool and authentication documentation, use `https://shipmail.to/docs/mcp`.

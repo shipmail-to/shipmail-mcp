@@ -1,11 +1,11 @@
 {
   "displayName": "Shipmail",
   "name": "shipmail",
-  "version": "0.8.8",
-  "description": "Triage custom-domain inboxes, draft replies, send approved messages, and manage calendars with Shipmail.",
+  "version": "0.9.0",
+  "description": "Modern email for your business. Inboxes, calendars, newsletters, bookings, an AI assistant, and an API for your agents. Everything on your own domain, in one subscription.",
   "author": {
     "name": "Shipmail",
-    "email": "ops@shipmail.to",
+    "email": "hi@shipmail.to",
     "url": "https://shipmail.to"
   },
   "homepage": "https://shipmail.to/docs/mcp",

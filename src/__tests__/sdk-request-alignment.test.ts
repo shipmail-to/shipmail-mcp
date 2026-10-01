@@ -10,7 +10,6 @@
 // `KeysMatch` from sdk-alignment.test.ts.
 import { describe, test } from "bun:test";
 import type {
-  ConsumePartnerMailboxCredentialGrantParams,
   CreateAutomationParams,
   CreateBookingPageParams,
   CreateDomainParams,
@@ -45,7 +44,6 @@ import type { z } from "zod/v4";
 
 import type {
   autoReplyInputSchema,
-  consumePartnerMailboxCredentialGrantInputSchema,
   createAutomationInputSchema,
   createBookingPageInputSchema,
   createDomainInputSchema,
@@ -85,7 +83,6 @@ import type {
 // - `folder_id` and `message_id` are second path parameters for nested tools.
 type StripMcpOnly<T> = Omit<T, "idempotency_key" | "id" | "folder_id" | "message_id">;
 type StripMcpOnlyKeepFolderId<T> = Omit<T, "idempotency_key" | "id">;
-type StripPartnerGrantPath<T> = Omit<T, "idempotency_key" | "grant_id">;
 type StripAudienceFeedPath<T> = Omit<T, "idempotency_key" | "audience_id">;
 
 // SDK fields that the MCP intentionally does not expose. Keep this list
@@ -139,12 +136,6 @@ type _CreateMailboxAppPassword = AssertTrue<
   KeysMatch<
     CreateMailboxAppPasswordParams,
     StripMcpOnly<z.infer<typeof createMailboxAppPasswordInputSchema>>
-  >
->;
-type _ConsumePartnerMailboxCredentialGrant = AssertTrue<
-  KeysMatch<
-    ConsumePartnerMailboxCredentialGrantParams,
-    StripPartnerGrantPath<z.infer<typeof consumePartnerMailboxCredentialGrantInputSchema>>
   >
 >;
 type _UpdateMailbox = AssertTrue<
@@ -230,7 +221,6 @@ type _AllChecks = [
   _SearchDomains,
   _CreateMailbox,
   _CreateMailboxAppPassword,
-  _ConsumePartnerMailboxCredentialGrant,
   _UpdateMailbox,
   _InjectSandboxInbound,
   _CreateMailboxFolder,
@@ -284,8 +274,7 @@ describe("SDK request params / MCP input schema alignment", () => {
       true,
       true,
       true,
-      true,
     ];
-    if (checks.length !== 30) throw new Error("alignment matrix size changed");
+    if (checks.length !== 29) throw new Error("alignment matrix size changed");
   });
 });

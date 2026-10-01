@@ -32,6 +32,13 @@ describe("isPublicHttpsUrl", () => {
       expect(isPublicHttpsUrl("https://router.home.arpa/x")).toBe(false);
       expect(isPublicHttpsUrl("https://api.localhost/x")).toBe(false);
     });
+
+    test("rejects names with a trailing dot", () => {
+      expect(isPublicHttpsUrl("https://localhost./x")).toBe(false);
+      expect(isPublicHttpsUrl("https://api.internal./x")).toBe(false);
+      expect(isPublicHttpsUrl("https://router.home.arpa./x")).toBe(false);
+      expect(isPublicHttpsUrl("https://example.com./hook")).toBe(true);
+    });
   });
 
   describe("IPv4 rejections", () => {

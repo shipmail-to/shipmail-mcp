@@ -5,7 +5,6 @@ import { HELP_TEXT, readConfig } from "../config.js";
 const ENV_KEYS = [
   "SHIPMAIL_API_KEY",
   "SHIPMAIL_BASE_URL",
-  "SHIPMAIL_ORGANIZATION_ID",
   "SHIPMAIL_ALLOW_INSECURE_BASE_URL",
 ] as const;
 
@@ -37,13 +36,6 @@ describe("readConfig", () => {
     const config = readConfig([]);
     expect(config.apiKey).toBe("sk_test");
     expect(config.baseUrl).toBeUndefined();
-    expect(config.organizationId).toBeUndefined();
-  });
-
-  test("reads the delegated organization id", () => {
-    process.env["SHIPMAIL_API_KEY"] = "sk_test";
-    process.env["SHIPMAIL_ORGANIZATION_ID"] = "org_child_123";
-    expect(readConfig([]).organizationId).toBe("org_child_123");
   });
 
   test("rejects the removed --tools selector with an actionable error", () => {

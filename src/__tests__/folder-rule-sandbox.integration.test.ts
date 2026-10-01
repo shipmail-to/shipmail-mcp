@@ -58,10 +58,7 @@ async function connectSandboxClient(): Promise<{
   if (!apiKey) {
     throw new Error("SHIPMAIL_API_KEY is required for sandbox integration.");
   }
-  const server = createShipmailMcpServer(
-    { apiKey, baseUrl, organizationId: undefined },
-    new Set(MCP_TOOL_NAMES),
-  );
+  const server = createShipmailMcpServer({ apiKey, baseUrl }, new Set(MCP_TOOL_NAMES));
   const client = new Client({ name: "folder-rule-sandbox", version: "0.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);

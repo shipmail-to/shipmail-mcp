@@ -259,7 +259,7 @@ export const mailboxSchema = z.object({
   address: z.string(),
   display_name: z.string().nullable(),
   suspended_at: z.string().nullable(),
-  suspension_reasons: z.array(z.enum(["billing", "manual", "security"] as const)),
+  suspension_reasons: z.array(z.enum(["billing", "manual", "security", "abuse"] as const)),
   auto_reply: autoReplySchema,
   created_at: z.string(),
   updated_at: z.string(),
@@ -327,7 +327,7 @@ export const mailboxAppPasswordSchema = z.object({
   mailbox_id: z.string(),
   name: z.string(),
   state: z.enum(["pending_create", "active", "pending_revoke", "revoked", "failed"] as const),
-  purpose: z.enum(["operator_client", "partner_embedded_webmail"] as const),
+  purpose: z.enum(["operator_client"] as const),
   expires_at: z.string().nullable(),
   allowed_cidrs: z.array(z.string()),
   last_used_at: z.string().nullable(),
@@ -337,25 +337,6 @@ export const mailboxAppPasswordSchema = z.object({
 
 export const createdMailboxAppPasswordSchema = mailboxAppPasswordSchema.extend({
   secret: z.string(),
-});
-
-export const partnerMailboxCredentialSchema = createdMailboxAppPasswordSchema.extend({
-  operator_notified: z.boolean(),
-});
-
-export const partnerMailboxCredentialGrantSchema = z.object({
-  object: z.literal("partner_mailbox_credential_grant"),
-  id: z.string(),
-  partner_organization_id: z.string(),
-  organization_id: z.string(),
-  organization_name: z.string(),
-  external_reference: z.string(),
-  operator_email: z.string(),
-  mailbox_id: z.string(),
-  mailbox_address: z.string(),
-  disclosure_version: z.string(),
-  expires_at: z.string(),
-  consented_at: z.string(),
 });
 
 export const mailboxFolderSchema = z.object({
@@ -576,6 +557,7 @@ export const inboxAttachmentContentSchema = inboxAttachmentSchema
     object: z.literal("inbox_attachment_content"),
     mailbox_id: z.string(),
     message_id: z.string(),
+    text: z.string().optional(),
   });
 
 export const inboxMessagesSchema = z.object({
@@ -955,6 +937,8 @@ export const scheduledMessageSchema = z.object({
   object: z.literal("scheduled_message"),
   id: z.string(),
   scheduled_message_id: z.string(),
+  // Optional so this package keeps working against a server that predates the field.
+  status: z.enum(["scheduled", "settling"] as const).optional(),
   kind: z.enum(["scheduled", "undo"] as const),
   mailbox_id: z.string(),
   mailbox_address: z.string(),
@@ -1061,6 +1045,8 @@ export const webhookSchema = z.object({
   events: z.array(z.enum(WEBHOOK_EVENT_TYPES)),
   active: z.boolean(),
   description: z.string().nullable(),
+  mailbox_ids: z.array(z.string()).nullable(),
+  domain_ids: z.array(z.string()).nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -1133,14 +1119,6 @@ export const mailboxAppPasswordsOutputSchema = z.object({
   app_passwords: z.object({
     object: z.literal("list"),
     data: z.array(mailboxAppPasswordSchema),
-  }),
-});
-export const partnerMailboxCredentialOutputSchema = z.object({
-  credential: partnerMailboxCredentialSchema,
-});
-export const partnerMailboxCredentialGrantsOutputSchema = z.object({
-  grants: z.object({
-    data: z.array(partnerMailboxCredentialGrantSchema),
   }),
 });
 export const mailboxFolderOutputSchema = z.object({ folder: mailboxFolderSchema });
@@ -2074,10 +2052,19 @@ export const webhookEventSchema = z.enum(WEBHOOK_EVENT_TYPES);
 export const webhookDeliveryStatusSchema = z.enum(WEBHOOK_DELIVERY_STATUSES);
 export const listWebhooksInputSchema = paginationInputSchema;
 export const listMembersInputSchema = paginationInputSchema;
+const webhookScopeIdsInputSchema = z.array(idSchema).max(100).nullable();
 export const createWebhookInputSchema = z.object({
   url: publicHttpsUrlSchema,
   events: z.array(webhookEventSchema).min(1).max(WEBHOOK_EVENT_TYPES.length),
   description: noControlString(500, "description").optional(),
+  mailbox_ids: webhookScopeIdsInputSchema
+    .optional()
+    .describe(
+      "Only deliver events for these mailbox IDs (plus mailboxes of domain_ids). Omit for every mailbox. Organization events are always delivered.",
+    ),
+  domain_ids: webhookScopeIdsInputSchema
+    .optional()
+    .describe("Only deliver events for these domain IDs and their mailboxes."),
   idempotency_key: idempotencyKeySchema,
 });
 export const updateWebhookInputSchema = z
@@ -2087,6 +2074,12 @@ export const updateWebhookInputSchema = z
     events: z.array(webhookEventSchema).min(1).max(WEBHOOK_EVENT_TYPES.length).optional(),
     description: noControlString(500, "description").nullable().optional(),
     active: z.boolean().optional(),
+    mailbox_ids: webhookScopeIdsInputSchema
+      .optional()
+      .describe("Replace the mailbox filter. Null or [] clears it."),
+    domain_ids: webhookScopeIdsInputSchema
+      .optional()
+      .describe("Replace the domain filter. Null or [] clears it."),
     idempotency_key: idempotencyKeySchema,
   })
   .refine(
@@ -2094,7 +2087,9 @@ export const updateWebhookInputSchema = z
       value.url !== undefined ||
       value.events !== undefined ||
       value.description !== undefined ||
-      value.active !== undefined,
+      value.active !== undefined ||
+      value.mailbox_ids !== undefined ||
+      value.domain_ids !== undefined,
     {
       message: "Provide at least one webhook field to update.",
     },
@@ -3414,102 +3409,4 @@ export const updateBookingPageInputSchema = z.object({
     ),
   active: z.boolean().optional(),
   idempotency_key: idempotencyKeySchema,
-});
-
-// --- Partner beta ---
-
-export const partnerOrganizationSchema = z.object({
-  object: z.literal("partner_organization"),
-  id: z.string(),
-  organization_id: z.string(),
-  name: z.string(),
-  external_reference: z.string(),
-  owner_email: z.string(),
-  owner_user_id: z.string().nullable(),
-  status: z.enum(["pending_owner", "active", "suspended", "offboarding", "disconnected"]),
-  data_classification: z.enum(["internal_test", "customer"]),
-  mailbox_limit: z.number().int(),
-  delegated_permissions: z.array(z.string()),
-  owner_accepted_at: z.string().nullable(),
-  activated_at: z.string().nullable(),
-  suspended_at: z.string().nullable(),
-  disconnected_at: z.string().nullable(),
-  created_at: z.string(),
-  updated_at: z.string(),
-});
-
-export const partnerOrganizationOutputSchema = z.object({
-  organization: partnerOrganizationSchema,
-});
-export const createdPartnerOrganizationSchema = partnerOrganizationSchema.extend({
-  ownership_invitation: z
-    .object({
-      object: z.literal("partner_ownership_invitation"),
-      owner_email: z.string(),
-      email_sent: z.boolean(),
-      expires_at: z.string(),
-    })
-    .nullable(),
-});
-export const createdPartnerOrganizationOutputSchema = z.object({
-  organization: createdPartnerOrganizationSchema,
-});
-export const partnerOrganizationsOutputSchema = z.object({
-  data: z.array(partnerOrganizationSchema),
-});
-export const partnerInvitationOutputSchema = z.object({
-  invitation: z.object({
-    object: z.literal("partner_ownership_invitation"),
-    owner_email: z.string(),
-    email_sent: z.boolean(),
-    expires_at: z.string(),
-  }),
-});
-export const partnerUsageOutputSchema = z.object({
-  usage: z.object({
-    object: z.literal("partner_usage"),
-    period_start: z.string(),
-    period_end: z.string(),
-    closed_through: z.string().nullable(),
-    active_children: z.number().int(),
-    active_mailboxes: z.number().int(),
-    child_active_seconds: z.number().int(),
-    mailbox_active_seconds: z.number().int(),
-    child_subtotal: z.number().int(),
-    mailbox_subtotal: z.number().int(),
-    minimum_shortfall: z.number().int(),
-    projected_total: z.number().int(),
-    currency: z.string(),
-  }),
-});
-
-export const createPartnerOrganizationInputSchema = z.object({
-  name: noControlString(120, "name").min(1),
-  external_reference: noControlString(200, "external reference").min(1),
-  owner_email: emailSchema,
-  mailbox_limit: z.number().int().min(1).max(50).default(3),
-  data_classification: z.enum(["internal_test", "customer"]).default("customer"),
-  idempotency_key: idempotencyKeySchema,
-});
-export const partnerOrganizationByIdInputSchema = z.object({
-  id: idSchema.describe("Partner organization relationship ID."),
-});
-export const updatePartnerOrganizationInputSchema = partnerOrganizationByIdInputSchema
-  .extend({
-    name: noControlString(120, "name").min(1).optional(),
-    mailbox_limit: z.number().int().min(1).max(50).optional(),
-    idempotency_key: idempotencyKeySchema,
-  })
-  .refine((value) => value.name !== undefined || value.mailbox_limit !== undefined, {
-    message: "Provide name or mailbox_limit.",
-  });
-export const resendPartnerInvitationInputSchema = partnerOrganizationByIdInputSchema.extend({
-  owner_email: emailSchema.optional(),
-  idempotency_key: idempotencyKeySchema,
-});
-export const consumePartnerMailboxCredentialGrantInputSchema = z.object({
-  grant_id: idSchema.describe("Single-use mailbox credential grant ID."),
-  name: noControlString(100, "name").trim().min(1).optional(),
-  expires_at: z.iso.datetime().optional(),
-  allowed_cidrs: z.array(appPasswordCidrInputSchema).max(20).optional(),
 });

@@ -39,7 +39,6 @@ async function main(): Promise<void> {
   const client = new ShipmailClient({
     apiKey: config.apiKey,
     ...(config.baseUrl ? { baseUrl: config.baseUrl } : {}),
-    ...(config.organizationId ? { organizationId: config.organizationId } : {}),
     defaultHeaders: {
       "User-Agent": `shipmail-mcp/${VERSION}`,
       "X-Shipmail-Client": "mcp",

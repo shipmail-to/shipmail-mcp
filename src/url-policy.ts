@@ -154,6 +154,8 @@ export function isPublicHttpsUrl(rawUrl: string): boolean {
   if (host.startsWith("[") && host.endsWith("]")) {
     host = host.slice(1, -1);
   }
+  // "localhost." resolves like "localhost", so a trailing dot must not bypass the name checks.
+  host = host.replace(/\.$/, "");
   if (host.length === 0) return false;
   for (const pattern of PRIVATE_HOST_NAME_PATTERNS) {
     if (pattern.test(host)) return false;

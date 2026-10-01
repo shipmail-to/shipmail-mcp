@@ -877,11 +877,6 @@
       }
     },
     "/domains": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/DelegatedOrganizationId"
-        }
-      ],
       "post": {
         "operationId": "createDomain",
         "summary": "Create a domain",
@@ -1041,13 +1036,16 @@
       "delete": {
         "operationId": "deleteDomain",
         "summary": "Delete a domain",
-        "description": "Permanently delete a domain and all associated mailboxes.",
+        "description": "Permanently delete a domain and all associated mailboxes. Returns 409 when the domain is still in use (aliases, catch-all, delivery routes, a sending identity) or has received emails that nobody has read yet; delete such a domain from the dashboard to review them.",
         "tags": ["Domains"],
         "x-rate-limit-tier": "write",
         "x-scope": "domains:write",
         "responses": {
           "204": {
             "description": "Domain deleted."
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -1249,15 +1247,10 @@
       }
     },
     "/mailboxes": {
-      "parameters": [
-        {
-          "$ref": "#/components/parameters/DelegatedOrganizationId"
-        }
-      ],
       "post": {
         "operationId": "createMailbox",
         "summary": "Create a mailbox",
-        "description": "Create a new mailbox on a verified domain.",
+        "description": "Create a new mailbox on a verified domain. Setting `password` also requires `mailbox_credentials:write`; `generate_password` needs only `mailboxes:write`. API keys created before 2026-09-29 may still set `password` with `mailboxes:write` alone; that exception is deprecated and will be removed.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
@@ -1445,7 +1438,7 @@
       "post": {
         "operationId": "suspendMailbox",
         "summary": "Suspend a mailbox",
-        "description": "Add a manual suspension. Authentication, sending, receiving, inbox rules, and Assistant automation execution are blocked. Billing and security suspension reasons remain independent.",
+        "description": "Add a manual suspension. Authentication, sending, receiving, inbox rules, and Assistant automation execution are blocked. Billing, security, and abuse suspension reasons remain independent.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
@@ -1481,7 +1474,7 @@
       "post": {
         "operationId": "resumeMailbox",
         "summary": "Resume a mailbox",
-        "description": "Remove only the manual suspension. Billing, security, organization reputation, and AWS restrictions are not cleared.",
+        "description": "Remove only the manual suspension. Billing, security, abuse, organization reputation, and AWS restrictions are not cleared.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
@@ -1517,7 +1510,7 @@
       "get": {
         "operationId": "listMailboxAppPasswords",
         "summary": "List mailbox app passwords",
-        "description": "List revocable app-password metadata for one mailbox. Secret values are never returned. Delegated partner organization headers are not accepted.",
+        "description": "List revocable app-password metadata for one mailbox. Secret values are never returned.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailbox_credentials:read",
@@ -1906,7 +1899,7 @@
       "patch": {
         "operationId": "resetMailboxPassword",
         "summary": "Reset mailbox password",
-        "description": "Reset the login password for a mailbox.",
+        "description": "Reset the login password for a mailbox. Requires both `mailboxes:write` and `mailbox_credentials:write`. API keys created before 2026-09-29 may still use `mailboxes:write` alone; that exception is deprecated and will be removed.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
@@ -3066,6 +3059,16 @@
           "404": {
             "$ref": "#/components/responses/NotFoundError"
           },
+          "409": {
+            "description": "The scheduled message is `settling`: a send attempt may already have gone out and Shipmail is checking whether it did, so it cannot be cancelled now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "422": {
             "$ref": "#/components/responses/ValidationError"
           }
@@ -3335,7 +3338,7 @@
       "post": {
         "operationId": "createWebhook",
         "summary": "Create a webhook",
-        "description": "Register a webhook endpoint to receive event notifications. Maximum 10 webhooks per account. The secret is only returned at creation time.",
+        "description": "Register a webhook endpoint to receive event notifications. Maximum 10 webhooks per account. The secret is only returned at creation time. Pass `mailbox_ids` or `domain_ids` to receive mailbox and domain events for only those resources; unknown IDs are rejected with a 422 whose details code is `invalid_mailbox_ids` or `invalid_domain_ids`.",
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "write",
         "x-scope": "webhooks:write",
@@ -6966,465 +6969,6 @@
           }
         }
       }
-    },
-    "/partner/organizations": {
-      "get": {
-        "operationId": "listPartnerOrganizations",
-        "summary": "List partner organizations",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "read",
-        "x-scope": "partner:organizations:read",
-        "responses": {
-          "200": {
-            "description": "Operator organizations.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerOrganizationList"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationError"
-          },
-          "403": {
-            "$ref": "#/components/responses/AuthorizationError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      },
-      "post": {
-        "operationId": "createPartnerOrganization",
-        "summary": "Create an operator-owned organization",
-        "description": "Creates the isolated organization and emails an ownership invitation. Domains and mailboxes are provisioned separately after ownership acceptance.",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "write",
-        "x-scope": "partner:organizations:write",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePartnerOrganizationRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Existing organization returned for an idempotent replay.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatedPartnerOrganization"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Organization and ownership invitation created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatedPartnerOrganization"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationError"
-          },
-          "403": {
-            "$ref": "#/components/responses/AuthorizationError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      }
-    },
-    "/partner/organizations/{id}": {
-      "get": {
-        "operationId": "getPartnerOrganization",
-        "summary": "Get a partner organization",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "read",
-        "x-scope": "partner:organizations:read",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ResourceId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Partner organization.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerOrganization"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      },
-      "patch": {
-        "operationId": "updatePartnerOrganization",
-        "summary": "Update a partner organization",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "write",
-        "x-scope": "partner:organizations:write",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ResourceId"
-          },
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePartnerOrganizationRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated partner organization.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerOrganization"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      },
-      "delete": {
-        "operationId": "offboardPartnerOrganization",
-        "summary": "Start non-destructive offboarding",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "write",
-        "x-scope": "partner:organizations:write",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ResourceId"
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Offboarding started.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerOrganization"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      }
-    },
-    "/partner/organizations/{id}/ownership-invitations": {
-      "post": {
-        "operationId": "resendPartnerOwnershipInvitation",
-        "summary": "Resend the ownership invitation",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "write",
-        "x-scope": "partner:organizations:write",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ResourceId"
-          },
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "owner_email": {
-                    "type": "string",
-                    "format": "email"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "New invitation issued.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerOwnershipInvitation"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      }
-    },
-    "/partner/organizations/{id}/suspend": {
-      "post": {
-        "operationId": "suspendPartnerOrganization",
-        "summary": "Suspend outbound sending for an operator",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "write",
-        "x-scope": "partner:organizations:write",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ResourceId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Sending suspended; inbound mail and storage continue.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerOrganization"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      }
-    },
-    "/partner/organizations/{id}/resume": {
-      "post": {
-        "operationId": "resumePartnerOrganization",
-        "summary": "Resume partner-managed outbound sending",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "write",
-        "x-scope": "partner:organizations:write",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ResourceId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Partner suspension removed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerOrganization"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      }
-    },
-    "/partner/mailbox-credential-grants": {
-      "get": {
-        "operationId": "listPartnerMailboxCredentialGrants",
-        "summary": "List pending mailbox credential grants",
-        "description": "List active, unexpired mailbox approvals created by operator owners. Returned metadata never includes an app-password secret.",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "read",
-        "x-scope": "partner:mailbox_credentials:issue",
-        "responses": {
-          "200": {
-            "description": "Pending operator approvals.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["object", "data"],
-                  "properties": {
-                    "object": {
-                      "type": "string",
-                      "const": "list"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/PartnerMailboxCredentialGrant"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationError"
-          },
-          "403": {
-            "$ref": "#/components/responses/AuthorizationError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      }
-    },
-    "/partner/mailbox-credential-grants/{grant_id}/consume": {
-      "post": {
-        "operationId": "consumePartnerMailboxCredentialGrant",
-        "summary": "Consume a mailbox credential grant",
-        "description": "Consume an active operator-approved, single-use grant and create an embedded-webmail app password. The operator is notified. The secret is returned exactly once and is never stored by Shipmail. Idempotency-Key is rejected because replaying a cached plaintext secret would violate the one-time-secret guarantee.",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "write",
-        "x-scope": "partner:mailbox_credentials:issue",
-        "parameters": [
-          {
-            "name": "grant_id",
-            "in": "path",
-            "required": true,
-            "description": "Single-use mailbox credential grant ID.",
-            "schema": {
-              "type": "string",
-              "pattern": "^pcg_[0-9a-z]+$"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConsumePartnerMailboxCredentialGrantRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Credential created. Save the secret now.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerMailboxCredential"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationError"
-          },
-          "403": {
-            "$ref": "#/components/responses/AuthorizationError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          },
-          "409": {
-            "$ref": "#/components/responses/ConflictError"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      }
-    },
-    "/partner/usage": {
-      "get": {
-        "operationId": "getPartnerUsage",
-        "summary": "Get current partner usage",
-        "tags": ["Partner Beta"],
-        "x-rate-limit-tier": "read",
-        "x-scope": "partner:usage:read",
-        "responses": {
-          "200": {
-            "description": "Consolidated current-month usage and projected charge in cents.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerUsage"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationError"
-          },
-          "403": {
-            "$ref": "#/components/responses/AuthorizationError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          }
-        }
-      }
     }
   },
   "components": {
@@ -7494,16 +7038,6 @@
           "maxLength": 255
         }
       },
-      "DelegatedOrganizationId": {
-        "name": "X-Shipmail-Organization-Id",
-        "in": "header",
-        "required": false,
-        "description": "Invite-only partner beta. Selects an active operator organization on paths that include this parameter. Requires partner:organizations:access and the endpoint's normal scope. Message content, credentials, exports, billing, and account routes do not accept delegated access.",
-        "schema": {
-          "type": "string",
-          "format": "uuid"
-        }
-      },
       "InboxThreadId": {
         "name": "thread_id",
         "in": "path",
@@ -7528,376 +7062,6 @@
       }
     },
     "schemas": {
-      "PartnerOrganization": {
-        "type": "object",
-        "required": [
-          "object",
-          "id",
-          "organization_id",
-          "name",
-          "external_reference",
-          "owner_email",
-          "owner_user_id",
-          "status",
-          "data_classification",
-          "mailbox_limit",
-          "delegated_permissions",
-          "owner_accepted_at",
-          "activated_at",
-          "suspended_at",
-          "disconnected_at",
-          "created_at",
-          "updated_at"
-        ],
-        "properties": {
-          "object": {
-            "const": "partner_organization"
-          },
-          "id": {
-            "type": "string"
-          },
-          "organization_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "external_reference": {
-            "type": "string"
-          },
-          "owner_email": {
-            "type": "string",
-            "format": "email"
-          },
-          "owner_user_id": {
-            "type": ["string", "null"]
-          },
-          "status": {
-            "type": "string",
-            "enum": ["pending_owner", "active", "suspended", "offboarding", "disconnected"]
-          },
-          "data_classification": {
-            "type": "string",
-            "enum": ["internal_test", "customer"]
-          },
-          "mailbox_limit": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 50
-          },
-          "delegated_permissions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "owner_accepted_at": {
-            "type": ["string", "null"],
-            "format": "date-time"
-          },
-          "activated_at": {
-            "type": ["string", "null"],
-            "format": "date-time"
-          },
-          "suspended_at": {
-            "type": ["string", "null"],
-            "format": "date-time"
-          },
-          "disconnected_at": {
-            "type": ["string", "null"],
-            "format": "date-time"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "PartnerOrganizationList": {
-        "type": "object",
-        "required": ["data"],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PartnerOrganization"
-            }
-          }
-        }
-      },
-      "CreatedPartnerOrganization": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/PartnerOrganization"
-          },
-          {
-            "type": "object",
-            "required": ["ownership_invitation"],
-            "properties": {
-              "ownership_invitation": {
-                "oneOf": [
-                  {
-                    "$ref": "#/components/schemas/PartnerOwnershipInvitation"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      },
-      "CreatePartnerOrganizationRequest": {
-        "type": "object",
-        "required": [
-          "name",
-          "external_reference",
-          "owner_email",
-          "mailbox_limit",
-          "data_classification"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "external_reference": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "owner_email": {
-            "type": "string",
-            "format": "email"
-          },
-          "mailbox_limit": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 50
-          },
-          "data_classification": {
-            "type": "string",
-            "enum": ["internal_test", "customer"]
-          }
-        }
-      },
-      "UpdatePartnerOrganizationRequest": {
-        "type": "object",
-        "minProperties": 1,
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "mailbox_limit": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 50
-          }
-        }
-      },
-      "PartnerOwnershipInvitation": {
-        "type": "object",
-        "required": ["object", "owner_email", "email_sent", "expires_at"],
-        "properties": {
-          "object": {
-            "const": "partner_ownership_invitation"
-          },
-          "owner_email": {
-            "type": "string",
-            "format": "email"
-          },
-          "email_sent": {
-            "type": "boolean"
-          },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ConsumePartnerMailboxCredentialGrantRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100,
-            "default": "Embedded webmail"
-          },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Optional expiry. Defaults to 90 days and cannot exceed one year."
-          },
-          "allowed_cidrs": {
-            "type": "array",
-            "maxItems": 20,
-            "items": {
-              "type": "string",
-              "description": "IPv4 or IPv6 CIDR range."
-            }
-          }
-        }
-      },
-      "PartnerMailboxCredentialGrant": {
-        "type": "object",
-        "required": [
-          "object",
-          "id",
-          "partner_organization_id",
-          "organization_id",
-          "organization_name",
-          "external_reference",
-          "operator_email",
-          "mailbox_id",
-          "mailbox_address",
-          "disclosure_version",
-          "expires_at",
-          "consented_at"
-        ],
-        "properties": {
-          "object": {
-            "type": "string",
-            "const": "partner_mailbox_credential_grant"
-          },
-          "id": {
-            "type": "string",
-            "pattern": "^pcg_[0-9a-z]+$"
-          },
-          "partner_organization_id": {
-            "type": "string",
-            "pattern": "^pch_[0-9a-z]+$"
-          },
-          "organization_id": {
-            "type": "string"
-          },
-          "organization_name": {
-            "type": "string"
-          },
-          "external_reference": {
-            "type": "string"
-          },
-          "operator_email": {
-            "type": "string",
-            "format": "email"
-          },
-          "mailbox_id": {
-            "type": "string"
-          },
-          "mailbox_address": {
-            "type": "string",
-            "format": "email"
-          },
-          "disclosure_version": {
-            "type": "string"
-          },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "consented_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "PartnerMailboxCredential": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/CreatedMailboxAppPassword"
-          },
-          {
-            "type": "object",
-            "required": ["operator_notified"],
-            "properties": {
-              "operator_notified": {
-                "type": "boolean",
-                "description": "Whether the operator notification email was accepted for delivery."
-              }
-            }
-          }
-        ]
-      },
-      "PartnerUsage": {
-        "type": "object",
-        "required": [
-          "object",
-          "period_start",
-          "period_end",
-          "closed_through",
-          "active_children",
-          "active_mailboxes",
-          "child_active_seconds",
-          "mailbox_active_seconds",
-          "child_subtotal",
-          "mailbox_subtotal",
-          "minimum_shortfall",
-          "projected_total",
-          "currency"
-        ],
-        "properties": {
-          "object": {
-            "const": "partner_usage"
-          },
-          "period_start": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "period_end": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "closed_through": {
-            "type": ["string", "null"],
-            "format": "date"
-          },
-          "active_children": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "active_mailboxes": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "child_active_seconds": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "mailbox_active_seconds": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "child_subtotal": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "mailbox_subtotal": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "minimum_shortfall": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "projected_total": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "currency": {
-            "type": "string",
-            "pattern": "^[a-z]{3}$"
-          }
-        }
-      },
       "RecurrenceNDay": {
         "type": "object",
         "required": ["day"],
@@ -9503,7 +8667,7 @@
             "description": "Independent reasons currently keeping the mailbox suspended.",
             "items": {
               "type": "string",
-              "enum": ["billing", "manual", "security"]
+              "enum": ["billing", "manual", "security", "abuse"]
             }
           },
           "auto_reply": {
@@ -9717,7 +8881,7 @@
           },
           "purpose": {
             "type": "string",
-            "enum": ["operator_client", "partner_embedded_webmail"]
+            "enum": ["operator_client"]
           },
           "expires_at": {
             "type": ["string", "null"],
@@ -10862,6 +10026,8 @@
           "events",
           "active",
           "description",
+          "mailbox_ids",
+          "domain_ids",
           "created_at",
           "updated_at"
         ],
@@ -10888,6 +10054,16 @@
           },
           "description": {
             "type": ["string", "null"]
+          },
+          "mailbox_ids": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "description": "Mailboxes this webhook is limited to, or null. See Scoping in the webhooks guide."
+          },
+          "domain_ids": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "description": "Domains this webhook is limited to, or null. When both lists are null the webhook receives events for every mailbox."
           },
           "created_at": {
             "type": "string",
@@ -10996,7 +10172,11 @@
           "org.reputation_warning",
           "org.sending_throttled",
           "org.sending_suspended",
-          "org.reputation_recovered"
+          "org.reputation_recovered",
+          "reply.overdue",
+          "conversation.needs_action",
+          "calendar.event_starting",
+          "booking.created"
         ]
       },
       "WebhookEventType": {
@@ -11016,7 +10196,11 @@
           "org.reputation_warning",
           "org.sending_throttled",
           "org.sending_suspended",
-          "org.reputation_recovered"
+          "org.reputation_recovered",
+          "reply.overdue",
+          "conversation.needs_action",
+          "calendar.event_starting",
+          "booking.created"
         ]
       },
       "VerificationResult": {
@@ -11269,14 +10453,14 @@
           "password": {
             "type": "string",
             "format": "password",
-            "description": "Initial mailbox password. Must include lowercase, uppercase, and numeric characters; common passwords are rejected. It is never returned by the API. Delegated partner requests cannot set this field.",
+            "description": "Initial mailbox password. Must include lowercase, uppercase, and numeric characters; common passwords are rejected. It is never returned by the API.",
             "minLength": 8,
             "maxLength": 128
           },
           "generate_password": {
             "type": "boolean",
             "const": true,
-            "description": "Generate a strong primary password on the server and never return it. Required for delegated partner mailbox provisioning; the operator can later set their own password."
+            "description": "Generate a strong primary password on the server and never return it. The operator can later set their own password."
           },
           "display_name": {
             "type": "string",
@@ -11574,6 +10758,11 @@
           "scheduled_message_id": {
             "type": "string",
             "description": "Internal scheduled lifecycle row ID."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["scheduled", "settling"],
+            "description": "`scheduled` while the message waits for its send time. `settling` when a send attempt may already have gone out and Shipmail is checking whether it did: the message cannot be updated or cancelled until that resolves, and it then leaves the scheduled list as sent, or returns as `scheduled`. Treat a value you do not recognize as not editable. Absent from responses of servers that predate the field; treat absence as `scheduled`."
           },
           "kind": {
             "type": "string",
@@ -11920,6 +11109,18 @@
             "type": "string",
             "description": "Human-readable description.",
             "maxLength": 500
+          },
+          "mailbox_ids": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "maxItems": 100,
+            "description": "Only deliver events for these mailboxes (plus mailboxes of `domain_ids`). Omit or null for every mailbox. Organization events are always delivered."
+          },
+          "domain_ids": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "maxItems": 100,
+            "description": "Only deliver events for these domains and their mailboxes. Omit or null for every domain."
           }
         }
       },
@@ -11947,6 +11148,18 @@
           "active": {
             "type": "boolean",
             "description": "Whether the webhook is active."
+          },
+          "mailbox_ids": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "maxItems": 100,
+            "description": "Replace the mailbox filter. Omit to leave it unchanged; null or [] clears it."
+          },
+          "domain_ids": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "maxItems": 100,
+            "description": "Replace the domain filter. Omit to leave it unchanged; null or [] clears it."
           }
         }
       },
@@ -15854,10 +15067,6 @@
     {
       "name": "Newsletters",
       "description": "Create, test, and schedule newsletter campaigns."
-    },
-    {
-      "name": "Partner Beta",
-      "description": "Invite-only operator organization lifecycle, delegated infrastructure, and consolidated usage. Commercial terms require a signed partner agreement."
     }
   ]
 }

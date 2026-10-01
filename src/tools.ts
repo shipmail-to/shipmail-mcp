@@ -44,6 +44,7 @@ import {
   MCP_RATE_LIMIT_MARKER,
   MCP_SCHEMA_VIOLATION_MARKER,
 } from "./result.js";
+import type { LongStringField } from "./sanitize.js";
 import {
   acknowledgmentOutputSchema,
   addSubscriberInputSchema,
@@ -67,14 +68,12 @@ import {
   calendarEventOutputSchema,
   calendarEventsOutputSchema,
   composeMessageWithFileInputSchema,
-  consumePartnerMailboxCredentialGrantInputSchema,
   createAudienceInputSchema,
   createAutomationInputSchema,
   createBookingPageInputSchema,
   createCalendarEventInputSchema,
   createdMailboxAppPasswordOutputSchema,
   createDomainInputSchema,
-  createdPartnerOrganizationOutputSchema,
   createInboxDraftInputSchema,
   createInboxReplyDraftInputSchema,
   createMailboxAppPasswordInputSchema,
@@ -85,7 +84,6 @@ import {
   createMailboxRuleInputSchema,
   createNewsletterFromChangelogInputSchema,
   createNewsletterInputSchema,
-  createPartnerOrganizationInputSchema,
   createReplyScanInputSchema,
   createWebhookInputSchema,
   deleteCalendarEventInputSchema,
@@ -173,13 +171,6 @@ import {
   newsletterSenderIdentitiesOutputSchema,
   newslettersOutputSchema,
   newsletterTestSendOutputSchema,
-  partnerInvitationOutputSchema,
-  partnerMailboxCredentialGrantsOutputSchema,
-  partnerMailboxCredentialOutputSchema,
-  partnerOrganizationByIdInputSchema,
-  partnerOrganizationOutputSchema,
-  partnerOrganizationsOutputSchema,
-  partnerUsageOutputSchema,
   prepareNewsletterAssetUploadInputSchema,
   prepareStagedAttachmentUploadInputSchema,
   previewNewsletterInputSchema,
@@ -193,7 +184,6 @@ import {
   replyToInboxThreadInputSchema,
   replyToMessageInputSchema,
   replyToThreadInputSchema,
-  resendPartnerInvitationInputSchema,
   resetPasswordInputSchema,
   restoreMailboxImportInputSchema,
   resubscribeSubscriberInputSchema,
@@ -229,7 +219,6 @@ import {
   updateMailboxInputSchema,
   updateMailboxRuleInputSchema,
   updateNewsletterInputSchema,
-  updatePartnerOrganizationInputSchema,
   updateScheduledMessageInputSchema,
   updateSubscriberInputSchema,
   updateWebhookInputSchema,
@@ -349,13 +338,6 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_create_automation: 20,
   shipmail_update_automation: 20,
   shipmail_run_automation: 20,
-  shipmail_create_partner_organization: 20,
-  shipmail_update_partner_organization: 50,
-  shipmail_resend_partner_ownership_invitation: 20,
-  shipmail_suspend_partner_organization: 20,
-  shipmail_resume_partner_organization: 20,
-  shipmail_offboard_partner_organization: 10,
-  shipmail_consume_partner_mailbox_credential_grant: 20,
 };
 // Hard ceiling on total tool calls per session, regardless of which tools are
 // hit. Catches runaway pagination loops on read tools that don't have explicit
@@ -410,13 +392,36 @@ class OutputSchemaViolation extends Error {
 }
 
 const MEDIA_TYPE_PATTERN = /^[a-z0-9][a-z0-9!#$&^_.+-]{0,126}\/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}$/i;
+const CHARSET_PARAMETER_PATTERN =
+  /(?:^|;)\s*charset\s*=\s*(?:"([a-z0-9][a-z0-9._-]{0,39})"|([a-z0-9][a-z0-9._-]{0,39}))(?:\s*;|$)/i;
 // Base64 expands bytes by one third. Keep enough headroom for the hosted
 // response limit, the JSON-RPC envelope, and attachment metadata.
 const MAX_MCP_ATTACHMENT_BYTES = 3 * 1024 * 1024;
+// The size a maximum binary attachment already produces as base64, plus envelope
+// headroom. Decoded text appears twice in a result (content and structuredContent),
+// each JSON-escaped, so it is checked against this after serialization.
+const MAX_MCP_ATTACHMENT_RESPONSE_BYTES = Math.ceil((MAX_MCP_ATTACHMENT_BYTES * 4) / 3) + 64 * 1024;
 
 function normalizeAttachmentContentType(contentType: string): string {
   const mediaType = contentType.split(";", 1)[0]?.trim().toLowerCase();
   return mediaType && MEDIA_TYPE_PATTERN.test(mediaType) ? mediaType : "application/octet-stream";
+}
+
+function isTextAttachment(contentType: string): boolean {
+  return normalizeAttachmentContentType(contentType).startsWith("text/");
+}
+
+function decodeTextAttachment(bytes: Uint8Array, contentType: string): string | null {
+  if (!isTextAttachment(contentType)) return null;
+
+  const charset = contentType.match(CHARSET_PARAMETER_PATTERN)?.slice(1).find(Boolean) ?? "utf-8";
+  try {
+    return new TextDecoder(charset, { fatal: true }).decode(bytes);
+  } catch {
+    // Preserve bytes as a binary resource when the declared charset is unsupported
+    // or the content is not valid in that charset. Do not silently replace bytes.
+    return null;
+  }
 }
 
 function attachmentResourceUri(mailboxId: string, messageId: string, partId: string): string {
@@ -564,6 +569,7 @@ export function registerTools(
     name: string,
     outputSchema: OutputValidator,
     body: () => Promise<unknown>,
+    longField?: LongStringField,
   ): Promise<CallToolResult> {
     const start = performance.now();
     try {
@@ -584,7 +590,7 @@ export function registerTools(
         throw new OutputSchemaViolation(name, issues);
       }
       logToolCall(name, performance.now() - start);
-      return jsonResult(parsed.data);
+      return jsonResult(parsed.data, longField);
     } catch (error) {
       if (error instanceof OutputSchemaViolation) {
         process.stderr.write(
@@ -1630,13 +1636,14 @@ export function registerTools(
       {
         title: "Read Mailbox Inbox Attachment",
         description:
-          "Fetch one attachment from an exact JMAP inbox message as an embedded MCP resource. The input uses the attachment part ID.",
+          "Fetch one attachment from an exact JMAP inbox message. Decodable text attachments are returned in attachment.text; other attachments are embedded resources. The input uses the attachment part ID.",
         inputSchema: readMailboxInboxAttachmentInputSchema,
         outputSchema: inboxAttachmentContentOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: true },
       },
       async ({ id, message_id, part_id }) => {
         let resource: EmbeddedResource | undefined;
+        let text: string | undefined;
         const result = await runTool(
           "shipmail_read_mailbox_inbox_attachment",
           inboxAttachmentContentOutputSchema,
@@ -1661,15 +1668,22 @@ export function registerTools(
             if (bytes.byteLength > MAX_MCP_ATTACHMENT_BYTES) {
               throw new ValidationError("Attachment exceeds the MCP read limit of 3 MB.");
             }
-            resource = {
-              type: "resource",
-              resource: {
-                uri: attachmentResourceUri(id, message.id, attachment.part_id),
-                mimeType: normalizeAttachmentContentType(attachment.content_type),
-                blob: Buffer.from(bytes).toString("base64"),
-              },
-              annotations: { audience: ["assistant"], priority: 1 },
-            };
+            // Clients such as Claude Code show only structuredContent, so text goes in the
+            // attachment object. jsonResult sanitizes it like any other tool output.
+            text = decodeTextAttachment(bytes, attachment.content_type) ?? undefined;
+            if (text === undefined) {
+              resource = {
+                type: "resource",
+                resource: {
+                  uri: attachmentResourceUri(id, message.id, attachment.part_id),
+                  mimeType: isTextAttachment(attachment.content_type)
+                    ? "application/octet-stream"
+                    : normalizeAttachmentContentType(attachment.content_type),
+                  blob: Buffer.from(bytes).toString("base64"),
+                },
+                annotations: { audience: ["assistant"], priority: 1 },
+              };
+            }
 
             return {
               attachment: {
@@ -1681,12 +1695,27 @@ export function registerTools(
                 name: attachment.name,
                 content_type: attachment.content_type,
                 size: bytes.byteLength,
+                ...(text !== undefined ? { text } : {}),
               },
             };
           },
+          { path: ["attachment", "text"], maxLength: MAX_MCP_ATTACHMENT_BYTES },
         );
-        if (result.isError || resource === undefined) return result;
-        return { ...result, content: [...result.content, resource] };
+        if (result.isError) return result;
+        if (resource !== undefined) return { ...result, content: [...result.content, resource] };
+        // Quotes, backslashes and control characters expand when escaped. Reject rather than
+        // silently truncate a result that exceeds the budget once serialized.
+        if (
+          text !== undefined &&
+          Buffer.byteLength(JSON.stringify(result), "utf8") > MAX_MCP_ATTACHMENT_RESPONSE_BYTES
+        ) {
+          return errorResult(
+            new ValidationError(
+              "Text attachment exceeds the MCP response budget after JSON encoding.",
+            ),
+          );
+        }
+        return result;
       },
     );
   });
@@ -2280,18 +2309,23 @@ export function registerTools(
       },
       async (args) =>
         runTool("shipmail_list_messages", messagesOutputSchema, async () => {
-          const params: ListMessagesParams = args.mailbox_id
+          const params: ListMessagesParams | undefined = args.mailbox_id
             ? {
                 mailbox_id: args.mailbox_id,
                 client_reference: args.client_reference,
                 cursor: args.cursor,
                 limit: args.limit,
               }
-            : {
-                client_reference: args.client_reference!,
-                cursor: args.cursor,
-                limit: args.limit,
-              };
+            : args.client_reference
+              ? {
+                  client_reference: args.client_reference,
+                  cursor: args.cursor,
+                  limit: args.limit,
+                }
+              : undefined;
+          if (!params) {
+            throw new Error("Provide mailbox_id or client_reference.");
+          }
           return client.messages.list(params);
         }),
     );
@@ -2717,7 +2751,7 @@ export function registerTools(
       {
         title: "Update Webhook",
         description:
-          "Update webhook URL, subscribed events, description, or active state. A URL change redirects future deliveries.",
+          "Update webhook URL, subscribed events, description, active state, or mailbox and domain filter. A URL change redirects future deliveries.",
         inputSchema: updateWebhookInputSchema,
         outputSchema: webhookOutputSchema,
         annotations: {
@@ -2734,11 +2768,15 @@ export function registerTools(
             events?: typeof args.events;
             description?: string | null;
             active?: boolean;
+            mailbox_ids?: string[] | null;
+            domain_ids?: string[] | null;
           } = {};
           if (args.url !== undefined) update.url = args.url;
           if (args.events !== undefined) update.events = args.events;
           if (args.description !== undefined) update.description = args.description;
           if (args.active !== undefined) update.active = args.active;
+          if (args.mailbox_ids !== undefined) update.mailbox_ids = args.mailbox_ids;
+          if (args.domain_ids !== undefined) update.domain_ids = args.domain_ids;
           return {
             webhook: await client.webhooks.update(args.id, update, mutationOptions(args)),
           };
@@ -4145,233 +4183,6 @@ export function registerTools(
           await client.bookingPages.delete(id);
           return { result: { ok: true, id } };
         }),
-    );
-  });
-
-  registerIfAllowed("shipmail_list_partner_organizations", () => {
-    server.registerTool(
-      "shipmail_list_partner_organizations",
-      {
-        title: "List Partner Organizations",
-        description: "List operator-owned organizations connected to the partner account.",
-        outputSchema: partnerOrganizationsOutputSchema,
-        annotations: { readOnlyHint: true, openWorldHint: false },
-      },
-      async () =>
-        runTool("shipmail_list_partner_organizations", partnerOrganizationsOutputSchema, () =>
-          client.partner.listOrganizations(),
-        ),
-    );
-  });
-
-  registerIfAllowed("shipmail_create_partner_organization", () => {
-    server.registerTool(
-      "shipmail_create_partner_organization",
-      {
-        title: "Create Partner Organization",
-        description:
-          "Create an operator organization and email its ownership invitation. No domain or mailbox is created.",
-        inputSchema: createPartnerOrganizationInputSchema,
-        outputSchema: createdPartnerOrganizationOutputSchema,
-        annotations: {
-          readOnlyHint: false,
-          destructiveHint: false,
-          idempotentHint: true,
-          openWorldHint: false,
-        },
-      },
-      async (args) =>
-        runTool(
-          "shipmail_create_partner_organization",
-          createdPartnerOrganizationOutputSchema,
-          async () => ({
-            organization: await client.partner.createOrganization(
-              stripIdempotencyKey(args),
-              mutationOptions(args),
-            ),
-          }),
-        ),
-    );
-  });
-
-  registerIfAllowed("shipmail_get_partner_organization", () => {
-    server.registerTool(
-      "shipmail_get_partner_organization",
-      {
-        title: "Get Partner Organization",
-        description: "Get one partner child relationship and its ownership state.",
-        inputSchema: partnerOrganizationByIdInputSchema,
-        outputSchema: partnerOrganizationOutputSchema,
-        annotations: { readOnlyHint: true, openWorldHint: false },
-      },
-      async ({ id }) =>
-        runTool("shipmail_get_partner_organization", partnerOrganizationOutputSchema, async () => ({
-          organization: await client.partner.getOrganization(id),
-        })),
-    );
-  });
-
-  registerIfAllowed("shipmail_update_partner_organization", () => {
-    server.registerTool(
-      "shipmail_update_partner_organization",
-      {
-        title: "Update Partner Organization",
-        description: "Update an operator organization name or mailbox allocation.",
-        inputSchema: updatePartnerOrganizationInputSchema,
-        outputSchema: partnerOrganizationOutputSchema,
-        annotations: {
-          readOnlyHint: false,
-          destructiveHint: false,
-          idempotentHint: true,
-          openWorldHint: false,
-        },
-      },
-      async (args) =>
-        runTool(
-          "shipmail_update_partner_organization",
-          partnerOrganizationOutputSchema,
-          async () => {
-            const { id, idempotency_key: _key, ...params } = args;
-            return {
-              organization: await client.partner.updateOrganization(
-                id,
-                params,
-                mutationOptions(args),
-              ),
-            };
-          },
-        ),
-    );
-  });
-
-  registerIfAllowed("shipmail_resend_partner_ownership_invitation", () => {
-    server.registerTool(
-      "shipmail_resend_partner_ownership_invitation",
-      {
-        title: "Resend Partner Ownership Invitation",
-        description: "Revoke the pending ownership link and email a new single-use link.",
-        inputSchema: resendPartnerInvitationInputSchema,
-        outputSchema: partnerInvitationOutputSchema,
-        annotations: {
-          readOnlyHint: false,
-          destructiveHint: false,
-          idempotentHint: true,
-          openWorldHint: true,
-        },
-      },
-      async (args) =>
-        runTool(
-          "shipmail_resend_partner_ownership_invitation",
-          partnerInvitationOutputSchema,
-          async () => ({
-            invitation: await client.partner.resendOwnershipInvitation(
-              args.id,
-              { owner_email: args.owner_email },
-              mutationOptions(args),
-            ),
-          }),
-        ),
-    );
-  });
-
-  for (const transition of ["suspend", "resume", "offboard"] as const) {
-    const toolName = `shipmail_${transition}_partner_organization`;
-    registerIfAllowed(toolName, () => {
-      server.registerTool(
-        toolName,
-        {
-          title: `${transition[0]?.toUpperCase() ?? ""}${transition.slice(1)} Partner Organization`,
-          description:
-            transition === "suspend"
-              ? "Suspend outbound sending for one operator organization. Inbound mail and storage continue."
-              : transition === "resume"
-                ? "Resume partner-managed outbound sending for one operator organization."
-                : "Start non-destructive offboarding and immediately remove delegated access.",
-          inputSchema: partnerOrganizationByIdInputSchema,
-          outputSchema: partnerOrganizationOutputSchema,
-          annotations: {
-            readOnlyHint: false,
-            destructiveHint: transition !== "resume",
-            idempotentHint: true,
-            openWorldHint: false,
-          },
-        },
-        async ({ id }) =>
-          runTool(toolName, partnerOrganizationOutputSchema, async () => ({
-            organization:
-              transition === "suspend"
-                ? await client.partner.suspendOrganization(id)
-                : transition === "resume"
-                  ? await client.partner.resumeOrganization(id)
-                  : await client.partner.offboardOrganization(id),
-          })),
-      );
-    });
-  }
-
-  registerIfAllowed("shipmail_consume_partner_mailbox_credential_grant", () => {
-    server.registerTool(
-      "shipmail_consume_partner_mailbox_credential_grant",
-      {
-        title: "Consume Partner Mailbox Credential Grant",
-        description:
-          "Consume a single-use grant and issue an embedded-webmail credential. The secret appears once and the operator receives a notification.",
-        inputSchema: consumePartnerMailboxCredentialGrantInputSchema,
-        outputSchema: partnerMailboxCredentialOutputSchema,
-        annotations: {
-          readOnlyHint: false,
-          destructiveHint: true,
-          idempotentHint: false,
-          openWorldHint: true,
-        },
-      },
-      async (args) =>
-        runTool(
-          "shipmail_consume_partner_mailbox_credential_grant",
-          partnerMailboxCredentialOutputSchema,
-          async () => ({
-            credential: await client.partner.consumeMailboxCredentialGrant(args.grant_id, {
-              ...(args.name ? { name: args.name } : {}),
-              ...(args.expires_at ? { expires_at: args.expires_at } : {}),
-              ...(args.allowed_cidrs ? { allowed_cidrs: args.allowed_cidrs } : {}),
-            }),
-          }),
-        ),
-    );
-  });
-
-  registerIfAllowed("shipmail_list_partner_mailbox_credential_grants", () => {
-    server.registerTool(
-      "shipmail_list_partner_mailbox_credential_grants",
-      {
-        title: "List Partner Mailbox Credential Grants",
-        description:
-          "List active ten-minute mailbox approvals created by operator owners. Grant metadata contains no app-password secret.",
-        outputSchema: partnerMailboxCredentialGrantsOutputSchema,
-        annotations: { readOnlyHint: true, openWorldHint: false },
-      },
-      async () =>
-        runTool(
-          "shipmail_list_partner_mailbox_credential_grants",
-          partnerMailboxCredentialGrantsOutputSchema,
-          async () => ({ grants: await client.partner.listMailboxCredentialGrants() }),
-        ),
-    );
-  });
-
-  registerIfAllowed("shipmail_get_partner_usage", () => {
-    server.registerTool(
-      "shipmail_get_partner_usage",
-      {
-        title: "Get Partner Usage",
-        description: "Get consolidated child and mailbox usage for the current UTC month.",
-        outputSchema: partnerUsageOutputSchema,
-        annotations: { readOnlyHint: true, openWorldHint: false },
-      },
-      async () =>
-        runTool("shipmail_get_partner_usage", partnerUsageOutputSchema, async () => ({
-          usage: await client.partner.usage(),
-        })),
     );
   });
 

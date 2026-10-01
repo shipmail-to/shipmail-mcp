@@ -30,6 +30,18 @@ describe("sanitizeString", () => {
     expect(sanitizeString("a‎b‏c؜d")).toBe("abcd");
   });
 
+  test("strips zero-width space, word joiner, BOM and Unicode tag characters", () => {
+    const hidden = "\u{E0001}\u{E0069}\u{E0067}\u{E006E}\u{E007F}";
+    expect(sanitizeString(`a\u200Bb\u2060c\uFEFFd${hidden}e`)).toBe("abcde");
+  });
+
+  test("keeps ZWNJ and ZWJ, which real text needs", () => {
+    const persian = "\u0645\u06CC\u200C\u062E\u0648\u0627\u0647\u0645";
+    const family = "\u{1F468}\u200D\u{1F469}\u200D\u{1F467}";
+    expect(sanitizeString(persian)).toBe(persian);
+    expect(sanitizeString(family)).toBe(family);
+  });
+
   test("truncates long strings with marker", () => {
     const long = "a".repeat(20_000);
     const out = sanitizeString(long, 100);

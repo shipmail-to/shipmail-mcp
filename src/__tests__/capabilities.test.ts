@@ -95,7 +95,6 @@ describe("MCP transport capability derivation", () => {
   });
 
   test("derives hosted OAuth permission groups from the hosted tool catalog", () => {
-    expect(MCP_HOSTED_OAUTH_PERMISSION_GROUP_NAMES).not.toContain("partner_admin");
     for (const group of MCP_HOSTED_OAUTH_PERMISSION_GROUP_NAMES) {
       expect(
         MCP_CAPABILITIES.some(

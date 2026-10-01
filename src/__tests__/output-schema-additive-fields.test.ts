@@ -34,7 +34,7 @@ const GRANTS: readonly HostedOrganizationGrant[] = [
 // separate path and would otherwise never be inspected.
 async function listTools() {
   const server = createShipmailMcpServer(
-    { apiKey: "sk_test", baseUrl: "https://shipmail.to/api/v1", organizationId: undefined },
+    { apiKey: "sk_test", baseUrl: "https://shipmail.to/api/v1" },
     EVERY_TOOL,
     GRANTS,
   );

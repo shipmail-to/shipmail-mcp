@@ -143,8 +143,7 @@ Cursor, VS Code, Windsurf, and other Streamable HTTP clients:
 
 The tool catalog follows the effective connection permissions. OAuth users manage those grants
 under **Settings → Connections**. Direct API-key and stdio users manage key scopes and resource
-constraints under **Developer → API keys**. Partner accounts can
-target a delegated child organization with the `X-Shipmail-Organization-Id` header.
+constraints under **Developer → API keys**.
 
 The sections below configure the same server locally over stdio.
 
@@ -272,7 +271,6 @@ All tools are namespaced with `shipmail_` to avoid collisions with peer MCP serv
 | Audiences                               | `shipmail_list_audiences`, `shipmail_get_audience`, `shipmail_create_audience`, `shipmail_update_audience`, `shipmail_delete_audience`, `shipmail_get_audience_feed`, `shipmail_update_audience_feed`, `shipmail_rotate_audience_feed`, `shipmail_revoke_audience_feed`, `shipmail_list_subscribers`, `shipmail_get_subscriber`, `shipmail_get_subscriber_by_email`, `shipmail_add_subscriber`, `shipmail_add_subscribers_batch`, `shipmail_update_subscriber`, `shipmail_unsubscribe_subscriber`, `shipmail_resubscribe_subscriber`, `shipmail_remove_subscriber`                                                                                                                                                                                                                                                                                                       |
 | Newsletters                             | `shipmail_list_newsletter_sender_identities`, `shipmail_list_newsletter_domains`, `shipmail_list_newsletter_assets`, `shipmail_upload_newsletter_asset_with_file` (hosted MCP Apps), `shipmail_prepare_newsletter_asset_upload`, `shipmail_register_newsletter_asset`, `shipmail_list_newsletters`, `shipmail_get_newsletter`, `shipmail_preview_newsletter`, `shipmail_create_newsletter`, `shipmail_create_newsletter_from_changelog`, `shipmail_update_newsletter`, `shipmail_run_newsletter_preflight`, `shipmail_send_newsletter_test`, `shipmail_schedule_newsletter`, `shipmail_cancel_newsletter`, `shipmail_resume_newsletter`                                                                                                                                                                                                                                  |
 | Cross-organization lists (hosted OAuth) | `shipmail_list_domains_across_organizations`, `shipmail_list_mailboxes_across_organizations`, `shipmail_list_webhooks_across_organizations`, `shipmail_list_suppressions_across_organizations`, `shipmail_list_newsletters_across_organizations`, `shipmail_list_newsletter_sender_identities_across_organizations`, `shipmail_list_newsletter_domains_across_organizations`, `shipmail_list_newsletter_assets_across_organizations`, `shipmail_list_audiences_across_organizations`, `shipmail_list_booking_pages_across_organizations`                                                                                                                                                                                                                                                                                                                                 |
-| Partner beta                            | `shipmail_list_partner_organizations`, `shipmail_create_partner_organization`, `shipmail_get_partner_organization`, `shipmail_update_partner_organization`, `shipmail_resend_partner_ownership_invitation`, `shipmail_suspend_partner_organization`, `shipmail_resume_partner_organization`, `shipmail_offboard_partner_organization`, `shipmail_list_partner_mailbox_credential_grants`, `shipmail_consume_partner_mailbox_credential_grant`, `shipmail_get_partner_usage`                                                                                                                                                                                                                                                                                                                                                                                              |
 
 Cross-organization list tools appear only on hosted OAuth connections with at least two
 organization grants. They return a success or failure section for every organization and paginate
@@ -296,10 +294,11 @@ and cancelled before dispatch begins.
 
 Received attachment contents are available through `shipmail_read_mailbox_inbox_attachment`. First
 fetch the exact inbox message, then pass its mailbox ID, message ID, and attachment `part_id`. The
-tool resolves the attachment metadata from that message and returns the bytes as an embedded MCP
-resource with the attachment's media type. Embedded reads are limited to 3 MB so the base64 payload
-stays within Shipmail's hosted and local MCP response budgets. Treat all attachment content as
-untrusted external data.
+tool resolves the attachment metadata from that message and returns the contents of decodable
+`text/*` attachments in `attachment.text` of the structured result. Other attachments are embedded MCP resources; unsupported or invalid text charsets are
+returned as binary resources so their bytes are preserved. Reads are limited to 3 MB so payloads stay
+within Shipmail's hosted and local MCP response budgets. Treat all attachment content as untrusted
+external data.
 
 In ChatGPT, `shipmail_compose_message_with_file` renders an MCP Apps review card for a
 conversation or library file. The card obtains a fresh ChatGPT download URL, hashes the exact
@@ -330,11 +329,9 @@ in Shipmail or any mail client. It needs only the `drafts:compose` scope.
 
 With an `sm_test_...` API key, send and reply tools accept `sandbox_outcome` and the sandbox inbound tool creates fake inbound mail. The API keeps test storage and events isolated and never delivers sandbox mail to real recipients.
 
-App-password creation, revocation, and partner grant consumption are destructive/high-risk tools.
-Creation and grant consumption return a live secret once; revocation disconnects that client
-immediately. Partner grant consumption requires the exact `partner:mailbox_credentials:issue`
-scope and an operator-approved one-time grant. App-password creation and grant consumption do not
-accept idempotency keys.
+App-password creation and revocation are destructive/high-risk tools. Creation returns a live
+secret once; revocation disconnects that client immediately. App-password creation does not accept
+idempotency keys.
 
 Use `shipmail_list_mailbox_rules` and `shipmail_get_mailbox_rule` with
 `shipmail_create_mailbox_rule`, `shipmail_update_mailbox_rule`, and `shipmail_delete_mailbox_rule`
@@ -374,23 +371,19 @@ Pre-built prompts the agent can use as guided workflows:
 
 ## Configuration
 
-| Variable                   | Required                         | Description                                                                                                                                                 |
-| -------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SHIPMAIL_API_KEY`         | Yes (or `SHIPMAIL_API_KEY_FILE`) | Shipmail API key (`sm_live_...`).                                                                                                                           |
-| `SHIPMAIL_API_KEY_FILE`    | No                               | Path to a file containing the API key. Takes precedence over `SHIPMAIL_API_KEY`. Reduces env-trace leak surface (Docker secrets, systemd `LoadCredential`). |
-| `SHIPMAIL_BASE_URL`        | No                               | Override the API base URL. Must be https on a `shipmail.to` host. Defaults to `https://shipmail.to/api/v1`.                                                 |
-| `SHIPMAIL_ORGANIZATION_ID` | No                               | Delegated child organization for an approved infrastructure-only MCP session.                                                                               |
-
-In a delegated partner session, call `shipmail_create_mailbox` with `generate_password: true`.
-Shipmail generates the primary credential and never returns it to the partner.
-| `SHIPMAIL_ALLOW_INSECURE_BASE_URL` | No | Set to `1` to permit a non-https or non-`shipmail.to` base URL. Local development only. |
-| `SHIPMAIL_MCP_DEBUG` | No | Set to `1` to include `request_id` and `status` in stderr tool-call logs. |
+| Variable                           | Required                         | Description                                                                                                                                                 |
+| ---------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SHIPMAIL_API_KEY`                 | Yes (or `SHIPMAIL_API_KEY_FILE`) | Shipmail API key (`sm_live_...`).                                                                                                                           |
+| `SHIPMAIL_API_KEY_FILE`            | No                               | Path to a file containing the API key. Takes precedence over `SHIPMAIL_API_KEY`. Reduces env-trace leak surface (Docker secrets, systemd `LoadCredential`). |
+| `SHIPMAIL_BASE_URL`                | No                               | Override the API base URL. Must be https on a `shipmail.to` host. Defaults to `https://shipmail.to/api/v1`.                                                 |
+| `SHIPMAIL_ALLOW_INSECURE_BASE_URL` | No                               | Set to `1` to permit a non-https or non-`shipmail.to` base URL. Local development only.                                                                     |
+| `SHIPMAIL_MCP_DEBUG`               | No                               | Set to `1` to include `request_id` and `status` in stderr tool-call logs.                                                                                   |
 
 ## Security
 
 - **Tool namespacing**: All tools are prefixed with `shipmail_` to avoid collisions with peer MCP servers in the same host.
 - **Structured outputs**: Successful tools return both text fallback content and structured MCP `structuredContent`.
-- **Idempotency**: Mutating tools accept an optional `idempotency_key`. When omitted, the server generates a fresh key per tool call. Supply your own key if a specific request must stay idempotent across MCP retries. Mailbox app-password creation and partner grant consumption are excluded because their one-time plaintext secrets must never be cached.
+- **Idempotency**: Mutating tools accept an optional `idempotency_key`. When omitted, the server generates a fresh key per tool call. Supply your own key if a specific request must stay idempotent across MCP retries. Mailbox app-password creation is excluded because its one-time plaintext secret must never be cached.
 - **Input sanitization**: Email content, addresses, and error text are stripped of ASCII control characters, DEL, and Unicode directional or BiDi markers (U+061C, U+200E/F, U+202A-E, U+2066-9). Long strings are truncated.
 - **Error redaction**: 5xx and unexpected Shipmail errors are redacted to a generic message; the original `request_id` is preserved for support. Generic `Error` thrown values (network errors, deserialization) are redacted to "Internal MCP error" before reaching the LLM. Detail lands on stderr.
 - **Circuit breaker**: Each session enforces per-tool rate limits and a hard total-call ceiling as a runaway-agent guard. These are not abuse controls. Real abuse limits live at the API per API key. Restart the server to reset.

@@ -1,6 +1,7 @@
 import type { CallToolResult } from "@modelcontextprotocol/server";
 import { ReconciliationRequiredError, ShipmailError, ValidationError } from "shipmail";
 
+import type { LongStringField } from "./sanitize.js";
 import { sanitizeRecord, sanitizeString, sanitizeValue } from "./sanitize.js";
 
 const MAX_ERROR_MESSAGE_LENGTH = 500;
@@ -25,8 +26,11 @@ export const MCP_RATE_LIMIT_MARKER = "[mcp.rate_limit]";
 export const MCP_SCHEMA_VIOLATION_MARKER = "[mcp.schema_violation]";
 const SAFE_MARKERS = [MCP_RATE_LIMIT_MARKER, MCP_SCHEMA_VIOLATION_MARKER] as const;
 
-export function jsonResult(structuredContent: Record<string, unknown>): CallToolResult {
-  const sanitized = sanitizeRecord(structuredContent);
+export function jsonResult(
+  structuredContent: Record<string, unknown>,
+  longField?: LongStringField,
+): CallToolResult {
+  const sanitized = sanitizeRecord(structuredContent, longField);
   return {
     content: [
       {

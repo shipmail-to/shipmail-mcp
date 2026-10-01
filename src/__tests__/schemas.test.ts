@@ -31,6 +31,7 @@ import {
   paginationInputSchema,
   removeSuppressionInputSchema,
   resetPasswordInputSchema,
+  scheduledMessageSchema,
   scheduleNewsletterInputSchema,
   sendMessageInputSchema,
   sendNewsletterTestInputSchema,
@@ -1382,5 +1383,35 @@ describe("createWebhookInputSchema (SSRF coverage via publicHttpsUrlSchema)", ()
         events: ["message.received"],
       }),
     ).toThrow();
+  });
+});
+
+describe("scheduledMessageSchema", () => {
+  const scheduled = {
+    object: "scheduled_message",
+    id: "msg_123",
+    scheduled_message_id: "sch_123",
+    kind: "scheduled",
+    mailbox_id: "mbx_123",
+    mailbox_address: "hello@example.com",
+    from_address: "hello@example.com",
+    identity_id: "ident_123",
+    mode: "live",
+    subject: "Hello",
+    to: [],
+    cc: [],
+    bcc: [],
+    attachments: [],
+    scheduled_at: "2026-08-01T08:00:00.000Z",
+    created_at: "2026-07-24T12:00:00.000Z",
+    updated_at: "2026-07-24T12:00:00.000Z",
+    last_error: null,
+  } as const;
+
+  test("reads a settling message, and one from a server without the status", () => {
+    expect(scheduledMessageSchema.parse({ ...scheduled, status: "settling" }).status).toBe(
+      "settling",
+    );
+    expect(scheduledMessageSchema.parse(scheduled).status).toBeUndefined();
   });
 });

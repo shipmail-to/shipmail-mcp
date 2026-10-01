@@ -75,7 +75,7 @@ describe("MCP startup capability discovery", () => {
       );
 
       const server = createShipmailMcpServer(
-        { apiKey: "invalid", baseUrl: undefined, organizationId: undefined },
+        { apiKey: "invalid", baseUrl: undefined },
         allowedTools,
       );
       const client = new Client({ name: "test-client", version: "0.0.0" });

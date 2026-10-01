@@ -1,10 +1,10 @@
 {
   "name": "shipmail",
-  "version": "0.8.8",
-  "description": "Operate secure custom-domain business email, calendars, and agent inboxes with Shipmail.",
+  "version": "0.9.0",
+  "description": "Modern email for your business. Inboxes, calendars, newsletters, bookings, an AI assistant, and an API for your agents. Everything on your own domain, in one subscription.",
   "author": {
     "name": "Shipmail",
-    "email": "ops@shipmail.to",
+    "email": "hi@shipmail.to",
     "url": "https://shipmail.to"
   },
   "homepage": "https://shipmail.to/docs/mcp",
@@ -21,8 +21,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Shipmail",
-    "shortDescription": "Secure email and calendars for AI agents",
-    "longDescription": "Triage inboxes, draft and send approved replies, manage custom-domain mailboxes, work with calendars, and automate email through Shipmail's hosted MCP server.",
+    "shortDescription": "Modern email for your business",
+    "longDescription": "Search and triage your inbox, draft and send replies you approve, write and schedule newsletters, manage calendars and booking pages, set up automations, and add domains and mailboxes, all on your own domain through Shipmail's hosted MCP server.",
     "developerName": "Shipmail",
     "category": "Productivity",
     "websiteURL": "https://shipmail.to",
@@ -31,12 +31,13 @@
     "capabilities": [
       "Email",
       "Calendar",
+      "Newsletters",
       "Automation"
     ],
     "defaultPrompt": [
-      "Triage my Shipmail inbox and identify what needs a reply.",
-      "Draft safe replies to the messages that need action, but do not send anything.",
-      "Show my Shipmail calendar availability for this week."
+      "Summarize my unread emails and draft replies to the customer ones, but do not send anything.",
+      "Find a free 30-minute slot tomorrow afternoon and put a call on my calendar.",
+      "Turn this month's changelog into a newsletter and send me a test."
     ],
     "composerIcon": "./assets/shipmail-mark.png",
     "logo": "./assets/shipmail-logo.png"

@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.9.0](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.9...shipmail-mcp-v0.9.0) (2026-10-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove the partner program ([#2765](https://github.com/shipmail-to/Shipmail/issues/2765))
+
+### Features
+
+* **scheduled-send:** cutover tooling, legacy import, operator resolution and draft revisions (step 4b-2) ([#2781](https://github.com/shipmail-to/Shipmail/issues/2781)) ([2786dc5](https://github.com/shipmail-to/Shipmail/commit/2786dc5f9974fda1dc44f4ae6e5311bbdb29f9c6))
+
+
+### Bug Fixes
+
+* **mcp:** refresh the plugin listing copy and logo ([#2812](https://github.com/shipmail-to/Shipmail/issues/2812)) ([9ab7854](https://github.com/shipmail-to/Shipmail/commit/9ab7854120a1076e60e455b5e0681cd238b61682))
+
+
+### Code Refactoring
+
+* remove the partner program ([#2765](https://github.com/shipmail-to/Shipmail/issues/2765)) ([ce36318](https://github.com/shipmail-to/Shipmail/commit/ce3631868740020c7ff8460bea06d580577b23af))
+
+## [0.8.9](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.8...shipmail-mcp-v0.8.9) (2026-09-28)
+
+
+### Features
+
+* **admin:** abuse cases with lock, clear and terminate ([#2619](https://github.com/shipmail-to/Shipmail/issues/2619)) ([d2a87a5](https://github.com/shipmail-to/Shipmail/commit/d2a87a50cf50ff67d8aa7a7e7d311409058e689c))
+* **webhooks:** limit a webhook to specific mailboxes or domains ([#2658](https://github.com/shipmail-to/Shipmail/issues/2658)) ([75d810e](https://github.com/shipmail-to/Shipmail/commit/75d810ea0434ea691140d83e791fa58f2ceea212))
+
+
+### Bug Fixes
+
+* harden SSRF and URL handling in discovery, redirects, S3 keys, import worker and MCP ([#2582](https://github.com/shipmail-to/Shipmail/issues/2582)) ([2bc08c4](https://github.com/shipmail-to/Shipmail/commit/2bc08c4c577eed2ce9942d787fba1a597464acb6))
+* MCP text attachments in structured output, public origin for client-facing URLs ([#2568](https://github.com/shipmail-to/Shipmail/issues/2568)) ([42cc998](https://github.com/shipmail-to/Shipmail/commit/42cc998776f3632f5f861532017a544e0aeeff0d))
+* package security and drift fixes from the audit ([#2595](https://github.com/shipmail-to/Shipmail/issues/2595)) ([0b629e4](https://github.com/shipmail-to/Shipmail/commit/0b629e444b4b0868a0b1d3ae305fe610917cdde3))
+
 ## [0.8.8](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.7...shipmail-mcp-v0.8.8) (2026-09-26)
 
 ### Bug Fixes

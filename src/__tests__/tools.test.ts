@@ -226,7 +226,6 @@ describe("registerTools", () => {
       "shipmail_create_booking_page",
       "shipmail_update_booking_page",
       "shipmail_delete_booking_page",
-      "shipmail_consume_partner_mailbox_credential_grant",
     ];
     for (const name of expected) {
       expect(result.knownTools).toContain(name);
