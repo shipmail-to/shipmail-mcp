@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.0...shipmail-mcp-v0.9.1) (2026-10-01)
+
+
+### Bug Fixes
+
+* **mcp:** open the plugin skill description with the homepage tagline ([#2816](https://github.com/shipmail-to/Shipmail/issues/2816)) ([f1d09ab](https://github.com/shipmail-to/Shipmail/commit/f1d09ab6a322bdd3be5b17841707d80b7b6a8fac))
+
 ## [0.9.0](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.9...shipmail-mcp-v0.9.0) (2026-10-01)
 
 

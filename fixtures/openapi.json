@@ -10176,7 +10176,9 @@
           "reply.overdue",
           "conversation.needs_action",
           "calendar.event_starting",
-          "booking.created"
+          "booking.created",
+          "subscriber.added",
+          "newsletter.sent"
         ]
       },
       "WebhookEventType": {
@@ -10200,7 +10202,9 @@
           "reply.overdue",
           "conversation.needs_action",
           "calendar.event_starting",
-          "booking.created"
+          "booking.created",
+          "subscriber.added",
+          "newsletter.sent"
         ]
       },
       "VerificationResult": {
