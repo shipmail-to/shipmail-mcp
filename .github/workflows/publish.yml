@@ -24,7 +24,7 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v7
@@ -103,7 +103,7 @@ jobs:
       - name: Publish to MCP Registry
         if: ${{ (github.event_name == 'push' || !inputs.dry_run) && steps.registry.outputs.published != 'true' }}
         run: |
-          max_attempts=6
+          max_attempts=24
           retry_delay_seconds=15
 
           for attempt in $(seq 1 "$max_attempts"); do
