@@ -29,8 +29,19 @@ describe("MCP transport capability derivation", () => {
     expect(stdio).toContain("shipmail_prepare_newsletter_asset_upload");
   });
 
-  test("always exposes only the public status tool without granted scopes", () => {
-    expect([...getAllowedMcpToolNames([], "stdio")]).toEqual(["shipmail_status"]);
+  test("always exposes only the public status and access tools without granted scopes", () => {
+    expect([...getAllowedMcpToolNames([], "stdio")]).toEqual([
+      "shipmail_status",
+      "shipmail_get_organization_access",
+    ]);
+  });
+
+  test("offers mailbox password reset through the dedicated credential scope", () => {
+    const credentialTools = getAllowedMcpToolNames(["mailbox_credentials:write"], "stdio");
+    const mailboxTools = getAllowedMcpToolNames(["mailboxes:write"], "stdio");
+
+    expect(credentialTools).toContain("shipmail_reset_mailbox_password");
+    expect(mailboxTools).not.toContain("shipmail_reset_mailbox_password");
   });
 
   test("maps dedicated rule scopes to persistent least-privilege tools", () => {

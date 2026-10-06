@@ -4,6 +4,7 @@ import {
   ConflictError,
   InternalServerError,
   NotFoundError,
+  QuotaExceededError,
   ShipmailError,
   ValidationError,
 } from "shipmail";
@@ -107,5 +108,54 @@ describe("errorResult", () => {
     const text = getText(errorResult(error));
     expect(text).toContain("Domain already exists");
     expect(text).toContain("type=conflict");
+  });
+});
+
+describe("owner recovery links", () => {
+  test("passes reason and action_url on a refusal the owner can lift", () => {
+    const text = getText(
+      errorResult(
+        new QuotaExceededError("Mailbox limit reached (3/3).", "req_1", {
+          reason: "trial_capacity",
+          actionUrl: "https://shipmail.to/billing?org=org_1",
+        }),
+      ),
+    );
+    expect(text).toContain("Mailbox limit reached (3/3).");
+    expect(text).toContain("reason=trial_capacity");
+    expect(text).toContain("action_url=https://shipmail.to/billing?org=org_1");
+    expect(text).toContain("type=quota_exceeded");
+    expect(text).toContain("status=403");
+  });
+
+  test("an older server's error has no recovery line", () => {
+    const text = getText(errorResult(new QuotaExceededError("Mailbox limit reached.", "req_2")));
+    expect(text).not.toContain("action_url=");
+  });
+
+  test("drops a link that is not a web URL", () => {
+    const text = getText(
+      errorResult(
+        new QuotaExceededError("Limit.", "req_3", {
+          reason: "purchased_capacity",
+          actionUrl: "javascript:alert(1)",
+        }),
+      ),
+    );
+    expect(text).not.toContain("action_url=");
+  });
+
+  test("never forwards a link on a redacted error", () => {
+    const text = getText(
+      errorResult(
+        new ShipmailError("secret", {
+          status: 500,
+          type: "internal_error",
+          reason: "subscription_required",
+          actionUrl: "https://shipmail.to/billing?org=org_1",
+        }),
+      ),
+    );
+    expect(text).not.toContain("action_url=");
   });
 });

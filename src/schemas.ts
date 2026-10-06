@@ -41,7 +41,8 @@ const SYSTEM_FOLDER_NAMES = [
 ] as const;
 const MAILBOX_RULE_MATCH_MODES = ["all", "any"] as const;
 const MAILBOX_RULE_SYSTEM_TARGET_ROLES = ["inbox", "archive", "junk", "trash"] as const;
-const MEMBER_ROLES = ["owner", "super_admin", "admin", "member"] as const;
+const MEMBER_ROLES = ["owner", "admin", "member"] as const;
+const MEMBER_MAILBOX_ACCESS_SCOPES = ["all", "selected"] as const;
 const JMAP_KEYWORDS = ["$flagged", "$seen", "$draft", "$answered", "$forwarded"] as const;
 const NEWSLETTER_STATUSES = [
   "draft",
@@ -213,6 +214,20 @@ export const statusSchema = z.object({
   version: z.string(),
   time: z.string(),
   request_id: z.string(),
+});
+
+export const organizationAccessSchema = z.object({
+  object: z.literal("organization_access"),
+  organization: z.object({ id: z.string(), name: z.string() }),
+  plan: z.enum(["free", "solo", "pro", "team", "scale"]),
+  has_access: z.boolean(),
+  trial: z.object({
+    active: z.boolean(),
+    ends_at: z.string().nullable(),
+    eligible: z.boolean(),
+  }),
+  mailboxes: z.object({ limit: z.number().int(), used: z.number().int() }),
+  newsletters_allowed: z.boolean(),
 });
 
 export const registrationSchema = z.object({
@@ -787,6 +802,7 @@ export const mailboxForwardingSchema = z.object({
   mailbox_id: z.string(),
   destination: emailSchema,
   sender: emailSchema.nullable(),
+  recipient: emailSchema.nullable(),
   status: z.enum(["pending", "active"] as const),
   verification_sent_at: z.string().nullable(),
   verified_at: z.string().nullable(),
@@ -1051,12 +1067,27 @@ export const webhookSchema = z.object({
   updated_at: z.string(),
 });
 
+export const memberMailboxAccessSchema = z
+  .object({
+    scope: z.enum(MEMBER_MAILBOX_ACCESS_SCOPES),
+    mailbox_ids: z
+      .array(z.string())
+      .describe(
+        'Mailbox IDs visible to this API credential. Empty when scope is "all"; for "selected", the list can be partial when the credential reaches only some granted mailboxes.',
+      ),
+  })
+  .refine((access) => access.scope !== "all" || access.mailbox_ids.length === 0, {
+    message: 'mailbox_ids must be empty when scope is "all".',
+    path: ["mailbox_ids"],
+  });
+
 export const memberSchema = z.object({
   object: z.literal("member"),
   id: z.string(),
   email: z.string(),
   name: z.string(),
   role: z.enum(MEMBER_ROLES),
+  mailbox_access: memberMailboxAccessSchema,
   created_at: z.string(),
 });
 
@@ -1102,6 +1133,7 @@ export const statusOutputSchema = z.object({
   // organization_id on other tools.
   organizations: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
 });
+export const organizationAccessOutputSchema = z.object({ access: organizationAccessSchema });
 export const domainOutputSchema = z.object({ domain: domainSchema });
 export const domainDnsRecordsOutputSchema = z.object({ dns_records: domainDnsRecordSetSchema });
 export const mailboxOutputSchema = z.object({ mailbox: mailboxSchema });
@@ -1553,6 +1585,7 @@ export const createMailboxForwardingInputSchema = z.object({
   id: idSchema,
   destination: emailSchema,
   sender: emailSchema.nullable().optional(),
+  recipient: emailSchema.nullable().optional(),
   idempotency_key: idempotencyKeySchema,
 });
 export const deleteMailboxForwardingInputSchema = z.object({
@@ -2389,6 +2422,21 @@ export const newsletterSchema = z.object({
     .describe(
       "styled applies Shipmail's email theme. plain sends your HTML without injected styles, width, or centering, so the reader's email client styles it.",
     ),
+  track_engagement: z.boolean().describe("Whether this issue tracks opens and clicks."),
+  opened_count: z
+    .number()
+    .int()
+    .nullable()
+    .describe(
+      "Unique recipients with at least one counted open, excluding Apple Mail Privacy Protection preloads. Null when track_engagement is false.",
+    ),
+  clicked_count: z
+    .number()
+    .int()
+    .nullable()
+    .describe(
+      "Unique recipients who clicked at least one tracked link, excluding link scanners. Null when track_engagement is false.",
+    ),
   preflight_status: z.enum(NEWSLETTER_PREFLIGHT_STATUSES),
   preflight_results: z.record(z.string(), z.unknown()),
   send_window_hours: z.number().int(),
@@ -2689,6 +2737,12 @@ const newsletterDraftFieldsInputSchema = {
     .describe(
       "styled applies Shipmail's email theme. plain sends your HTML without injected styles, width, or centering, so the reader's email client styles it.",
     ),
+  track_engagement: z
+    .boolean()
+    .optional()
+    .describe(
+      "Track opens and clicks for this issue. Off by default; omit on update to keep the current value. Fails with validation_error when open and click tracking is not available. Changes only while the newsletter is an editable draft or a future scheduled newsletter.",
+    ),
 } as const;
 
 export const createNewsletterInputSchema = z
@@ -2773,6 +2827,7 @@ export const updateNewsletterInputSchema = z
     archive_visibility: newsletterDraftFieldsInputSchema.archive_visibility,
     feed_entry_url: newsletterDraftFieldsInputSchema.feed_entry_url,
     styling_mode: newsletterDraftFieldsInputSchema.styling_mode,
+    track_engagement: newsletterDraftFieldsInputSchema.track_engagement,
     idempotency_key: idempotencyKeySchema,
   })
   .refine(
@@ -2788,7 +2843,8 @@ export const updateNewsletterInputSchema = z
       value.send_window_hours !== undefined ||
       value.archive_visibility !== undefined ||
       value.feed_entry_url !== undefined ||
-      value.styling_mode !== undefined,
+      value.styling_mode !== undefined ||
+      value.track_engagement !== undefined,
     {
       message: "Provide at least one newsletter field to update.",
     },
@@ -2962,6 +3018,7 @@ const calendarInvitationLanguageSchema = z
 export const calendarEventSchema = z.object({
   object: z.literal("calendar_event"),
   id: z.string(),
+  revision: z.string(),
   mailbox: z.string(),
   calendar_id: z.string().nullable(),
   uid: z.string().nullable(),
@@ -2986,6 +3043,16 @@ export const calendarEventSchema = z.object({
   attendees: z.array(calendarAttendeeSchema),
   created_at: z.string().nullable(),
   updated_at: z.string().nullable(),
+});
+
+export const calendarInvitationOutcomeSchema = z.object({
+  recipient: z.string(),
+  status: z.enum(["sent", "failed", "unknown"]),
+});
+
+export const calendarEventMutationSchema = calendarEventSchema.extend({
+  invitation_outcomes: z.array(calendarInvitationOutcomeSchema),
+  invitation_failures: z.array(z.string()),
 });
 
 export const calendarAvailabilitySlotSchema = z.object({
@@ -3238,6 +3305,7 @@ export const bookingPageSchema = z.object({
 });
 
 export const calendarEventOutputSchema = z.object({ event: calendarEventSchema });
+export const calendarEventMutationOutputSchema = z.object({ event: calendarEventMutationSchema });
 export const calendarEventsOutputSchema = z.object({
   data: z.array(calendarEventSchema),
   pagination: paginationSchema,
@@ -3272,6 +3340,16 @@ const attendeeInputSchema = z.object({
 });
 
 const mailboxAddressInputSchema = emailSchema.describe("The mailbox (calendar owner) address.");
+const calendarOperationKeySchema = z
+  .string()
+  .min(16)
+  .max(200)
+  .regex(/^[A-Za-z0-9._:-]+$/)
+  .describe("Stable retry key for this exact calendar mutation payload.");
+const calendarRevisionSchema = z
+  .string()
+  .regex(/^[a-f0-9]{64}$/)
+  .describe("Revision originally read before updating the event.");
 
 export const listCalendarEventsInputSchema = paginationInputSchema.extend({
   mailbox: mailboxAddressInputSchema,
@@ -3293,6 +3371,11 @@ export const deleteCalendarEventInputSchema = z.object({
 
 export const createCalendarEventInputSchema = z.object({
   mailbox: mailboxAddressInputSchema,
+  operation_key: calendarOperationKeySchema.optional(),
+  send_invitations: z
+    .boolean()
+    .default(true)
+    .describe("Send invitations to attendees (default true)."),
   calendar_id: calendarIdInputSchema
     .optional()
     .describe("Target calendar. Defaults to the default calendar."),
@@ -3318,6 +3401,12 @@ export const createCalendarEventInputSchema = z.object({
 export const updateCalendarEventInputSchema = z.object({
   id: calendarEventIdInputSchema.describe("Calendar event ID."),
   mailbox: mailboxAddressInputSchema,
+  operation_key: calendarOperationKeySchema.optional(),
+  expected_revision: calendarRevisionSchema.optional(),
+  send_guest_updates: z
+    .boolean()
+    .default(true)
+    .describe("Send scheduling updates to attendees (default true)."),
   title: noControlString(1024, "title").min(1).optional(),
   invitation_language: calendarInvitationLanguageSchema.optional(),
   description: noControlString(32768, "description").nullish(),

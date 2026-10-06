@@ -84,6 +84,9 @@
               "maximum": 250,
               "default": 100
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -142,7 +145,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CalendarEvent"
+                  "$ref": "#/components/schemas/CalendarEventMutationResult"
                 }
               }
             }
@@ -156,7 +159,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/calendar/events/{id}": {
@@ -187,6 +195,9 @@
               "type": "string",
               "format": "email"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -233,7 +244,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CalendarEvent"
+                  "$ref": "#/components/schemas/CalendarEventMutationResult"
                 }
               }
             }
@@ -247,7 +258,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteCalendarEvent",
@@ -265,6 +281,9 @@
               "type": "string",
               "format": "email"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -397,6 +416,9 @@
               "type": "integer",
               "minimum": 0
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -456,7 +478,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "post": {
         "operationId": "createAutomation",
@@ -495,7 +522,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/automations/{id}": {
@@ -537,7 +569,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateAutomation",
@@ -582,7 +619,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/automations/{id}/run": {
@@ -631,7 +673,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/booking-pages": {
@@ -647,6 +694,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -719,7 +769,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/booking-pages/{id}": {
@@ -757,7 +812,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateBookingPage",
@@ -798,7 +858,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteBookingPage",
@@ -816,7 +881,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/status": {
@@ -873,7 +943,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/domains": {
@@ -914,7 +989,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "get": {
         "operationId": "listDomains",
@@ -929,6 +1009,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -992,7 +1075,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateDomain",
@@ -1031,7 +1119,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteDomain",
@@ -1053,7 +1146,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/domains/{id}/verification": {
@@ -1086,7 +1184,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/domains/{id}/dns-records": {
@@ -1098,7 +1201,7 @@
       "get": {
         "operationId": "getDomainDnsRecords",
         "summary": "Get domain DNS records",
-        "description": "Return all DNS records required by Shipmail and run a live, read-only DNS check. This endpoint does not update the domain's persisted verification state.",
+        "description": "Return the DNS records Shipmail requires for this domain and run a live, read-only DNS check. A connected domain needs four records: mx, spf, dkim and dmarc. A domain bought through Shipmail also returns mail_from_mx and mail_from_spf, which Shipmail publishes itself. This endpoint does not update the domain's persisted verification state.",
         "tags": ["Domains"],
         "x-rate-limit-tier": "verification",
         "x-scope": "domains:read",
@@ -1122,7 +1225,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/domains/search": {
@@ -1176,14 +1284,19 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/domains/register": {
       "post": {
         "operationId": "registerDomain",
         "summary": "Register a domain",
-        "description": "Register a new domain through shipmail. Charges the saved payment method and returns the created Domain object. Requires an active subscription.",
+        "description": "Register a new domain through shipmail. Charges the saved payment method and returns the created Domain object. Requires an active subscription. Only an API key a person created can buy: an agent credential (an OAuth connection, the MCP server over OAuth, or an auth.md registration) never triggers a charge. It gets a 403 with `reason: \"owner_confirmation_required\"` and an `action_url` where the organization owner reviews the price and confirms the purchase.",
         "tags": ["Domains"],
         "x-rate-limit-tier": "write",
         "x-scope": "domains:write",
@@ -1230,7 +1343,7 @@
             "$ref": "#/components/responses/ValidationError"
           },
           "403": {
-            "description": "Active subscription required to register domains.",
+            "description": "Active subscription required to register domains, or an agent credential asked to buy (`reason: \"owner_confirmation_required\"` with `action_url`).",
             "$ref": "#/components/responses/AuthorizationError"
           },
           "409": {
@@ -1243,7 +1356,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes": {
@@ -1276,15 +1394,22 @@
             }
           },
           "403": {
-            "$ref": "#/components/responses/QuotaExceededError"
+            "$ref": "#/components/responses/QuotaExceededError",
+            "description": "Insufficient permissions. A full mailbox quota is type `quota_exceeded` with `reason` `trial_capacity` or `purchased_capacity` and an `action_url` for the organization owner."
           },
           "422": {
-            "$ref": "#/components/responses/ValidationError"
+            "$ref": "#/components/responses/ValidationError",
+            "description": "Validation error. An organization without a plan answers with `reason: \"subscription_required\"` and an `action_url` for the organization owner."
           },
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "get": {
         "operationId": "listMailboxes",
@@ -1307,6 +1432,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -1370,7 +1498,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateMailbox",
@@ -1408,7 +1541,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteMailbox",
@@ -1426,7 +1564,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/suspend": {
@@ -1462,7 +1605,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/resume": {
@@ -1498,7 +1646,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/app-passwords": {
@@ -1550,7 +1703,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "post": {
         "operationId": "createMailboxAppPassword",
@@ -1595,7 +1753,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/app-passwords/{app_password_id}": {
@@ -1637,7 +1800,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/exports": {
@@ -1699,7 +1867,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/exports/{export_id}": {
@@ -1751,7 +1924,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/auto-reply": {
@@ -1803,7 +1981,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/delivery-routing": {
@@ -1842,7 +2025,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateMailboxDeliveryRouting",
@@ -1887,7 +2075,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/password": {
@@ -1899,10 +2092,10 @@
       "patch": {
         "operationId": "resetMailboxPassword",
         "summary": "Reset mailbox password",
-        "description": "Reset the login password for a mailbox. Requires both `mailboxes:write` and `mailbox_credentials:write`. API keys created before 2026-09-29 may still use `mailboxes:write` alone; that exception is deprecated and will be removed.",
+        "description": "Reset the login password for a mailbox. Requires `mailbox_credentials:write` and an Owner or Admin who can read the mailbox, or its own sign-in principal. Non-Owners cannot reset a mailbox that receives an Owner login address. API keys created before 2026-09-29 may still use `mailboxes:write` alone; that exception is deprecated and will be removed.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
-        "x-scope": "mailboxes:write",
+        "x-scope": "mailbox_credentials:write",
         "requestBody": {
           "required": true,
           "content": {
@@ -1939,7 +2132,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/folders": {
@@ -1981,7 +2179,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "post": {
         "operationId": "createMailboxFolder",
@@ -1993,6 +2196,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -2092,7 +2298,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteMailboxFolder",
@@ -2123,7 +2334,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/identities": {
@@ -2165,7 +2381,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/rules": {
@@ -2207,7 +2428,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "put": {
         "operationId": "updateMailboxRules",
@@ -2252,7 +2478,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/forwarding": {
@@ -2294,7 +2525,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "post": {
         "operationId": "createMailboxForwarding",
@@ -2339,7 +2575,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/forwarding/{forwarding_id}": {
@@ -2384,7 +2625,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/sandbox/inbound": {
@@ -2403,6 +2649,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -2470,6 +2719,9 @@
               "minLength": 1,
               "maxLength": 256
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -2556,7 +2808,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/staged-attachment-uploads/{token}": {
@@ -2646,6 +2903,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -2689,6 +2949,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -2775,6 +3038,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -2838,7 +3104,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/messages/{id}/reply": {
@@ -2857,6 +3128,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -2942,6 +3216,9 @@
               "maximum": 200,
               "default": 100
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -2993,7 +3270,12 @@
           "422": {
             "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateScheduledMessage",
@@ -3005,6 +3287,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -3072,7 +3357,12 @@
           "422": {
             "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/threads": {
@@ -3098,6 +3388,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -3160,6 +3453,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -3210,6 +3506,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -3255,7 +3554,7 @@
       "get": {
         "operationId": "listMembers",
         "summary": "List members",
-        "description": "List non-shadow organization members.",
+        "description": "List person members with roles and mailbox access. Selected mailbox IDs are limited to the calling credential's effective mailbox reach and resource constraints and may be incomplete.",
         "tags": ["Members"],
         "x-rate-limit-tier": "read",
         "x-scope": "members:read",
@@ -3265,6 +3564,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -3308,6 +3610,7 @@
       "get": {
         "operationId": "getMember",
         "summary": "Get a member",
+        "description": "Retrieve a person member with their role and mailbox access. Selected mailbox IDs are limited to the calling credential's effective mailbox reach and resource constraints and may be incomplete.",
         "tags": ["Members"],
         "x-rate-limit-tier": "read",
         "x-scope": "members:read",
@@ -3331,7 +3634,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/webhooks": {
@@ -3383,7 +3691,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "get": {
         "operationId": "listWebhooks",
@@ -3397,6 +3710,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -3460,7 +3776,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateWebhook",
@@ -3498,7 +3819,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteWebhook",
@@ -3516,7 +3842,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/webhooks/{id}/rotate-secret": {
@@ -3549,7 +3880,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/webhooks/{id}/test": {
@@ -3590,7 +3926,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/webhooks/{id}/deliveries": {
@@ -3629,6 +3970,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -3705,7 +4049,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/webhooks/{id}/deliveries/{deliveryId}/replay": {
@@ -3733,6 +4082,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -3775,6 +4127,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -3826,6 +4181,9 @@
               "type": "string",
               "format": "email"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -3891,7 +4249,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/reply-scans/{scan_id}": {
@@ -3938,7 +4301,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/reply-scans/{scan_id}/results": {
@@ -3965,6 +4333,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -4088,6 +4459,9 @@
             "schema": {
               "$ref": "#/components/schemas/InboxKeyword"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -4160,7 +4534,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateMailboxInboxMessage",
@@ -4205,7 +4584,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteMailboxInboxMessage",
@@ -4233,7 +4617,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/inbox/messages/{message_id}/move": {
@@ -4288,7 +4677,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/inbox/messages/{message_id}/reply": {
@@ -4310,6 +4704,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -4414,6 +4811,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -4487,7 +4887,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateMailboxInboxThreadAttention",
@@ -4535,7 +4940,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/inbox/drafts": {
@@ -4587,7 +4997,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/inbox/threads/{thread_id}/drafts": {
@@ -4645,7 +5060,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/inbox/threads/{thread_id}/drafts/{draft_id}/send": {
@@ -4702,7 +5122,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/mailboxes/{id}/inbox/threads/{thread_id}/reply": {
@@ -4724,6 +5149,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -4803,6 +5231,9 @@
               "maxLength": 512,
               "default": "attachment"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -4855,6 +5286,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -4908,6 +5342,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -4920,6 +5357,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -4950,6 +5390,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -5011,6 +5454,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -5052,6 +5498,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -5109,6 +5558,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -5121,6 +5573,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -5160,6 +5615,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -5211,6 +5669,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -5265,6 +5726,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -5329,6 +5793,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -5392,7 +5859,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "get": {
         "operationId": "listAudiences",
@@ -5406,6 +5878,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -5469,7 +5944,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateAudience",
@@ -5510,7 +5990,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "delete": {
         "operationId": "deleteAudience",
@@ -5528,7 +6013,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/audiences/{id}/feed": {
@@ -5564,7 +6054,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateAudienceFeed",
@@ -5576,6 +6071,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -5647,7 +6145,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/audiences/{id}/feed/revoke": {
@@ -5686,7 +6189,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/audiences/{id}/subscribers": {
@@ -5732,7 +6240,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "get": {
         "operationId": "listSubscribers",
@@ -5772,6 +6285,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -5861,7 +6377,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/audiences/{id}/subscribers/by-email/{email}": {
@@ -5903,7 +6424,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/audiences/{id}/subscribers/{subscriber_id}": {
@@ -5944,7 +6470,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "patch": {
         "operationId": "updateSubscriber",
@@ -5983,7 +6514,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "delete": {
         "operationId": "removeSubscriber",
@@ -6001,7 +6537,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/audiences/{id}/subscribers/{subscriber_id}/unsubscribe": {
@@ -6043,7 +6584,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/audiences/{id}/subscribers/{subscriber_id}/resubscribe": {
@@ -6098,7 +6644,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/newsletters": {
@@ -6136,7 +6687,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       },
       "get": {
         "operationId": "listNewsletters",
@@ -6150,6 +6706,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6198,6 +6757,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6246,6 +6808,9 @@
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6295,6 +6860,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6322,7 +6890,7 @@
       "patch": {
         "operationId": "updateNewsletter",
         "summary": "Update a newsletter",
-        "description": "Update an editable draft newsletter or a scheduled newsletter whose send time is still in the future. Sending and sent newsletters cannot be edited. The server applies an internal revision check and returns 409 if another save wins concurrently; fetch the latest newsletter before retrying.",
+        "description": "Update an editable draft newsletter or a scheduled newsletter whose send time is still in the future. Changing message content, presentation, or audience returns a scheduled newsletter to draft and clears scheduled_at; inspect the returned status, send a new test, and schedule again. Name, feed link, and send-window changes can keep the schedule and refresh its recipient snapshot. Sending and sent newsletters cannot be edited. The server applies an internal revision check and returns 409 if another save wins concurrently; fetch the latest newsletter before retrying.",
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "write",
         "x-scope": "newsletters:write",
@@ -6334,6 +6902,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -6387,6 +6958,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6427,6 +7001,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6477,6 +7054,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6527,6 +7107,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6567,6 +7150,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6631,6 +7217,9 @@
               "maximum": 100,
               "default": 24
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6697,6 +7286,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "requestBody": {
@@ -6844,7 +7436,12 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/newsletter-asset-uploads/{token}": {
@@ -6902,6 +7499,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
         "responses": {
@@ -6967,7 +7567,48 @@
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
+    "/organization/access": {
+      "get": {
+        "operationId": "getOrganizationAccess",
+        "summary": "Get organization access",
+        "description": "Return whether the authenticated credential's organization can create mailboxes now, its plan, trial state and mailbox capacity. An agent polls this after the owner pays: access appears once Shipmail has recorded the payment. It never returns payment methods, invoices or billing provider identifiers.",
+        "tags": ["Status"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "authenticated",
+        "responses": {
+          "200": {
+            "description": "Organization access returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationAccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     }
   },
@@ -6976,7 +7617,24 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "API key authentication. Keys are prefixed with sm_live_ or sm_test_."
+        "description": "API key authentication. Keys are prefixed with sm_live_ or sm_test_. An OAuth access token issued for the https://shipmail.to/api/v1 resource is also accepted as the Bearer token; see oauth2."
+      },
+      "oauth2": {
+        "type": "oauth2",
+        "description": "OAuth 2.1 for agents and command-line tools. Register a public client with dynamic client registration (https://shipmail.to/api/auth/oauth2/register), then use the authorization code flow with PKCE (S256) and resource=https://shipmail.to/api/v1 on the authorize and token requests. Send the access token as Authorization: Bearer <token>. Permissions come from the organizations and access approved on the consent page, not from OAuth scopes. Tokens issued for https://shipmail.to/api/mcp are rejected. Protected resource metadata: https://shipmail.to/.well-known/oauth-protected-resource/api/v1.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://shipmail.to/api/auth/oauth2/authorize",
+            "tokenUrl": "https://shipmail.to/api/auth/oauth2/token",
+            "refreshUrl": "https://shipmail.to/api/auth/oauth2/token",
+            "scopes": {
+              "openid": "Sign in with your Shipmail account.",
+              "profile": "Read your name.",
+              "email": "Read your account email address.",
+              "offline_access": "Receive a refresh token."
+            }
+          }
+        }
       }
     },
     "parameters": {
@@ -7058,6 +7716,15 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 256
+        }
+      },
+      "ShipmailOrganization": {
+        "name": "X-Shipmail-Organization",
+        "in": "header",
+        "required": false,
+        "description": "OAuth access tokens only. The organization ID this request acts on. Required when the OAuth connection was approved for several organizations (400 validation_error without it); optional with one. An organization the connection was not approved for returns 403 authorization_error. Ignored for API keys, which belong to one organization.",
+        "schema": {
+          "type": "string"
         }
       }
     },
@@ -7164,6 +7831,7 @@
         "required": [
           "object",
           "id",
+          "revision",
           "mailbox",
           "calendar_id",
           "uid",
@@ -7196,6 +7864,11 @@
           },
           "id": {
             "type": "string"
+          },
+          "revision": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "Content revision to pass as expected_revision on a later update."
           },
           "mailbox": {
             "type": "string",
@@ -7406,6 +8079,18 @@
             "items": {
               "$ref": "#/components/schemas/CalendarAttendeeInput"
             }
+          },
+          "operation_key": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "description": "Stable retry key for this exact create payload."
+          },
+          "send_invitations": {
+            "type": "boolean",
+            "default": true,
+            "description": "Send invitations to attendees."
           }
         }
       },
@@ -7497,6 +8182,23 @@
             "items": {
               "$ref": "#/components/schemas/CalendarAttendeeInput"
             }
+          },
+          "operation_key": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 200,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "description": "Stable retry key for this exact update payload."
+          },
+          "expected_revision": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "Revision originally read before this update."
+          },
+          "send_guest_updates": {
+            "type": "boolean",
+            "default": true,
+            "description": "Send scheduling updates to attendees."
           }
         }
       },
@@ -9161,6 +9863,7 @@
           "mailbox_id",
           "destination",
           "sender",
+          "recipient",
           "status",
           "verification_sent_at",
           "verified_at",
@@ -9187,6 +9890,11 @@
             "type": ["string", "null"],
             "format": "email",
             "description": "Exact From address to forward, or null to forward every non-spam message."
+          },
+          "recipient": {
+            "type": ["string", "null"],
+            "format": "email",
+            "description": "Exact mailbox primary address or alias that received the message, or null to match every address."
           },
           "status": {
             "type": "string",
@@ -9245,6 +9953,12 @@
             "format": "email",
             "maxLength": 320,
             "description": "Optional exact From address. Omit or set null to forward every non-spam message."
+          },
+          "recipient": {
+            "type": ["string", "null"],
+            "format": "email",
+            "maxLength": 320,
+            "description": "Optional exact mailbox primary address or alias. Omit or set null to match every address. When both sender and recipient are set, a message must match both."
           }
         }
       },
@@ -9990,7 +10704,19 @@
       },
       "Member": {
         "type": "object",
-        "required": ["object", "id", "email", "name", "role", "created_at"],
+        "example": {
+          "object": "member",
+          "id": "mem_alice",
+          "email": "alice@acme.com",
+          "name": "Alice",
+          "role": "admin",
+          "mailbox_access": {
+            "scope": "selected",
+            "mailbox_ids": ["mbx_123"]
+          },
+          "created_at": "2026-01-01T00:00:00Z"
+        },
+        "required": ["object", "id", "email", "name", "role", "mailbox_access", "created_at"],
         "properties": {
           "object": {
             "type": "string",
@@ -10009,7 +10735,53 @@
           },
           "role": {
             "type": "string",
-            "enum": ["owner", "super_admin", "admin", "member"]
+            "enum": ["owner", "admin", "member"]
+          },
+          "mailbox_access": {
+            "type": "object",
+            "required": ["scope", "mailbox_ids"],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "enum": ["all", "selected"],
+                "description": "The person's mailbox access, independent of their organization role."
+              },
+              "mailbox_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Empty for all. For selected, includes only granted mailboxes visible within the calling credential's effective mailbox reach and resource constraints; this list may be incomplete. An empty selected list may mean no grants or no visible grants."
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "scope": {
+                      "const": "all"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "mailbox_ids": {
+                      "maxItems": 0
+                    }
+                  }
+                }
+              }
+            ],
+            "examples": [
+              {
+                "scope": "all",
+                "mailbox_ids": []
+              },
+              {
+                "scope": "selected",
+                "mailbox_ids": ["mbx_123"]
+              }
+            ]
           },
           "created_at": {
             "type": "string",
@@ -10057,12 +10829,16 @@
           },
           "mailbox_ids": {
             "type": ["array", "null"],
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Mailboxes this webhook is limited to, or null. See Scoping in the webhooks guide."
           },
           "domain_ids": {
             "type": ["array", "null"],
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Domains this webhook is limited to, or null. When both lists are null the webhook receives events for every mailbox."
           },
           "created_at": {
@@ -11116,13 +11892,17 @@
           },
           "mailbox_ids": {
             "type": ["array", "null"],
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "maxItems": 100,
             "description": "Only deliver events for these mailboxes (plus mailboxes of `domain_ids`). Omit or null for every mailbox. Organization events are always delivered."
           },
           "domain_ids": {
             "type": ["array", "null"],
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "maxItems": 100,
             "description": "Only deliver events for these domains and their mailboxes. Omit or null for every domain."
           }
@@ -11155,13 +11935,17 @@
           },
           "mailbox_ids": {
             "type": ["array", "null"],
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "maxItems": 100,
             "description": "Replace the mailbox filter. Omit to leave it unchanged; null or [] clears it."
           },
           "domain_ids": {
             "type": ["array", "null"],
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "maxItems": 100,
             "description": "Replace the domain filter. Omit to leave it unchanged; null or [] clears it."
           }
@@ -11222,6 +12006,21 @@
               "message_id": {
                 "type": "string",
                 "description": "Present only on a reconciliation_required error. The tracking message the interrupted send attempt left behind; quote it in support rather than retrying, because the original may already have gone out."
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "owner_confirmation_required",
+                  "subscription_required",
+                  "trial_capacity",
+                  "purchased_capacity"
+                ],
+                "description": "Present only on a refusal an organization owner can lift in Shipmail. `owner_confirmation_required`: an agent credential asked to buy a domain, and the owner must confirm it. `subscription_required`: the organization has no plan. `trial_capacity`: the trial's own limit binds; ending the trial early lifts it and charges at once. `purchased_capacity`: the paid plan is full. The type and status stay those of the original error. Send `action_url` to the owner; after they confirm, retry with a new idempotency key."
+              },
+              "action_url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Present with `reason`. A Shipmail page where the organization owner reviews and confirms. It carries identifiers only; prices are computed on the page."
               }
             }
           }
@@ -13428,6 +14227,9 @@
           "archive_visibility",
           "feed_entry_url",
           "styling_mode",
+          "track_engagement",
+          "opened_count",
+          "clicked_count",
           "preflight_status",
           "published_at",
           "archive_url",
@@ -13513,6 +14315,19 @@
             "enum": ["styled", "plain"],
             "default": "styled",
             "description": "styled applies Shipmail's email theme. plain sends your HTML without injected styles, width, or centering, so the reader's email client styles it."
+          },
+          "track_engagement": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this issue tracks opens and clicks."
+          },
+          "opened_count": {
+            "type": ["integer", "null"],
+            "description": "Unique recipients with at least one counted open. Opens that Apple Mail Privacy Protection preloads are not counted. Null when track_engagement is false."
+          },
+          "clicked_count": {
+            "type": ["integer", "null"],
+            "description": "Unique recipients who clicked at least one tracked link, excluding clicks attributed to link scanners. Null when track_engagement is false."
           },
           "preflight_status": {
             "type": "string",
@@ -13649,6 +14464,11 @@
             "default": "styled",
             "description": "styled applies Shipmail's email theme. plain sends your HTML without injected styles, width, or centering, so the reader's email client styles it."
           },
+          "track_engagement": {
+            "type": "boolean",
+            "default": false,
+            "description": "Track opens and clicks for this issue. Defaults to false. Returns 422 validation_error when open and click tracking is not available. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
+          },
           "blocks": {
             "type": "array",
             "maxItems": 200,
@@ -13708,6 +14528,10 @@
             "enum": ["styled", "plain"],
             "default": "styled",
             "description": "styled applies Shipmail's email theme. plain sends your HTML without injected styles, width, or centering, so the reader's email client styles it."
+          },
+          "track_engagement": {
+            "type": "boolean",
+            "description": "Track opens and clicks for this issue. Omit to keep the current value. Returns 422 validation_error when open and click tracking is not available. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
           },
           "blocks": {
             "type": "array",
@@ -14039,23 +14863,43 @@
                     "anyOf": [
                       {
                         "required": ["title"],
-                        "properties": { "title": { "type": "string", "minLength": 1 } }
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
                       },
                       {
                         "required": ["body"],
-                        "properties": { "body": { "type": "string", "minLength": 1 } }
+                        "properties": {
+                          "body": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
                       },
                       {
                         "required": ["image_url"],
                         "properties": {
-                          "image_url": { "type": "string", "format": "uri", "minLength": 1 }
+                          "image_url": {
+                            "type": "string",
+                            "format": "uri",
+                            "minLength": 1
+                          }
                         }
                       },
                       {
                         "required": ["cta_label", "cta_url"],
                         "properties": {
-                          "cta_label": { "type": "string", "minLength": 1 },
-                          "cta_url": { "type": "string", "minLength": 1 }
+                          "cta_label": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "cta_url": {
+                            "type": "string",
+                            "minLength": 1
+                          }
                         }
                       }
                     ]
@@ -14063,21 +14907,41 @@
                   {
                     "if": {
                       "required": ["cta_label"],
-                      "properties": { "cta_label": { "type": "string", "minLength": 1 } }
+                      "properties": {
+                        "cta_label": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
                     },
                     "then": {
                       "required": ["cta_url"],
-                      "properties": { "cta_url": { "type": "string", "minLength": 1 } }
+                      "properties": {
+                        "cta_url": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
                     }
                   },
                   {
                     "if": {
                       "required": ["cta_url"],
-                      "properties": { "cta_url": { "type": "string", "minLength": 1 } }
+                      "properties": {
+                        "cta_url": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
                     },
                     "then": {
                       "required": ["cta_label"],
-                      "properties": { "cta_label": { "type": "string", "minLength": 1 } }
+                      "properties": {
+                        "cta_label": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
                     }
                   }
                 ],
@@ -14130,23 +14994,43 @@
                     "anyOf": [
                       {
                         "required": ["title"],
-                        "properties": { "title": { "type": "string", "minLength": 1 } }
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
                       },
                       {
                         "required": ["body"],
-                        "properties": { "body": { "type": "string", "minLength": 1 } }
+                        "properties": {
+                          "body": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
                       },
                       {
                         "required": ["image_url"],
                         "properties": {
-                          "image_url": { "type": "string", "format": "uri", "minLength": 1 }
+                          "image_url": {
+                            "type": "string",
+                            "format": "uri",
+                            "minLength": 1
+                          }
                         }
                       },
                       {
                         "required": ["cta_label", "cta_url"],
                         "properties": {
-                          "cta_label": { "type": "string", "minLength": 1 },
-                          "cta_url": { "type": "string", "minLength": 1 }
+                          "cta_label": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "cta_url": {
+                            "type": "string",
+                            "minLength": 1
+                          }
                         }
                       }
                     ]
@@ -14154,21 +15038,41 @@
                   {
                     "if": {
                       "required": ["cta_label"],
-                      "properties": { "cta_label": { "type": "string", "minLength": 1 } }
+                      "properties": {
+                        "cta_label": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
                     },
                     "then": {
                       "required": ["cta_url"],
-                      "properties": { "cta_url": { "type": "string", "minLength": 1 } }
+                      "properties": {
+                        "cta_url": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
                     }
                   },
                   {
                     "if": {
                       "required": ["cta_url"],
-                      "properties": { "cta_url": { "type": "string", "minLength": 1 } }
+                      "properties": {
+                        "cta_url": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
                     },
                     "then": {
                       "required": ["cta_label"],
-                      "properties": { "cta_label": { "type": "string", "minLength": 1 } }
+                      "properties": {
+                        "cta_label": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
                     }
                   }
                 ],
@@ -14921,6 +15825,120 @@
             "description": "styled applies Shipmail's email theme. plain sends your HTML without injected styles, width, or centering, so the reader's email client styles it."
           }
         }
+      },
+      "CalendarInvitationOutcome": {
+        "type": "object",
+        "required": ["recipient", "status"],
+        "properties": {
+          "recipient": {
+            "type": "string",
+            "format": "email"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["sent", "failed", "unknown"]
+          }
+        }
+      },
+      "CalendarEventMutationResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CalendarEvent"
+          },
+          {
+            "type": "object",
+            "required": ["invitation_outcomes", "invitation_failures"],
+            "properties": {
+              "invitation_outcomes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CalendarInvitationOutcome"
+                },
+                "description": "Per-recipient delivery outcome for this mutation."
+              },
+              "invitation_failures": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "description": "Compatibility list of failed and unknown recipients."
+              }
+            }
+          }
+        ]
+      },
+      "OrganizationAccess": {
+        "type": "object",
+        "required": [
+          "object",
+          "organization",
+          "plan",
+          "has_access",
+          "trial",
+          "mailboxes",
+          "newsletters_allowed"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "organization_access"
+          },
+          "organization": {
+            "type": "object",
+            "required": ["id", "name"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "plan": {
+            "type": "string",
+            "enum": ["free", "solo", "pro", "team", "scale"]
+          },
+          "has_access": {
+            "type": "boolean",
+            "description": "Mailboxes can be created now. The same rule mailbox creation applies, including trials and managed accounts."
+          },
+          "trial": {
+            "type": "object",
+            "required": ["active", "ends_at", "eligible"],
+            "properties": {
+              "active": {
+                "type": "boolean"
+              },
+              "ends_at": {
+                "type": ["string", "null"],
+                "format": "date-time"
+              },
+              "eligible": {
+                "type": "boolean",
+                "description": "The organization has no subscription yet and its owner has never had a trial. A trial is still confirmed at checkout."
+              }
+            }
+          },
+          "mailboxes": {
+            "type": "object",
+            "required": ["limit", "used"],
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "description": "Mailboxes the organization can hold now. During a trial this is at most 3."
+              },
+              "used": {
+                "type": "integer"
+              }
+            }
+          },
+          "newsletters_allowed": {
+            "type": "boolean",
+            "description": "Newsletter sending is available. It is not during a trial."
+          }
+        }
       }
     },
     "responses": {
@@ -15025,6 +16043,9 @@
   "security": [
     {
       "bearerAuth": []
+    },
+    {
+      "oauth2": []
     }
   ],
   "tags": [

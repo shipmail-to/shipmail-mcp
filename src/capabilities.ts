@@ -214,6 +214,7 @@ type CapabilityRow = readonly [
 
 const CAPABILITY_ROWS = [
   ["shipmail_status", "getStatus", "public"],
+  ["shipmail_get_organization_access", "getOrganizationAccess", "public"],
   ["shipmail_list_automations", "listAutomations", "automations:read"],
   ["shipmail_create_automation", "createAutomation", "automations:write"],
   ["shipmail_get_automation", "getAutomation", "automations:read"],
@@ -266,7 +267,7 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_mailbox_forwarding", "listMailboxForwarding", "mailbox_forwarding:read"],
   ["shipmail_create_mailbox_forwarding", "createMailboxForwarding", "mailbox_forwarding:write"],
   ["shipmail_delete_mailbox_forwarding", "deleteMailboxForwarding", "mailbox_forwarding:write"],
-  ["shipmail_reset_mailbox_password", "resetMailboxPassword", "mailboxes:write"],
+  ["shipmail_reset_mailbox_password", "resetMailboxPassword", "mailbox_credentials:write"],
   ["shipmail_set_auto_reply", "updateAutoReply", "mailboxes:write"],
   ["shipmail_get_mailbox_delivery_routing", "getMailboxDeliveryRouting", "mailboxes:read"],
   ["shipmail_update_mailbox_delivery_routing", "updateMailboxDeliveryRouting", "mailboxes:write"],

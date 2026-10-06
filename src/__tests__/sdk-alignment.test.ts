@@ -18,6 +18,8 @@ import type {
   AudienceFeed,
   Automation,
   BookingPage,
+  CalendarEvent,
+  CalendarEventMutationResult,
   CreatedMailboxAppPassword,
   Domain,
   DomainSearchResult,
@@ -32,10 +34,12 @@ import type {
   MailboxExport,
   MailboxFolder,
   MailboxFolders,
+  MailboxForwarding,
   MailboxIdentities,
   MailboxIdentity,
   MailboxRules,
   Member,
+  MemberMailboxAccess,
   Message,
   Newsletter,
   NewsletterAsset,
@@ -56,6 +60,8 @@ import {
   audienceSchema,
   automationSchema,
   bookingPageSchema,
+  calendarEventMutationSchema,
+  calendarEventSchema,
   createdMailboxAppPasswordSchema,
   domainSchema,
   domainSearchResultSchema,
@@ -69,6 +75,7 @@ import {
   mailboxExportSchema,
   mailboxFolderSchema,
   mailboxFoldersSchema,
+  mailboxForwardingSchema,
   mailboxIdentitiesSchema,
   mailboxIdentitySchema,
   mailboxRulesSchema,
@@ -97,6 +104,11 @@ type KeysMatch<A, B> = [Exclude<Keys<A>, Keys<B>>] extends [never]
     ? true
     : { error: "MCP schema has fields the SDK type does not"; extra: Exclude<Keys<B>, Keys<A>> }
   : { error: "SDK type has fields the MCP schema does not"; missing: Exclude<Keys<A>, Keys<B>> };
+type ValuesMatch<A, B> = [A] extends [B]
+  ? [B] extends [A]
+    ? true
+    : { error: "MCP schema is missing SDK values"; missing: Exclude<A, B> }
+  : { error: "MCP schema has values the SDK type does not"; extra: Exclude<B, A> };
 
 type AssertTrue<T extends true> = T;
 
@@ -107,6 +119,10 @@ type _AudienceKeys = AssertTrue<KeysMatch<Audience, z.infer<typeof audienceSchem
 type _AudienceFeedKeys = AssertTrue<KeysMatch<AudienceFeed, z.infer<typeof audienceFeedSchema>>>;
 type _AutomationKeys = AssertTrue<KeysMatch<Automation, z.infer<typeof automationSchema>>>;
 type _BookingPageKeys = AssertTrue<KeysMatch<BookingPage, z.infer<typeof bookingPageSchema>>>;
+type _CalendarEventKeys = AssertTrue<KeysMatch<CalendarEvent, z.infer<typeof calendarEventSchema>>>;
+type _CalendarEventMutationKeys = AssertTrue<
+  KeysMatch<CalendarEventMutationResult, z.infer<typeof calendarEventMutationSchema>>
+>;
 type _MailboxKeys = AssertTrue<KeysMatch<Mailbox, z.infer<typeof mailboxSchema>>>;
 type _MailboxAppPasswordKeys = AssertTrue<
   KeysMatch<MailboxAppPassword, z.infer<typeof mailboxAppPasswordSchema>>
@@ -118,6 +134,9 @@ type _MailboxExportKeys = AssertTrue<KeysMatch<MailboxExport, z.infer<typeof mai
 type _MailboxFolderKeys = AssertTrue<KeysMatch<MailboxFolder, z.infer<typeof mailboxFolderSchema>>>;
 type _MailboxFoldersKeys = AssertTrue<
   KeysMatch<MailboxFolders, z.infer<typeof mailboxFoldersSchema>>
+>;
+type _MailboxForwardingKeys = AssertTrue<
+  KeysMatch<MailboxForwarding, z.infer<typeof mailboxForwardingSchema>>
 >;
 type _MailboxIdentityKeys = AssertTrue<
   KeysMatch<MailboxIdentity, z.infer<typeof mailboxIdentitySchema>>
@@ -137,6 +156,15 @@ type _InboxMessagesKeys = AssertTrue<KeysMatch<InboxMessages, z.infer<typeof inb
 type _InboxThreadKeys = AssertTrue<KeysMatch<InboxThread, z.infer<typeof inboxThreadSchema>>>;
 type _MessageKeys = AssertTrue<KeysMatch<Message, z.infer<typeof messageSchema>>>;
 type _MemberKeys = AssertTrue<KeysMatch<Member, z.infer<typeof memberSchema>>>;
+type _MemberRoleValues = AssertTrue<
+  ValuesMatch<Member["role"], z.infer<typeof memberSchema>["role"]>
+>;
+type _MemberMailboxAccessKeys = AssertTrue<
+  KeysMatch<MemberMailboxAccess, z.infer<typeof memberSchema>["mailbox_access"]>
+>;
+type _MemberMailboxAccessScopeValues = AssertTrue<
+  ValuesMatch<MemberMailboxAccess["scope"], z.infer<typeof memberSchema>["mailbox_access"]["scope"]>
+>;
 type _NewsletterDomainKeys = AssertTrue<
   KeysMatch<NewsletterDomain, z.infer<typeof newsletterDomainSchema>>
 >;
@@ -179,12 +207,15 @@ type _AllChecks = [
   _AutomationKeys,
   _DomainKeys,
   _BookingPageKeys,
+  _CalendarEventKeys,
+  _CalendarEventMutationKeys,
   _MailboxKeys,
   _MailboxAppPasswordKeys,
   _CreatedMailboxAppPasswordKeys,
   _MailboxExportKeys,
   _MailboxFolderKeys,
   _MailboxFoldersKeys,
+  _MailboxForwardingKeys,
   _MailboxIdentityKeys,
   _MailboxIdentitiesKeys,
   _MailboxRulesKeys,
@@ -195,6 +226,9 @@ type _AllChecks = [
   _InboxThreadKeys,
   _MessageKeys,
   _MemberKeys,
+  _MemberRoleValues,
+  _MemberMailboxAccessKeys,
+  _MemberMailboxAccessScopeValues,
   _NewsletterDomainKeys,
   _NewsletterKeys,
   _NewsletterAssetKeys,
@@ -249,7 +283,13 @@ describe("SDK / MCP schema alignment", () => {
       true,
       true,
       true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
     ];
-    if (checks.length !== 34) throw new Error("alignment matrix size changed");
+    if (checks.length !== 40) throw new Error("alignment matrix size changed");
   });
 });

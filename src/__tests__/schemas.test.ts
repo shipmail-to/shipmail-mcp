@@ -112,6 +112,40 @@ describe("calendar invitation language schemas", () => {
       }),
     ).toThrow();
   });
+
+  test("validates retry keys, revisions, and invitation delivery defaults", () => {
+    const created = createCalendarEventInputSchema.parse({
+      mailbox: "hello@example.com",
+      title: "Sync",
+      start: "2026-08-07T08:30:00",
+      operation_key: "calendar-create:0001",
+    });
+    expect(created.send_invitations).toBe(true);
+
+    const updated = updateCalendarEventInputSchema.parse({
+      id: "evt_1",
+      mailbox: "hello@example.com",
+      operation_key: "calendar-update:0001",
+      expected_revision: "a".repeat(64),
+    });
+    expect(updated.send_guest_updates).toBe(true);
+
+    expect(() =>
+      createCalendarEventInputSchema.parse({
+        mailbox: "hello@example.com",
+        title: "Sync",
+        start: "2026-08-07T08:30:00",
+        operation_key: "contains spaces",
+      }),
+    ).toThrow();
+    expect(() =>
+      updateCalendarEventInputSchema.parse({
+        id: "evt_1",
+        mailbox: "hello@example.com",
+        expected_revision: "A".repeat(64),
+      }),
+    ).toThrow();
+  });
 });
 
 describe("listMessageAnalyticsInputSchema", () => {
@@ -1104,6 +1138,15 @@ describe("newsletter schemas", () => {
         styling_mode: "styled",
       }).styling_mode,
     ).toBe("styled");
+    expect(
+      updateNewsletterInputSchema.parse({
+        id: "nws_123",
+        track_engagement: false,
+      }).track_engagement,
+    ).toBe(false);
+    expect(() =>
+      updateNewsletterInputSchema.parse({ id: "nws_123", track_engagement: "yes" }),
+    ).toThrow();
     expect(() => updateNewsletterInputSchema.parse({ id: "nws_123" })).toThrow();
     expect(() =>
       createNewsletterInputSchema.parse({
@@ -1163,6 +1206,9 @@ describe("newsletter schemas", () => {
         archive_visibility: "private",
         feed_entry_url: null,
         styling_mode: "styled",
+        track_engagement: true,
+        opened_count: 12,
+        clicked_count: 4,
         preflight_status: "not_run",
         preflight_results: {},
         send_window_hours: 6,

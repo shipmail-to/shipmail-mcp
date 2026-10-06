@@ -58,6 +58,14 @@ function formatShipmailError(error: ShipmailError): string {
   if (error instanceof ReconciliationRequiredError && error.messageId) {
     parts.push(`message_id=${sanitizeString(error.messageId, 200)}`);
   }
+  // A refusal the organization owner can lift in Shipmail. The agent passes the link to the person
+  // and retries with a new idempotency key once the owner confirmed; it never pays itself.
+  const actionUrl = isSafeMessage ? safeActionUrl(error.actionUrl) : null;
+  if (actionUrl) {
+    if (error.reason) parts.push(`reason=${sanitizeString(error.reason, 64)}`);
+    parts.push(`action_url=${actionUrl}`);
+    parts.push("Send action_url to the organization owner; do not pay or choose a plan yourself.");
+  }
   if (isSafeMessage && error instanceof ValidationError && error.details?.length) {
     const fields = error.details
       .map((detail) => sanitizeString(detail.field, 100))
@@ -67,6 +75,18 @@ function formatShipmailError(error: ShipmailError): string {
     if (fields.length > 0) parts.push(`fields=${fields}`);
   }
   return parts.join(" | ");
+}
+
+function safeActionUrl(value: string | undefined): string | null {
+  if (!value) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+  return sanitizeString(parsed.href, 500);
 }
 
 function safeMarkerStrip(message: string): string | null {

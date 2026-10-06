@@ -11,6 +11,7 @@ import { z } from "zod/v4";
 import { MCP_CAPABILITIES, MCP_PERMISSION_GROUPS, MCP_TOOL_NAMES } from "../capabilities.js";
 import {
   audienceFeedSchema,
+  createMailboxForwardingInputSchema,
   createNewsletterInputSchema,
   inboxDraftSchema,
   inboxFullMessageSchema,
@@ -19,6 +20,7 @@ import {
   inboxThreadAttentionResultSchema,
   inboxThreadSchema,
   inboxThreadSummarySchema,
+  memberMailboxAccessSchema,
   memberSchema,
   messageAnalyticsSchema,
   messageSchema,
@@ -95,6 +97,11 @@ const OPENAPI_SCHEMA_COVERAGE = [
     mcpOnlyKeys: ["idempotency_key"],
   },
   {
+    componentName: "CreateMailboxForwardingRequest",
+    mcpKeys: createMailboxForwardingInputSchema.keyof().options,
+    mcpOnlyKeys: ["id", "idempotency_key"],
+  },
+  {
     componentName: "UpdateNewsletterRequest",
     mcpKeys: updateNewsletterInputSchema.keyof().options,
     mcpOnlyKeys: ["id", "idempotency_key"],
@@ -141,6 +148,20 @@ const OPENAPI_SCHEMA_COVERAGE = [
     mcpOnlyKeys: [],
   },
 ] as const;
+
+const memberOpenApiSchema = z.object({
+  required: z.array(z.string()),
+  properties: z.object({
+    role: z.object({ enum: z.array(z.string()) }),
+    mailbox_access: z.object({
+      required: z.array(z.string()),
+      properties: z.object({
+        scope: z.object({ enum: z.array(z.string()) }),
+        mailbox_ids: z.object({ type: z.literal("array") }),
+      }),
+    }),
+  }),
+});
 
 function readOpenApiDocument(): z.infer<typeof openApiSchema> {
   const raw: unknown = JSON.parse(readFileSync(OPENAPI_PATH, "utf8"));
@@ -191,6 +212,18 @@ describe("OpenAPI, capability registry, and MCP registration", () => {
     }
   });
 
+  test("member roles and mailbox access match OpenAPI", () => {
+    const member = memberOpenApiSchema.parse(readOpenApiDocument().components.schemas.Member);
+    expect(member.properties.role.enum).toEqual(memberSchema.shape.role.options);
+    expect(member.required).toContain("mailbox_access");
+    expect(member.properties.mailbox_access.required.sort()).toEqual(
+      memberMailboxAccessSchema.keyof().options.sort(),
+    );
+    expect(member.properties.mailbox_access.properties.scope.enum).toEqual(
+      memberMailboxAccessSchema.shape.scope.options,
+    );
+  });
+
   test("every OpenAPI operation is registered or explicitly excluded", () => {
     const operations = readOpenApiOperations();
     const operationIds = new Set(MCP_CAPABILITIES.map((capability) => capability.operationId));
@@ -215,7 +248,8 @@ describe("OpenAPI, capability registry, and MCP registration", () => {
     const knownScopes = new Set<string>(API_KEY_SCOPES);
     for (const capability of MCP_CAPABILITIES) {
       if (capability.requiredScope === "public") {
-        expect(operations.get(capability.operationId)).toBeUndefined();
+        // No scope to grant: either an unauthenticated route or one any credential may call.
+        expect([undefined, "authenticated"]).toContain(operations.get(capability.operationId));
       } else {
         expect(knownScopes.has(capability.requiredScope)).toBe(true);
         expect(operations.get(capability.operationId)).toBe(capability.requiredScope);

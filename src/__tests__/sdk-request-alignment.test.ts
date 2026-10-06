@@ -12,9 +12,11 @@ import { describe, test } from "bun:test";
 import type {
   CreateAutomationParams,
   CreateBookingPageParams,
+  CreateCalendarEventParams,
   CreateDomainParams,
   CreateMailboxAppPasswordParams,
   CreateMailboxFolderParams,
+  CreateMailboxForwardingParams,
   CreateMailboxParams,
   CreateNewsletterFromChangelogParams,
   CreateNewsletterParams,
@@ -33,6 +35,7 @@ import type {
   UpdateAutomationParams,
   UpdateAutoReplyParams,
   UpdateBookingPageParams,
+  UpdateCalendarEventParams,
   UpdateDomainParams,
   UpdateInboxMessageParams,
   UpdateMailboxFolderParams,
@@ -46,9 +49,11 @@ import type {
   autoReplyInputSchema,
   createAutomationInputSchema,
   createBookingPageInputSchema,
+  createCalendarEventInputSchema,
   createDomainInputSchema,
   createMailboxAppPasswordInputSchema,
   createMailboxFolderInputSchema,
+  createMailboxForwardingInputSchema,
   createMailboxInputSchema,
   createNewsletterFromChangelogInputSchema,
   createNewsletterInputSchema,
@@ -66,6 +71,7 @@ import type {
   updateAudienceFeedInputSchema,
   updateAutomationInputSchema,
   updateBookingPageInputSchema,
+  updateCalendarEventInputSchema,
   updateDomainInputSchema,
   updateInboxMessageInputSchema,
   updateMailboxFolderInputSchema,
@@ -117,6 +123,12 @@ type _CreateBookingPage = AssertTrue<
 type _UpdateBookingPage = AssertTrue<
   KeysMatch<UpdateBookingPageParams, StripMcpOnly<z.infer<typeof updateBookingPageInputSchema>>>
 >;
+type _CreateCalendarEvent = AssertTrue<
+  KeysMatch<CreateCalendarEventParams, StripMcpOnly<z.infer<typeof createCalendarEventInputSchema>>>
+>;
+type _UpdateCalendarEvent = AssertTrue<
+  KeysMatch<UpdateCalendarEventParams, StripMcpOnly<z.infer<typeof updateCalendarEventInputSchema>>>
+>;
 type _UpdateAudienceFeed = AssertTrue<
   KeysMatch<
     UpdateAudienceFeedParams,
@@ -136,6 +148,12 @@ type _CreateMailboxAppPassword = AssertTrue<
   KeysMatch<
     CreateMailboxAppPasswordParams,
     StripMcpOnly<z.infer<typeof createMailboxAppPasswordInputSchema>>
+  >
+>;
+type _CreateMailboxForwarding = AssertTrue<
+  KeysMatch<
+    CreateMailboxForwardingParams,
+    StripMcpOnly<z.infer<typeof createMailboxForwardingInputSchema>>
   >
 >;
 type _UpdateMailbox = AssertTrue<
@@ -216,11 +234,14 @@ type _AllChecks = [
   _UpdateAudienceFeed,
   _CreateBookingPage,
   _UpdateBookingPage,
+  _CreateCalendarEvent,
+  _UpdateCalendarEvent,
   _CreateDomain,
   _UpdateDomain,
   _SearchDomains,
   _CreateMailbox,
   _CreateMailboxAppPassword,
+  _CreateMailboxForwarding,
   _UpdateMailbox,
   _InjectSandboxInbound,
   _CreateMailboxFolder,
@@ -274,7 +295,10 @@ describe("SDK request params / MCP input schema alignment", () => {
       true,
       true,
       true,
+      true,
+      true,
+      true,
     ];
-    if (checks.length !== 29) throw new Error("alignment matrix size changed");
+    if (checks.length !== 32) throw new Error("alignment matrix size changed");
   });
 });

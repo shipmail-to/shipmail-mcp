@@ -37,6 +37,9 @@ function newsletterPayload() {
     archive_visibility: "private",
     feed_entry_url: null,
     styling_mode: "styled",
+    track_engagement: false,
+    opened_count: null,
+    clicked_count: null,
     preflight_status: "not_run",
     preflight_results: {},
     send_window_hours: 6,
@@ -186,6 +189,33 @@ describe("newsletter MCP tools", () => {
     expect(captured[1]?.url.pathname).toBe("/api/v1/newsletters/nws_123");
     expect(captured[1]?.method).toBe("PATCH");
     expect(captured[1]?.body).toContain(JSON.stringify({ type: "callout", body: updateBody }));
+  });
+
+  test("forwards track_engagement on create and update", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const createResult = await client.callTool({
+      name: "shipmail_create_newsletter",
+      arguments: {
+        audience_id: "aud_123",
+        sender_identity_id: "nwsid_123",
+        name: "Launch",
+        subject: "What shipped",
+        body_text: "Launch notes",
+        track_engagement: true,
+      },
+    });
+    const updateResult = await client.callTool({
+      name: "shipmail_update_newsletter",
+      arguments: { id: "nws_123", track_engagement: false },
+    });
+
+    expect(createResult.isError).toBeFalsy();
+    expect(updateResult.isError).toBeFalsy();
+    expect(JSON.parse(captured[0]?.body ?? "{}")).toMatchObject({ track_engagement: true });
+    expect(captured[1]?.method).toBe("PATCH");
+    expect(JSON.parse(captured[1]?.body ?? "{}")).toEqual({ track_engagement: false });
   });
 
   test("rejects half-filled column CTAs before calling the API", async () => {

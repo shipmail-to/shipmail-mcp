@@ -44,6 +44,10 @@ export const ATTACHMENT_COMPOSER_HTML = String.raw`<!doctype html>
       var bridge = window.openai;
       var input = bridge && bridge.toolInput ? bridge.toolInput : {};
       var selectedFile = input.file || null;
+      // Once the send tool has been called, its outcome can be ambiguous to
+      // the card (for example, the host can lose the response after accepting
+      // the request). Keep this exact payload until it resolves.
+      var pendingSend = null;
       var submit = document.getElementById("submit");
       var change = document.getElementById("change");
       var status = document.getElementById("status");
@@ -65,7 +69,9 @@ export const ATTACHMENT_COMPOSER_HTML = String.raw`<!doctype html>
       }
       function setBusy(busy) {
         submit.disabled = busy;
-        change.disabled = busy;
+        // A different file would turn an uncertain, already-accepted request
+        // into a new one. It stays unavailable until this request resolves.
+        change.disabled = busy || Boolean(pendingSend);
       }
       function readUrl(value) {
         if (typeof value === "string") return value;
@@ -99,8 +105,12 @@ export const ATTACHMENT_COMPOSER_HTML = String.raw`<!doctype html>
       if (bridge && typeof bridge.selectFiles === "function") {
         change.hidden = false;
         change.addEventListener("click", async function () {
+          if (pendingSend) return;
           try {
             var files = await bridge.selectFiles();
+            // The picker may have opened before a send crossed its boundary.
+            // Do not let its late result replace the retained request.
+            if (pendingSend) return;
             if (files && files[0]) {
               selectedFile = files[0];
               text("file", fileName(selectedFile));
@@ -124,6 +134,15 @@ export const ATTACHMENT_COMPOSER_HTML = String.raw`<!doctype html>
 
         setBusy(true);
         try {
+          if (pendingSend) {
+            setStatus(input.scheduled_at ? "Checking the scheduled message..." : "Checking the message send...");
+            var retried = await bridge.callTool("shipmail_send_message", pendingSend);
+            if (hasToolError(retried)) throw new Error("send_failed");
+            setStatus(input.scheduled_at ? "Message scheduled." : "Message sent.", "success");
+            submit.hidden = true;
+            change.hidden = true;
+            return;
+          }
           setStatus("Downloading the selected file...");
           var fileId = selectedFile.file_id || selectedFile.fileId;
           var downloadUrl = selectedFile.download_url || selectedFile.downloadUrl || null;
@@ -181,13 +200,22 @@ export const ATTACHMENT_COMPOSER_HTML = String.raw`<!doctype html>
             idempotency_key: "mcp_app_" + crypto.randomUUID().replace(/-/g, "")
           });
           delete sendInput.file;
-          var sent = await bridge.callTool("shipmail_send_message", sendInput);
+          pendingSend = sendInput;
+          submit.textContent = input.scheduled_at ? "Check scheduled result" : "Check send result";
+          var sent = await bridge.callTool("shipmail_send_message", pendingSend);
           if (hasToolError(sent)) throw new Error("send_failed");
           setStatus(input.scheduled_at ? "Message scheduled." : "Message sent.", "success");
           submit.hidden = true;
           change.hidden = true;
         } catch (error) {
-          setStatus("The attachment could not be sent. No automatic retry was made.", "error");
+          setStatus(
+            pendingSend
+              ? input.scheduled_at
+                ? "The scheduling result is unknown. Check Scheduled Messages before retrying; retry uses the same request."
+                : "The send result is unknown. Check Sent before retrying; retry uses the same request."
+              : "The attachment could not be prepared for sending.",
+            "error"
+          );
         } finally {
           setBusy(false);
         }

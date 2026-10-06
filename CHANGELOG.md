@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.9.3](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.2...shipmail-mcp-v0.9.3) (2026-10-06)
+
+
+### Features
+
+* **agents:** hand Shipmail setup to an agent, owner pays ([#2978](https://github.com/shipmail-to/Shipmail/issues/2978)) ([2f7db58](https://github.com/shipmail-to/Shipmail/commit/2f7db58f5fd9f1c9865a82384cf42f32e7e9be5c))
+* forward mail for a selected alias ([#2968](https://github.com/shipmail-to/Shipmail/issues/2968)) ([6bc51ce](https://github.com/shipmail-to/Shipmail/commit/6bc51ce7f416436ff0755e6680e5c13780d5a045))
+
+
+### Bug Fixes
+
+* **domains:** ask for the four DNS records a connected domain needs ([#2970](https://github.com/shipmail-to/Shipmail/issues/2970)) ([9630a1e](https://github.com/shipmail-to/Shipmail/commit/9630a1e9a33a3426d8ff28bb9da7d66957da908c))
+
+## [0.9.2](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.1...shipmail-mcp-v0.9.2) (2026-10-03)
+
+
+### Features
+
+* **api:** member roles and mailbox access in the API, SDKs, CLI and MCP (R3b-3) ([#2844](https://github.com/shipmail-to/Shipmail/issues/2844)) ([a181133](https://github.com/shipmail-to/Shipmail/commit/a181133adbe43c375a08f3de6b2be126a80203e0))
+* **calendar:** add reliable multi-calendar scheduling workspace ([#2864](https://github.com/shipmail-to/Shipmail/issues/2864)) ([41718d9](https://github.com/shipmail-to/Shipmail/commit/41718d9e0cf998265b640c17fda58314f92922e9))
+* complete newsletter workspace and audience tools ([#2843](https://github.com/shipmail-to/Shipmail/issues/2843)) ([728c4d5](https://github.com/shipmail-to/Shipmail/commit/728c4d5c7d6f02726ca73ba4605e038935c61a6b))
+* **newsletters:** optional open and click tracking, clearer import drop zone ([#2860](https://github.com/shipmail-to/Shipmail/issues/2860)) ([38c25fd](https://github.com/shipmail-to/Shipmail/commit/38c25fd929c0ba973a19c182aad4942a137325e5))
+* **roles:** selected-access Admins manage forwarding, passwords and aliases of their mailboxes ([#2878](https://github.com/shipmail-to/Shipmail/issues/2878)) ([6aef8c3](https://github.com/shipmail-to/Shipmail/commit/6aef8c3ee8d96c21eb5cda690540726ec04b4057))
+
+
+### Bug Fixes
+
+* preserve send and automation durability across retries ([#2839](https://github.com/shipmail-to/Shipmail/issues/2839)) ([38b0cb6](https://github.com/shipmail-to/Shipmail/commit/38b0cb68b780abd87e0b74dd2666638bb360d45f))
+
 ## [0.9.1](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.0...shipmail-mcp-v0.9.1) (2026-10-01)
 
 

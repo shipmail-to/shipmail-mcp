@@ -19,6 +19,7 @@ function eventPayload(overrides: Record<string, unknown> = {}) {
   return {
     object: "calendar_event",
     id: "evt_1",
+    revision: "a".repeat(64),
     mailbox: ADDRESS,
     calendar_id: "cal_1",
     uid: "uid-1",
@@ -45,6 +46,14 @@ function eventPayload(overrides: Record<string, unknown> = {}) {
     updated_at: null,
     ...overrides,
   };
+}
+
+function mutationEventPayload(overrides: Record<string, unknown> = {}) {
+  return eventPayload({
+    invitation_outcomes: [],
+    invitation_failures: [],
+    ...overrides,
+  });
 }
 
 function bookingPayload() {
@@ -104,11 +113,13 @@ describe("calendar + booking MCP tools", () => {
   });
 
   test("create_calendar_event POSTs to /calendar/events with the event body", async () => {
-    const client = await buildPair(() => eventPayload());
+    const client = await buildPair(() => mutationEventPayload());
     const result = await client.callTool({
       name: "shipmail_create_calendar_event",
       arguments: {
         mailbox: ADDRESS,
+        operation_key: "calendar-create-0001",
+        send_invitations: false,
         title: "Sync",
         invitation_language: "fr",
         start: "2026-08-01T14:00:00",
@@ -121,13 +132,18 @@ describe("calendar + booking MCP tools", () => {
     expect(new URL(req?.url ?? "").pathname).toBe("/api/v1/calendar/events");
     expect(req?.body).toMatchObject({
       mailbox: ADDRESS,
+      operation_key: "calendar-create-0001",
+      send_invitations: false,
       title: "Sync",
       invitation_language: "fr",
       start: "2026-08-01T14:00:00",
       attendees: [{ email: "guest@example.com", name: "Guest" }],
     });
-    const sc = (result.structuredContent ?? {}) as { event?: { id?: string } };
+    const sc = (result.structuredContent ?? {}) as {
+      event?: { id?: string; invitation_outcomes?: unknown[] };
+    };
     expect(sc.event?.id).toBe("evt_1");
+    expect(sc.event?.invitation_outcomes).toEqual([]);
   });
 
   test("get_calendar_event forwards the mailbox query param", async () => {
@@ -142,12 +158,15 @@ describe("calendar + booking MCP tools", () => {
   });
 
   test("update_calendar_event accepts opaque event ids", async () => {
-    const client = await buildPair(() => eventPayload());
+    const client = await buildPair(() => mutationEventPayload());
     const result = await client.callTool({
       name: "shipmail_update_calendar_event",
       arguments: {
         id: OPAQUE_EVENT_ID,
         mailbox: ADDRESS,
+        operation_key: "calendar-update-0001",
+        expected_revision: "a".repeat(64),
+        send_guest_updates: false,
         invitation_language: "es",
         location: null,
       },
@@ -156,7 +175,14 @@ describe("calendar + booking MCP tools", () => {
     const req = captured[0];
     expect(req?.method).toBe("PATCH");
     expect(new URL(req?.url ?? "").pathname).toBe("/api/v1/calendar/events/evt%3Aopaque.123");
-    expect(req?.body).toEqual({ mailbox: ADDRESS, invitation_language: "es", location: null });
+    expect(req?.body).toEqual({
+      mailbox: ADDRESS,
+      operation_key: "calendar-update-0001",
+      expected_revision: "a".repeat(64),
+      send_guest_updates: false,
+      invitation_language: "es",
+      location: null,
+    });
   });
 
   test("get_calendar_availability joins days and returns slots", async () => {

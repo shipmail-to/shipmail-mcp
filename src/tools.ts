@@ -65,6 +65,7 @@ import {
   bookingPagesOutputSchema,
   calendarAvailabilityInputSchema,
   calendarAvailabilityOutputSchema,
+  calendarEventMutationOutputSchema,
   calendarEventOutputSchema,
   calendarEventsOutputSchema,
   composeMessageWithFileInputSchema,
@@ -171,6 +172,7 @@ import {
   newsletterSenderIdentitiesOutputSchema,
   newslettersOutputSchema,
   newsletterTestSendOutputSchema,
+  organizationAccessOutputSchema,
   prepareNewsletterAssetUploadInputSchema,
   prepareStagedAttachmentUploadInputSchema,
   previewNewsletterInputSchema,
@@ -665,6 +667,23 @@ export function registerTools(
     );
   });
 
+  registerIfAllowed("shipmail_get_organization_access", () => {
+    server.registerTool(
+      "shipmail_get_organization_access",
+      {
+        title: "Get Organization Access",
+        description:
+          "Check whether the organization can create mailboxes now: plan, has_access, trial state and end, trial eligibility, mailbox limit and usage, and whether newsletters are allowed. Poll it after the owner opens the billing link: access appears once Shipmail has recorded the payment. Never choose or pay for a plan yourself.",
+        outputSchema: organizationAccessOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async () =>
+        runTool("shipmail_get_organization_access", organizationAccessOutputSchema, async () => ({
+          access: await client.organization.access(),
+        })),
+    );
+  });
+
   registerIfAllowed("shipmail_list_domains", () => {
     server.registerTool(
       "shipmail_list_domains",
@@ -705,7 +724,7 @@ export function registerTools(
       {
         title: "Get Domain DNS Records",
         description:
-          "Return all six DNS records required by Shipmail and live observed values for propagation diagnostics. This does not update domain state.",
+          "Return the DNS records Shipmail requires for this domain and live observed values for propagation diagnostics. A connected domain needs four: MX, SPF, DKIM and DMARC. A domain bought through Shipmail also lists two mail-subdomain records, which Shipmail adds itself. This does not update domain state.",
         inputSchema: getByIdInputSchema,
         outputSchema: domainDnsRecordsOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: true },
@@ -2040,7 +2059,7 @@ export function registerTools(
       {
         title: "Add Mailbox Forwarding",
         description:
-          "Send a confirmation email to a forwarding destination. Delivery begins after recipient confirmation, keeps a local copy, and excludes spam.",
+          "Send a confirmation email to a forwarding destination. Optionally filter by exact From address, delivery recipient, or both. Delivery begins after confirmation, keeps a local copy, and excludes spam.",
         inputSchema: createMailboxForwardingInputSchema,
         outputSchema: mailboxForwardingOutputSchema,
         annotations: {
@@ -2054,7 +2073,11 @@ export function registerTools(
         runTool("shipmail_create_mailbox_forwarding", mailboxForwardingOutputSchema, async () => ({
           forwarding: await client.mailboxes.createForwarding(
             args.id,
-            { destination: args.destination, sender: args.sender ?? null },
+            {
+              destination: args.destination,
+              sender: args.sender ?? null,
+              recipient: args.recipient ?? null,
+            },
             mutationOptions(args),
           ),
         })),
@@ -2659,7 +2682,8 @@ export function registerTools(
       "shipmail_list_members",
       {
         title: "List Members",
-        description: "List organization members.",
+        description:
+          "List organization members and their mailbox access. Selected mailbox IDs are limited to mailboxes visible to this API credential and may be partial.",
         inputSchema: listMembersInputSchema,
         outputSchema: membersOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: false },
@@ -2676,7 +2700,8 @@ export function registerTools(
       "shipmail_get_member",
       {
         title: "Get Member",
-        description: "Fetch an organization member by ID.",
+        description:
+          "Fetch an organization member and their mailbox access by ID. Selected mailbox IDs are limited to mailboxes visible to this API credential and may be partial.",
         inputSchema: getByIdInputSchema,
         outputSchema: memberOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: false },
@@ -3214,7 +3239,7 @@ export function registerTools(
       {
         title: "Create Newsletter",
         description:
-          "Create a newsletter draft for an audience and sender identity. Shipmail renders blocks to email-safe HTML and text. Paragraph, quote, callout, list-item, and column bodies accept text or sanitized inline HTML. styled applies Shipmail's email theme. plain preserves HTML without injected styles, width, or centering.",
+          "Create a newsletter draft for an audience and sender identity. Shipmail renders blocks to email-safe HTML and text. Paragraph, quote, callout, list-item, and column bodies accept text or sanitized inline HTML. styled applies Shipmail's email theme. plain preserves HTML without injected styles, width, or centering. track_engagement turns on open and click tracking for this issue; it is off by default.",
         inputSchema: createNewsletterInputSchema,
         outputSchema: newsletterOutputSchema,
         annotations: {
@@ -3266,7 +3291,7 @@ export function registerTools(
       {
         title: "Update Newsletter",
         description:
-          "Update an editable newsletter draft or future scheduled newsletter. Paragraph, quote, callout, list-item, and column bodies accept text or sanitized inline HTML. body_text alone updates the plain-text override when blocks exist. Sending and sent newsletters cannot be edited. Concurrent saves return conflict (409). styled applies Shipmail's email theme. plain preserves HTML without injected styles, width, or centering.",
+          "Update an editable newsletter draft or future scheduled newsletter. Changing message content, presentation, or audience returns a scheduled newsletter to draft and clears scheduled_at; inspect the returned status, send a new test, and schedule again. Name, feed link, and send-window changes can keep the schedule. Paragraph, quote, callout, list-item, and column bodies accept text or sanitized inline HTML. body_text alone updates the plain-text override when blocks exist. Sending and sent newsletters cannot be edited. Concurrent saves return conflict (409). styled applies Shipmail's email theme. plain preserves HTML without injected styles, width, or centering. track_engagement turns open and click tracking on or off for this issue.",
         inputSchema: updateNewsletterInputSchema,
         outputSchema: newsletterOutputSchema,
         annotations: {
@@ -3300,6 +3325,9 @@ export function registerTools(
                 : {}),
               ...(rest.feed_entry_url !== undefined ? { feed_entry_url: rest.feed_entry_url } : {}),
               ...(rest.styling_mode !== undefined ? { styling_mode: rest.styling_mode } : {}),
+              ...(rest.track_engagement !== undefined
+                ? { track_engagement: rest.track_engagement }
+                : {}),
             },
             mutationOptions(args),
           ),
@@ -3881,9 +3909,9 @@ export function registerTools(
       {
         title: "Create Calendar Event",
         description:
-          "Create a calendar event on a mailbox's calendar. start is a local date-time; its zone is given by timezone.",
+          "Create a calendar event on a mailbox's calendar. start is a local date-time; its zone is given by timezone. Reuse operation_key only when retrying the exact same payload.",
         inputSchema: createCalendarEventInputSchema,
-        outputSchema: calendarEventOutputSchema,
+        outputSchema: calendarEventMutationOutputSchema,
         annotations: {
           readOnlyHint: false,
           destructiveHint: false,
@@ -3892,7 +3920,7 @@ export function registerTools(
         },
       },
       async (args) =>
-        runTool("shipmail_create_calendar_event", calendarEventOutputSchema, async () => ({
+        runTool("shipmail_create_calendar_event", calendarEventMutationOutputSchema, async () => ({
           event: await client.calendar.events.create(
             stripIdempotencyKey(args),
             mutationOptions(args),
@@ -3907,9 +3935,9 @@ export function registerTools(
       {
         title: "Update Calendar Event",
         description:
-          "Update a calendar event. Omitted fields are unchanged; send null to clear description, timezone, location, video_url, recurrence, or reminders.",
+          "Update a calendar event. Omitted fields are unchanged; send null to clear description, timezone, location, video_url, recurrence, or reminders. Use expected_revision from a prior read and reuse operation_key only for an exact-payload retry.",
         inputSchema: updateCalendarEventInputSchema,
-        outputSchema: calendarEventOutputSchema,
+        outputSchema: calendarEventMutationOutputSchema,
         annotations: {
           readOnlyHint: false,
           destructiveHint: false,
@@ -3918,7 +3946,7 @@ export function registerTools(
         },
       },
       async (args) =>
-        runTool("shipmail_update_calendar_event", calendarEventOutputSchema, async () => {
+        runTool("shipmail_update_calendar_event", calendarEventMutationOutputSchema, async () => {
           const { id, idempotency_key: _key, ...params } = args;
           return { event: await client.calendar.events.update(id, params, mutationOptions(args)) };
         }),
