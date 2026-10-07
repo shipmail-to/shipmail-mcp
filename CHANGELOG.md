@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.4](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.3...shipmail-mcp-v0.9.4) (2026-10-07)
+
+
+### Bug Fixes
+
+* **mcp:** describe Shipmail with the current hero copy in package listings ([#3033](https://github.com/shipmail-to/Shipmail/issues/3033)) ([87ec869](https://github.com/shipmail-to/Shipmail/commit/87ec8699191b554e3f07694d40f779e8fbe94117))
+
 ## [0.9.3](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.2...shipmail-mcp-v0.9.3) (2026-10-06)
 
 

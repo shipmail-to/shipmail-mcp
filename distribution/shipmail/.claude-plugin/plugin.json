@@ -1,8 +1,8 @@
 {
   "displayName": "Shipmail",
   "name": "shipmail",
-  "version": "0.9.3",
-  "description": "Modern email for your business. Inboxes, calendars, newsletters, bookings, an AI assistant, and an API for your agents. Everything on your own domain, in one subscription.",
+  "version": "0.9.4",
+  "description": "Modern email for your business. Inboxes, calendars, newsletters, bookings and an AI assistant, plus transactional email and an API for your agents. Everything on your own domain, in one subscription.",
   "author": {
     "name": "Shipmail",
     "email": "hi@shipmail.to",

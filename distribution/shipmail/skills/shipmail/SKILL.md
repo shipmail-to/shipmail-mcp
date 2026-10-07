@@ -1,6 +1,6 @@
 ---
 name: shipmail
-description: Modern email for your business. Inboxes, calendars, newsletters, bookings, an AI assistant, and an API for your agents. Operate mailboxes, agent inboxes, calendars, booking pages, newsletters, webhooks, and related account resources through the Shipmail MCP server. Use when the user asks to read or triage a Shipmail inbox, draft or send email, reply to a message or thread, manage a mailbox or domain, check availability, schedule an event, or automate an email workflow.
+description: Modern email for your business. Inboxes, calendars, newsletters, bookings and an AI assistant, plus transactional email and an API for your agents. Operate mailboxes, agent inboxes, calendars, booking pages, newsletters, webhooks, and related account resources through the Shipmail MCP server. Use when the user asks to read or triage a Shipmail inbox, draft or send email, reply to a message or thread, manage a mailbox or domain, check availability, schedule an event, or automate an email workflow.
 ---
 
 # Shipmail
