@@ -3646,7 +3646,7 @@
       "post": {
         "operationId": "createWebhook",
         "summary": "Create a webhook",
-        "description": "Register a webhook endpoint to receive event notifications. Maximum 10 webhooks per account. The secret is only returned at creation time. Pass `mailbox_ids` or `domain_ids` to receive mailbox and domain events for only those resources; unknown IDs are rejected with a 422 whose details code is `invalid_mailbox_ids` or `invalid_domain_ids`.",
+        "description": "Register a webhook endpoint to receive event notifications. Maximum 10 webhooks per account. The secret is only returned at creation time. Pass `mailbox_ids` or `domain_ids` to receive mailbox and domain events for only those resources; unknown IDs are rejected with a 422 whose details code is `invalid_mailbox_ids` or `invalid_domain_ids`. Pass `authorization` to send that value as the `Authorization` header of every delivery; it is write-only. Pass `standard_webhooks_secret` to sign every delivery the way Standard Webhooks receivers check; it is write-only too.",
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "write",
         "x-scope": "webhooks:write",
@@ -10063,6 +10063,7 @@
                   "from_is",
                   "from_contains",
                   "recipient_is",
+                  "recipient_contains",
                   "plus_tag_is",
                   "subject_contains"
                 ]
@@ -10800,6 +10801,8 @@
           "description",
           "mailbox_ids",
           "domain_ids",
+          "has_authorization",
+          "has_standard_webhooks_secret",
           "created_at",
           "updated_at"
         ],
@@ -10840,6 +10843,14 @@
               "type": "string"
             },
             "description": "Domains this webhook is limited to, or null. When both lists are null the webhook receives events for every mailbox."
+          },
+          "has_authorization": {
+            "type": "boolean",
+            "description": "True when deliveries carry an `Authorization` header set through `authorization`. The value itself is never returned."
+          },
+          "has_standard_webhooks_secret": {
+            "type": "boolean",
+            "description": "True when deliveries carry Standard Webhooks signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`) from a secret set through `standard_webhooks_secret`. The secret itself is never returned."
           },
           "created_at": {
             "type": "string",
@@ -10936,6 +10947,7 @@
           "webhook.test",
           "message.received",
           "message.sent",
+          "message.delayed",
           "message.delivered",
           "message.bounced",
           "message.complained",
@@ -10962,6 +10974,7 @@
         "enum": [
           "message.received",
           "message.sent",
+          "message.delayed",
           "message.delivered",
           "message.bounced",
           "message.complained",
@@ -11905,6 +11918,21 @@
             },
             "maxItems": 100,
             "description": "Only deliver events for these domains and their mailboxes. Omit or null for every domain."
+          },
+          "authorization": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "^[\\x20-\\x7E]+$",
+            "writeOnly": true,
+            "description": "Sent verbatim as the `Authorization` header of every delivery to this webhook, including test events and replays. For example `Bearer <key>`. Printable ASCII only. Stored encrypted and never returned; responses carry `has_authorization` instead. Signature headers are sent as usual."
+          },
+          "standard_webhooks_secret": {
+            "type": ["string", "null"],
+            "pattern": "^whsec_(?:[A-Za-z0-9+/]+={0,2}|[A-Za-z0-9_-]+)$",
+            "maxLength": 128,
+            "writeOnly": true,
+            "description": "A Standard Webhooks signing secret from the receiving service, such as a Grok automation webhook trigger: `whsec_` followed by a 24 to 64 byte key in standard base64 (with or without padding) or base64url. When set, every delivery, test event and replay also carries `webhook-id` (the event id, the same on every retry and replay), `webhook-timestamp` and `webhook-signature`. Stored encrypted and never returned; responses carry `has_standard_webhooks_secret` instead. The `X-Shipmail-Signature` headers are sent as usual."
           }
         }
       },
@@ -11948,6 +11976,21 @@
             },
             "maxItems": 100,
             "description": "Replace the domain filter. Omit to leave it unchanged; null or [] clears it."
+          },
+          "authorization": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "^[\\x20-\\x7E]+$",
+            "writeOnly": true,
+            "description": "`Authorization` header value sent with every delivery. A string replaces the stored value, null removes it, and omitting the field leaves it unchanged. Printable ASCII only. Stored encrypted and never returned."
+          },
+          "standard_webhooks_secret": {
+            "type": ["string", "null"],
+            "pattern": "^whsec_(?:[A-Za-z0-9+/]+={0,2}|[A-Za-z0-9_-]+)$",
+            "maxLength": 128,
+            "writeOnly": true,
+            "description": "Standard Webhooks signing secret. A string replaces the stored secret, null stops the signatures, and omitting the field leaves it unchanged. Stored encrypted and never returned."
           }
         }
       },

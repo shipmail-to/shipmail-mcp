@@ -101,7 +101,8 @@ Claude users can install the hosted plugin from the
 | ------------------- | ---------------------------- |
 | OpenAI Codex        | `.codex-plugin/plugin.json`  |
 | Claude              | `.claude-plugin/plugin.json` |
-| Cursor/Open Plugins | `.plugin/plugin.json`        |
+| Cursor and Grok Bot | `.cursor-plugin/plugin.json` |
+| Open Plugins        | `.plugin/plugin.json`        |
 | MCP connection      | `.mcp.json`                  |
 | Agent skill         | `skills/shipmail/SKILL.md`   |
 
@@ -399,6 +400,8 @@ Domain purchase is intentionally excluded.
 - **Malicious LLM output or hallucinated arguments.** The MCP layer cannot tell whether an argument came from the user or was invented. Use the host UI's tool-call confirmation, especially for `destructiveHint:true` tools.
 - **Compromised MCP host.** Your API key is read from `SHIPMAIL_API_KEY` and held in memory by this process. If the host is compromised, the key is gone regardless. Rotate keys you suspect have been exposed.
 - **Webhook signing secret in conversation logs.** `shipmail_create_webhook` and `shipmail_rotate_webhook_secret` return the secret in `structuredContent`. Many MCP clients persist tool output in conversation history. Treat the session log as sensitive after these calls.
+- **Webhook authorization in conversation logs.** `shipmail_create_webhook` and `shipmail_update_webhook` accept an optional `authorization` value that Shipmail sends as the `Authorization` header of every delivery. Shipmail never returns it (results show `has_authorization` only), but the value you pass is part of the tool call and stays in the conversation history.
+- **Standard Webhooks secret in conversation logs.** The same two tools accept an optional `standard_webhooks_secret` (`whsec_...`) that Shipmail uses to sign every delivery for receivers such as Grok automations. Shipmail never returns it (results show `has_standard_webhooks_secret` only), but the value you pass stays in the conversation history.
 
 ## Privacy
 

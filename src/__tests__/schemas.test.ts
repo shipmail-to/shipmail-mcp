@@ -47,6 +47,7 @@ import {
   updateMailboxInputSchema,
   updateMailboxRuleInputSchema,
   updateNewsletterInputSchema,
+  updateWebhookInputSchema,
 } from "../schemas.js";
 
 describe("messageSchema", () => {
@@ -653,6 +654,73 @@ describe("createWebhookInputSchema", () => {
         events: ["message.received"],
       }),
     ).toThrow();
+  });
+});
+
+describe("webhook authorization input", () => {
+  const base = { url: "https://example.com/hook", events: ["message.received"] };
+
+  test("accepts printable ASCII up to 1024 characters", () => {
+    expect(
+      createWebhookInputSchema.parse({ ...base, authorization: "Bearer k" }).authorization,
+    ).toBe("Bearer k");
+    expect(
+      createWebhookInputSchema.safeParse({ ...base, authorization: "a".repeat(1024) }).success,
+    ).toBe(true);
+  });
+
+  test("rejects empty, too long, control and non-ASCII values", () => {
+    for (const authorization of [
+      "",
+      "a".repeat(1025),
+      "Bearer k\r\nX: y",
+      "Bearer\tk",
+      "Bearer é",
+    ]) {
+      expect(createWebhookInputSchema.safeParse({ ...base, authorization }).success).toBe(false);
+    }
+  });
+
+  test("update accepts authorization alone, including null", () => {
+    expect(updateWebhookInputSchema.parse({ id: "whk_1", authorization: null }).authorization).toBe(
+      null,
+    );
+    expect(
+      updateWebhookInputSchema.safeParse({ id: "whk_1", authorization: "Bearer k" }).success,
+    ).toBe(true);
+    expect(updateWebhookInputSchema.safeParse({ id: "whk_1" }).success).toBe(false);
+  });
+});
+
+describe("webhook standard_webhooks_secret input", () => {
+  const base = { url: "https://example.com/hook", events: ["message.received"] };
+  const padded = `whsec_${Buffer.alloc(32, 9).toString("base64")}`;
+
+  test("accepts standard base64 with or without padding and base64url", () => {
+    for (const secret of [
+      padded,
+      padded.replace(/=+$/u, ""),
+      `whsec_${Buffer.alloc(32, 251).toString("base64url")}`,
+    ]) {
+      expect(
+        createWebhookInputSchema.safeParse({ ...base, standard_webhooks_secret: secret }).success,
+      ).toBe(true);
+    }
+  });
+
+  test("rejects values without the whsec_ prefix or with other characters", () => {
+    for (const secret of ["", "Bearer k", padded.slice(6), `${padded} `, "whsec_a*b"]) {
+      expect(
+        createWebhookInputSchema.safeParse({ ...base, standard_webhooks_secret: secret }).success,
+      ).toBe(false);
+    }
+  });
+
+  test("update accepts it alone, including null", () => {
+    expect(
+      updateWebhookInputSchema.parse({ id: "whk_1", standard_webhooks_secret: null })
+        .standard_webhooks_secret,
+    ).toBeNull();
   });
 });
 

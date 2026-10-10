@@ -1,6 +1,6 @@
 {
   "name": "shipmail-mcp",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "mcpName": "io.github.shipmail-to/shipmail-mcp",
   "description": "Official Model Context Protocol (MCP) server for Shipmail. Modern email for your business, plus transactional email and an API for your agents.",
   "type": "module",
@@ -18,6 +18,7 @@
     "smithery.yaml",
     ".claude-plugin",
     ".codex-plugin",
+    ".cursor-plugin",
     ".plugin",
     ".mcp.json",
     "assets",
@@ -68,7 +69,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.0.0",
-    "shipmail": "0.6.3",
+    "shipmail": "0.6.4",
     "zod": "4.4.3"
   },
   "devDependencies": {

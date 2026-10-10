@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.5](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.4...shipmail-mcp-v0.9.5) (2026-10-10)
+
+
+### Features
+
+* **rules:** run rules on the inbox, Recipient contains, keep typed values ([#3079](https://github.com/shipmail-to/Shipmail/issues/3079)) ([660ff00](https://github.com/shipmail-to/Shipmail/commit/660ff0062ba51737b9af95b98c716c9cfd775b31))
+* **webhooks:** authenticate deliveries with an Authorization header or a Standard Webhooks secret ([#3092](https://github.com/shipmail-to/Shipmail/issues/3092)) ([27ba1dc](https://github.com/shipmail-to/Shipmail/commit/27ba1dc16838aee268989f7beb79148072d0e18a))
+
 ## [0.9.4](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.3...shipmail-mcp-v0.9.4) (2026-10-07)
 
 

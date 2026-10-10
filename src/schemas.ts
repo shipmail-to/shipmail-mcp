@@ -380,6 +380,7 @@ type MailboxRuleConditionInput =
         | "from_is"
         | "from_contains"
         | "recipient_is"
+        | "recipient_contains"
         | "plus_tag_is"
         | "subject_contains";
       readonly value: string;
@@ -398,6 +399,7 @@ export const mailboxRuleConditionSchema: z.ZodType<MailboxRuleConditionInput> = 
         "from_is",
         "from_contains",
         "recipient_is",
+        "recipient_contains",
         "plus_tag_is",
         "subject_contains",
       ] as const),
@@ -1063,6 +1065,14 @@ export const webhookSchema = z.object({
   description: z.string().nullable(),
   mailbox_ids: z.array(z.string()).nullable(),
   domain_ids: z.array(z.string()).nullable(),
+  has_authorization: z
+    .boolean()
+    .describe("True when deliveries carry an Authorization header. The value is never returned."),
+  has_standard_webhooks_secret: z
+    .boolean()
+    .describe(
+      "True when deliveries carry Standard Webhooks signatures from a stored signing secret. The secret is never returned.",
+    ),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -2086,6 +2096,18 @@ export const webhookDeliveryStatusSchema = z.enum(WEBHOOK_DELIVERY_STATUSES);
 export const listWebhooksInputSchema = paginationInputSchema;
 export const listMembersInputSchema = paginationInputSchema;
 const webhookScopeIdsInputSchema = z.array(idSchema).max(100).nullable();
+const webhookAuthorizationInputSchema = z
+  .string()
+  .min(1)
+  .max(1024)
+  .regex(/^[\x20-\x7E]+$/u, "authorization must contain only printable ASCII characters.");
+const webhookStandardWebhooksSecretInputSchema = z
+  .string()
+  .regex(
+    /^whsec_(?:[A-Za-z0-9+/]+={0,2}|[A-Za-z0-9_-]+)$/u,
+    "standard_webhooks_secret must be whsec_ followed by the base64 key from the receiving service.",
+  )
+  .max(128);
 export const createWebhookInputSchema = z.object({
   url: publicHttpsUrlSchema,
   events: z.array(webhookEventSchema).min(1).max(WEBHOOK_EVENT_TYPES.length),
@@ -2098,6 +2120,16 @@ export const createWebhookInputSchema = z.object({
   domain_ids: webhookScopeIdsInputSchema
     .optional()
     .describe("Only deliver events for these domain IDs and their mailboxes."),
+  authorization: webhookAuthorizationInputSchema
+    .optional()
+    .describe(
+      'Sent verbatim as the Authorization header of every delivery, for example "Bearer <key>". Write-only: stored encrypted and never returned.',
+    ),
+  standard_webhooks_secret: webhookStandardWebhooksSecretInputSchema
+    .optional()
+    .describe(
+      "A whsec_ signing secret from the receiving service, such as a Grok automation webhook trigger. Every delivery then also carries webhook-id, webhook-timestamp and webhook-signature. Write-only: stored encrypted and never returned.",
+    ),
   idempotency_key: idempotencyKeySchema,
 });
 export const updateWebhookInputSchema = z
@@ -2113,6 +2145,18 @@ export const updateWebhookInputSchema = z
     domain_ids: webhookScopeIdsInputSchema
       .optional()
       .describe("Replace the domain filter. Null or [] clears it."),
+    authorization: webhookAuthorizationInputSchema
+      .nullable()
+      .optional()
+      .describe(
+        "Replace the Authorization header sent with every delivery. Null removes it; omit to keep it. Write-only: never returned.",
+      ),
+    standard_webhooks_secret: webhookStandardWebhooksSecretInputSchema
+      .nullable()
+      .optional()
+      .describe(
+        "Replace the Standard Webhooks signing secret. Null stops the signatures; omit to keep it. Write-only: never returned.",
+      ),
     idempotency_key: idempotencyKeySchema,
   })
   .refine(
@@ -2122,7 +2166,9 @@ export const updateWebhookInputSchema = z
       value.description !== undefined ||
       value.active !== undefined ||
       value.mailbox_ids !== undefined ||
-      value.domain_ids !== undefined,
+      value.domain_ids !== undefined ||
+      value.authorization !== undefined ||
+      value.standard_webhooks_secret !== undefined,
     {
       message: "Provide at least one webhook field to update.",
     },

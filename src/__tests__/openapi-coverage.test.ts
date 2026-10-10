@@ -13,6 +13,7 @@ import {
   audienceFeedSchema,
   createMailboxForwardingInputSchema,
   createNewsletterInputSchema,
+  createWebhookInputSchema,
   inboxDraftSchema,
   inboxFullMessageSchema,
   inboxMessageSchema,
@@ -28,6 +29,8 @@ import {
   threadSchema,
   updateAudienceFeedInputSchema,
   updateNewsletterInputSchema,
+  updateWebhookInputSchema,
+  webhookSchema,
 } from "../schemas.js";
 import { registerTools } from "../tools.js";
 
@@ -142,6 +145,17 @@ const OPENAPI_SCHEMA_COVERAGE = [
     mcpOnlyKeys: [],
   },
   { componentName: "InboxThread", mcpKeys: inboxThreadSchema.keyof().options, mcpOnlyKeys: [] },
+  { componentName: "Webhook", mcpKeys: webhookSchema.keyof().options, mcpOnlyKeys: [] },
+  {
+    componentName: "CreateWebhookRequest",
+    mcpKeys: createWebhookInputSchema.keyof().options,
+    mcpOnlyKeys: ["idempotency_key"],
+  },
+  {
+    componentName: "UpdateWebhookRequest",
+    mcpKeys: updateWebhookInputSchema.keyof().options,
+    mcpOnlyKeys: ["id", "idempotency_key"],
+  },
   {
     componentName: "ReplyScanCandidate",
     mcpKeys: replyScanCandidateSchema.keyof().options,

@@ -2753,7 +2753,7 @@ export function registerTools(
       {
         title: "Create Webhook",
         description:
-          "Create a webhook endpoint. Its signing secret appears once in the tool result and conversation log.",
+          "Create a webhook endpoint. Its signing secret appears once in the tool result and conversation log. Optional authorization is sent as the Authorization header of every delivery, and optional standard_webhooks_secret signs every delivery the way Standard Webhooks receivers such as Grok automations check. Both are write-only and never echoed back, but the values you pass appear in the conversation log.",
         inputSchema: createWebhookInputSchema,
         outputSchema: webhookWithSecretOutputSchema,
         annotations: {
@@ -2776,7 +2776,7 @@ export function registerTools(
       {
         title: "Update Webhook",
         description:
-          "Update webhook URL, subscribed events, description, active state, or mailbox and domain filter. A URL change redirects future deliveries.",
+          "Update webhook URL, subscribed events, description, active state, mailbox and domain filter, the Authorization header sent with deliveries, or the Standard Webhooks signing secret. A URL change redirects future deliveries. authorization and standard_webhooks_secret are write-only and never echoed back; null removes them.",
         inputSchema: updateWebhookInputSchema,
         outputSchema: webhookOutputSchema,
         annotations: {
@@ -2795,6 +2795,8 @@ export function registerTools(
             active?: boolean;
             mailbox_ids?: string[] | null;
             domain_ids?: string[] | null;
+            authorization?: string | null;
+            standard_webhooks_secret?: string | null;
           } = {};
           if (args.url !== undefined) update.url = args.url;
           if (args.events !== undefined) update.events = args.events;
@@ -2802,6 +2804,10 @@ export function registerTools(
           if (args.active !== undefined) update.active = args.active;
           if (args.mailbox_ids !== undefined) update.mailbox_ids = args.mailbox_ids;
           if (args.domain_ids !== undefined) update.domain_ids = args.domain_ids;
+          if (args.authorization !== undefined) update.authorization = args.authorization;
+          if (args.standard_webhooks_secret !== undefined) {
+            update.standard_webhooks_secret = args.standard_webhooks_secret;
+          }
           return {
             webhook: await client.webhooks.update(args.id, update, mutationOptions(args)),
           };
