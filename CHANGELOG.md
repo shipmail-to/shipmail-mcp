@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.9.6](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.5...shipmail-mcp-v0.9.6) (2026-10-14)
+
+
+### Features
+
+* act on AgentMail's agent eval findings ([#3272](https://github.com/shipmail-to/Shipmail/issues/3272)) ([4ae9ac9](https://github.com/shipmail-to/Shipmail/commit/4ae9ac9d0bab23c182f365e6e7800cc81524e440))
+* inbox search filters and webhook sender allowlist for agents ([#3286](https://github.com/shipmail-to/Shipmail/issues/3286)) ([66e5c15](https://github.com/shipmail-to/Shipmail/commit/66e5c15c2e0c515ebea9612c3dcb1b60b2722b32))
+* **newsletters:** link analytics for email and the Atom feed ([#3196](https://github.com/shipmail-to/Shipmail/issues/3196)) ([ef9e842](https://github.com/shipmail-to/Shipmail/commit/ef9e842b5ebbb919a0a4d5444b21eb12db5c2576))
+* reply_text and sender authentication for agents ([#3277](https://github.com/shipmail-to/Shipmail/issues/3277)) ([5369e81](https://github.com/shipmail-to/Shipmail/commit/5369e817866ae9ce10cd07ece80816ccbd35b793))
+
+
+### Bug Fixes
+
+* MCP connects from LangChain JS, and a wrong 2FA code says so ([#3293](https://github.com/shipmail-to/Shipmail/issues/3293)) ([f8fdf2f](https://github.com/shipmail-to/Shipmail/commit/f8fdf2f763f699cb0cb271b9f67a9d295f67836a))
+
 ## [0.9.5](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.4...shipmail-mcp-v0.9.5) (2026-10-10)
 
 

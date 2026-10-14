@@ -39,6 +39,7 @@ function fullMessagePayload(id: string) {
     text_body: [{ part_id: "1", type: "text/plain" }],
     html_body: [{ part_id: "2", type: "text/html" }],
     attachments: [],
+    reply_text: "A short reply",
     authentication_results: {
       spf: "pass",
       dkim: "pass",
@@ -58,21 +59,24 @@ function inboxMessagesPayload(count: number) {
     object: "inbox_messages",
     mailbox_id: MAILBOX_ID,
     address: "valerian@example.com",
+    junk_total: null,
     data: Array.from({ length: count }, (_, index) => fullMessagePayload(`msg-${index}`)),
     pagination: { limit: count, total: 7334, has_more: true, next_cursor: "cursor-1" },
   };
 }
 
-async function buildPair(responder: () => unknown) {
+async function buildPair(responder: () => unknown, requests: URL[] = []) {
   const shipmail = new ShipmailClient({
     apiKey: "sk_test",
     baseUrl: "https://shipmail.to/api/v1",
     maxRetries: 0,
-    fetch: (async (_input: string | URL | Request, _init?: RequestInit) =>
-      new Response(JSON.stringify(responder()), {
+    fetch: (async (input: string | URL | Request, _init?: RequestInit) => {
+      requests.push(new URL(String(input)));
+      return new Response(JSON.stringify(responder()), {
         status: 200,
         headers: { "content-type": "application/json" },
-      })) as typeof fetch,
+      });
+    }) as typeof fetch,
   });
   const server = new McpServer({ name: "test", version: "0.0.0" });
   registerTools(server, shipmail, undefined);
@@ -121,5 +125,29 @@ describe("shipmail_list_mailbox_inbox_messages", () => {
     // 50 messages whose bodies are ~200KB each must not leak into the result.
     const textContent = result.content as { type: string; text: string }[];
     expect(textContent[0]?.text.length ?? 0).toBeLessThan(100_000);
+  });
+});
+
+describe("inbox listing filters", () => {
+  test("sends from, to, subject and has_attachment to the API", async () => {
+    const requests: URL[] = [];
+    const client = await buildPair(() => inboxMessagesPayload(1), requests);
+    const result = await client.callTool({
+      name: "shipmail_list_mailbox_inbox_messages",
+      arguments: {
+        id: MAILBOX_ID,
+        from: "jane@example.com",
+        to: "billing",
+        subject: "Invoice",
+        has_attachment: false,
+      },
+    });
+    expect(result.isError ?? false).toBe(false);
+    expect(Object.fromEntries(requests[0]?.searchParams ?? [])).toMatchObject({
+      from: "jane@example.com",
+      to: "billing",
+      subject: "Invoice",
+      has_attachment: "false",
+    });
   });
 });

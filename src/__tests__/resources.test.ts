@@ -190,6 +190,7 @@ describe("MCP resources", () => {
         object: "inbox_messages",
         mailbox_id: "mbx_123",
         address: "support@example.com",
+        junk_total: null,
         data: [],
         pagination: {
           limit: 25,
@@ -210,6 +211,7 @@ describe("MCP resources", () => {
       object: "inbox_messages",
       mailbox_id: "mbx_123",
       address: "support@example.com",
+      junk_total: null,
       data: [],
       pagination: {
         limit: 25,

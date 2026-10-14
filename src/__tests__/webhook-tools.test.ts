@@ -17,6 +17,9 @@ const WEBHOOK = webhookSchema.parse({
   domain_ids: null,
   has_authorization: true,
   has_standard_webhooks_secret: false,
+  include_reply_text: false,
+  authenticated_senders_only: false,
+  allowed_senders: null,
   created_at: "2026-10-09T10:00:00Z",
   updated_at: "2026-10-09T10:00:00Z",
 });
@@ -106,6 +109,75 @@ describe("webhook authorization tools", () => {
     });
     expect(cleared.result.isError).toBeFalsy();
     expect(cleared.bodies).toEqual([{ standard_webhooks_secret: null }]);
+  });
+
+  test("create and update pass include_reply_text through", async () => {
+    const created = await callWebhookTool("shipmail_create_webhook", {
+      url: "https://example.com/hook",
+      events: ["message.received"],
+      include_reply_text: true,
+    });
+    expect(created.result.isError).toBeFalsy();
+    expect(created.bodies).toEqual([
+      {
+        url: "https://example.com/hook",
+        events: ["message.received"],
+        include_reply_text: true,
+      },
+    ]);
+
+    const updated = await callWebhookTool("shipmail_update_webhook", {
+      id: "whk_123",
+      include_reply_text: false,
+    });
+    expect(updated.result.isError).toBeFalsy();
+    expect(updated.bodies).toEqual([{ include_reply_text: false }]);
+  });
+
+  test("create and update pass authenticated_senders_only through", async () => {
+    const created = await callWebhookTool("shipmail_create_webhook", {
+      url: "https://example.com/hook",
+      events: ["message.received"],
+      authenticated_senders_only: true,
+    });
+    expect(created.result.isError).toBeFalsy();
+    expect(created.bodies).toEqual([
+      {
+        url: "https://example.com/hook",
+        events: ["message.received"],
+        authenticated_senders_only: true,
+      },
+    ]);
+
+    const updated = await callWebhookTool("shipmail_update_webhook", {
+      id: "whk_123",
+      authenticated_senders_only: false,
+    });
+    expect(updated.result.isError).toBeFalsy();
+    expect(updated.bodies).toEqual([{ authenticated_senders_only: false }]);
+  });
+
+  test("create and update pass allowed_senders through, and null clears it", async () => {
+    const created = await callWebhookTool("shipmail_create_webhook", {
+      url: "https://example.com/hook",
+      events: ["message.received"],
+      allowed_senders: ["jane@customer.com", "customer.org"],
+    });
+    expect(created.result.isError).toBeFalsy();
+    expect(created.bodies).toEqual([
+      {
+        url: "https://example.com/hook",
+        events: ["message.received"],
+        allowed_senders: ["jane@customer.com", "customer.org"],
+      },
+    ]);
+
+    const cleared = await callWebhookTool("shipmail_update_webhook", {
+      id: "whk_123",
+      allowed_senders: null,
+    });
+    expect(cleared.result.isError).toBeFalsy();
+    expect(cleared.bodies).toEqual([{ allowed_senders: null }]);
   });
 
   test("update without authorization leaves it out of the request", async () => {

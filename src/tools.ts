@@ -1575,7 +1575,7 @@ export function registerTools(
       {
         title: "List Mailbox Inbox Messages",
         description:
-          "List inbound/JMAP message summaries with headers, preview, folders, keywords, and cursor, date, folder, keyword, and search filters.",
+          "List inbound/JMAP message summaries with headers, preview, folders, keywords, and cursor, date, folder, keyword, search, from, to, subject, and attachment filters. Without a folder filter it lists every folder, Junk included. With one, junk_total counts matching messages held in Junk: check it before concluding that a message has not arrived.",
         inputSchema: listMailboxInboxMessagesInputSchema,
         outputSchema: inboxMessageSummariesOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: true },
@@ -1589,6 +1589,10 @@ export function registerTools(
               folder_id?: string;
               folder_role?: typeof args.folder_role;
               search_text?: string;
+              from?: string;
+              to?: string;
+              subject?: string;
+              has_attachment?: boolean;
               cursor?: string;
               after?: string;
               before?: string;
@@ -1599,6 +1603,10 @@ export function registerTools(
             if (args.folder_id !== undefined) params.folder_id = args.folder_id;
             if (args.folder_role !== undefined) params.folder_role = args.folder_role;
             if (args.search_text !== undefined) params.search_text = args.search_text;
+            if (args.from !== undefined) params.from = args.from;
+            if (args.to !== undefined) params.to = args.to;
+            if (args.subject !== undefined) params.subject = args.subject;
+            if (args.has_attachment !== undefined) params.has_attachment = args.has_attachment;
             if (args.cursor !== undefined) params.cursor = args.cursor;
             if (args.after !== undefined) params.after = args.after;
             if (args.before !== undefined) params.before = args.before;
@@ -2776,7 +2784,7 @@ export function registerTools(
       {
         title: "Update Webhook",
         description:
-          "Update webhook URL, subscribed events, description, active state, mailbox and domain filter, the Authorization header sent with deliveries, or the Standard Webhooks signing secret. A URL change redirects future deliveries. authorization and standard_webhooks_secret are write-only and never echoed back; null removes them.",
+          "Update webhook URL, subscribed events, description, active state, mailbox and domain filter, the Authorization header sent with deliveries, the Standard Webhooks signing secret, whether message.received carries reply_text, whether it skips senders that did not pass DMARC, or the senders it is limited to. A URL change redirects future deliveries. authorization and standard_webhooks_secret are write-only and never echoed back; null removes them.",
         inputSchema: updateWebhookInputSchema,
         outputSchema: webhookOutputSchema,
         annotations: {
@@ -2797,6 +2805,9 @@ export function registerTools(
             domain_ids?: string[] | null;
             authorization?: string | null;
             standard_webhooks_secret?: string | null;
+            include_reply_text?: boolean;
+            authenticated_senders_only?: boolean;
+            allowed_senders?: string[] | null;
           } = {};
           if (args.url !== undefined) update.url = args.url;
           if (args.events !== undefined) update.events = args.events;
@@ -2808,6 +2819,13 @@ export function registerTools(
           if (args.standard_webhooks_secret !== undefined) {
             update.standard_webhooks_secret = args.standard_webhooks_secret;
           }
+          if (args.include_reply_text !== undefined) {
+            update.include_reply_text = args.include_reply_text;
+          }
+          if (args.authenticated_senders_only !== undefined) {
+            update.authenticated_senders_only = args.authenticated_senders_only;
+          }
+          if (args.allowed_senders !== undefined) update.allowed_senders = args.allowed_senders;
           return {
             webhook: await client.webhooks.update(args.id, update, mutationOptions(args)),
           };
@@ -3334,6 +3352,7 @@ export function registerTools(
               ...(rest.track_engagement !== undefined
                 ? { track_engagement: rest.track_engagement }
                 : {}),
+              ...(rest.add_utm_tags !== undefined ? { add_utm_tags: rest.add_utm_tags } : {}),
             },
             mutationOptions(args),
           ),

@@ -38,6 +38,7 @@ function newsletterPayload() {
     feed_entry_url: null,
     styling_mode: "styled",
     track_engagement: false,
+    add_utm_tags: false,
     opened_count: null,
     clicked_count: null,
     preflight_status: "not_run",
@@ -216,6 +217,32 @@ describe("newsletter MCP tools", () => {
     expect(JSON.parse(captured[0]?.body ?? "{}")).toMatchObject({ track_engagement: true });
     expect(captured[1]?.method).toBe("PATCH");
     expect(JSON.parse(captured[1]?.body ?? "{}")).toEqual({ track_engagement: false });
+  });
+
+  test("forwards add_utm_tags on create and update", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const createResult = await client.callTool({
+      name: "shipmail_create_newsletter",
+      arguments: {
+        audience_id: "aud_123",
+        sender_identity_id: "nwsid_123",
+        name: "Launch",
+        subject: "What shipped",
+        body_text: "Launch notes",
+        add_utm_tags: true,
+      },
+    });
+    const updateResult = await client.callTool({
+      name: "shipmail_update_newsletter",
+      arguments: { id: "nws_123", add_utm_tags: false },
+    });
+
+    expect(createResult.isError).toBeFalsy();
+    expect(updateResult.isError).toBeFalsy();
+    expect(JSON.parse(captured[0]?.body ?? "{}")).toMatchObject({ add_utm_tags: true });
+    expect(JSON.parse(captured[1]?.body ?? "{}")).toEqual({ add_utm_tags: false });
   });
 
   test("rejects half-filled column CTAs before calling the API", async () => {

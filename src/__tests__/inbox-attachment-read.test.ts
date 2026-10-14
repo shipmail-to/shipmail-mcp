@@ -80,6 +80,7 @@ function inboxMessage(contentType = "application/pdf", attachmentSize = 4, name 
     body_values: {},
     text_body: [],
     html_body: [],
+    reply_text: null,
     attachments: [
       {
         part_id: "part_1",

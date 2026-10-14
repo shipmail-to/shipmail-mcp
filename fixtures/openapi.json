@@ -1347,7 +1347,7 @@
             "$ref": "#/components/responses/AuthorizationError"
           },
           "409": {
-            "description": "The purchase conflicts, or it was charged and needs support. Type `conflict`: \"Domain already exists in shipmail.\", \"A purchase for this domain is already in progress.\", or \"This domain purchase was closed before registration. Contact support for a refund.\" Type `reconciliation_required`: \"The registrar did not confirm this registration. Support will check it, then finish the setup or refund the payment.\" or \"Domain was registered but could not be saved. Support must reconcile it.\" Do not retry a `reconciliation_required` response: support settles the purchase.",
+            "description": "The purchase conflicts, or it was charged and needs support. Type `conflict`: \"Domain already exists in shipmail.\", \"A purchase for this domain is already in progress.\", or \"This domain purchase was closed before registration. Contact support for a refund.\" Type `reconciliation_required`: \"Your payment is still processing. The domain stays reserved and is registered as soon as the payment clears.\", \"Stripe did not confirm the payment. The domain stays reserved while we check it, and you are never charged twice for it.\", \"The registrar did not confirm this registration. Support will check it, then finish the setup or refund the payment.\" or \"Domain was registered but could not be saved. Support must reconcile it.\" Do not retry a `reconciliation_required` response: Shipmail settles the purchase.",
             "$ref": "#/components/responses/ConflictError"
           },
           "422": {
@@ -2989,7 +2989,7 @@
             "$ref": "#/components/responses/ConflictError"
           },
           "422": {
-            "description": "Validation failed. For a transactional sender, details[].code is transactional_sender_immediate_only (scheduled_at set), transactional_sender_no_reply_tracking (track_reply true), transactional_sender_reply_to (reply_to differs from the sender's Reply-To), transactional_sender_staged_attachments (staged_attachment_ids set) or transactional_sender_display_name (from carries a different display name).",
+            "description": "Validation failed. For a transactional sender, details[].code is transactional_sender_immediate_only (scheduled_at set), transactional_sender_no_reply_tracking (track_reply true), transactional_sender_reply_to (reply_to differs from the sender's Reply-To), transactional_sender_staged_attachments (staged_attachment_ids set) transactional_sender_display_name (from carries a different display name) or recipient_disposable (the sender refuses temporary email addresses and a recipient uses one).",
             "content": {
               "application/json": {
                 "schema": {
@@ -4410,6 +4410,42 @@
             "schema": {
               "type": "string",
               "maxLength": 500
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Return messages whose From name or address matches this text. Max 500 characters.",
+            "schema": {
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Return messages whose To recipients match this text by name or address. Cc and Bcc are not searched. Max 500 characters.",
+            "schema": {
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "Return messages whose subject matches this text. Max 500 characters.",
+            "schema": {
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          {
+            "name": "has_attachment",
+            "in": "query",
+            "description": "`true` returns messages with an attachment, `false` returns messages without one. Any other value is rejected.",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
             }
           },
           {
@@ -7689,7 +7725,7 @@
       "IdempotencyKey": {
         "name": "Idempotency-Key",
         "in": "header",
-        "description": "Unique key for idempotent requests. Printable ASCII, 1-255 characters. Cached for 24 hours.",
+        "description": "Unique key for idempotent requests. Printable ASCII, 1-255 characters. The response is cached for 24 hours. A message send also derives the message ID from the key, so after the cache expires a retry on the same endpoint returns the message already sent, without comparing the body, for as long as that message exists.",
         "schema": {
           "type": "string",
           "minLength": 1,
@@ -10354,7 +10390,7 @@
         "type": "string",
         "minLength": 1,
         "maxLength": 255,
-        "description": "Caller-defined idempotent correlation reference, unique within an organization."
+        "description": "Caller-defined correlation reference, unique within an organization and mode. Sending again from the same mailbox with a reference already in use returns the original message (201) and sends nothing; the new body is not compared. The same reference from a different mailbox returns 409."
       },
       "MessageMetadata": {
         "type": "object",
@@ -10445,7 +10481,7 @@
           "thread_id": {
             "type": ["string", "null"],
             "deprecated": true,
-            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+            "description": "Deprecated and not stable: a legacy thread ID that changes when the mail server re-threads its IDs or a relayed send's placeholder key is replaced. It remains supported in thread paths; store conversation_id instead."
           },
           "conversation_id": {
             "type": ["string", "null"],
@@ -10589,7 +10625,7 @@
           "thread_id": {
             "type": ["string", "null"],
             "deprecated": true,
-            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+            "description": "Deprecated and not stable: a legacy thread ID that changes when the mail server re-threads its IDs or a relayed send's placeholder key is replaced. It remains supported in thread paths; store conversation_id instead."
           },
           "conversation_id": {
             "type": ["string", "null"],
@@ -10803,6 +10839,9 @@
           "domain_ids",
           "has_authorization",
           "has_standard_webhooks_secret",
+          "include_reply_text",
+          "authenticated_senders_only",
+          "allowed_senders",
           "created_at",
           "updated_at"
         ],
@@ -10851,6 +10890,21 @@
           "has_standard_webhooks_secret": {
             "type": "boolean",
             "description": "True when deliveries carry Standard Webhooks signatures (`webhook-id`, `webhook-timestamp`, `webhook-signature`) from a secret set through `standard_webhooks_secret`. The secret itself is never returned."
+          },
+          "include_reply_text": {
+            "type": "boolean",
+            "description": "True when `message.received` deliveries carry `reply_text`."
+          },
+          "authenticated_senders_only": {
+            "type": "boolean",
+            "description": "True when `message.received` is delivered only for messages whose sender passed DMARC (`sender_authenticated: true`)."
+          },
+          "allowed_senders": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            },
+            "description": "Addresses and domains `message.received` is limited to, lowercased. Null when every sender is delivered."
           },
           "created_at": {
             "type": "string",
@@ -11463,14 +11517,14 @@
           },
           "in_reply_to": {
             "type": "string",
-            "description": "Message-ID to reply to (for threading)."
+            "description": "Message-ID this message replies to, sent as the In-Reply-To header. The message joins the conversation of the stored message with this Message-ID when it is found in exactly one conversation of the mailbox; otherwise it starts its own. It never merges conversations."
           },
           "references": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Message-ID references for threading."
+            "description": "Message-IDs sent as the References header, for threading in the recipient's mail client. They never decide or merge conversations."
           },
           "attachments": {
             "type": "array",
@@ -11722,13 +11776,15 @@
             "maxLength": 262144
           },
           "in_reply_to": {
-            "type": "string"
+            "type": "string",
+            "description": "Replaces the In-Reply-To header. The scheduled message keeps the conversation it was stored in."
           },
           "references": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "Replaces the References header. It never decides or merges conversations."
           },
           "staged_attachment_ids": {
             "type": "array",
@@ -11933,6 +11989,25 @@
             "maxLength": 128,
             "writeOnly": true,
             "description": "A Standard Webhooks signing secret from the receiving service, such as a Grok automation webhook trigger: `whsec_` followed by a 24 to 64 byte key in standard base64 (with or without padding) or base64url. When set, every delivery, test event and replay also carries `webhook-id` (the event id, the same on every retry and replay), `webhook-timestamp` and `webhook-signature`. Stored encrypted and never returned; responses carry `has_standard_webhooks_secret` instead. The `X-Shipmail-Signature` headers are sent as usual."
+          },
+          "include_reply_text": {
+            "type": "boolean",
+            "default": false,
+            "description": "Add `reply_text`, the sender's new text without quoted history or signature, to `message.received` deliveries. Turning it on needs an API key that also grants `messages:read`. Otherwise the request fails with 403. The same check applies to a URL, event, mailbox or domain change on a webhook that includes it."
+          },
+          "authenticated_senders_only": {
+            "type": "boolean",
+            "default": false,
+            "description": "Deliver `message.received` only when the sender passed DMARC (`sender_authenticated: true`). Other events are unaffected. Use it for agents that act on mail and must not trust a forged From address."
+          },
+          "allowed_senders": {
+            "type": ["array", "null"],
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "maxLength": 320
+            },
+            "description": "Deliver `message.received` only when `data.from.address` equals an address entry (`jane@customer.com`) or its domain equals a domain entry (`customer.com`) exactly. Subdomains do not match, and a message without a From address never matches. Entries are trimmed, lowercased and deduplicated. Null or `[]` delivers every sender. Combines with `authenticated_senders_only`; other events are unaffected."
           }
         }
       },
@@ -11991,6 +12066,23 @@
             "maxLength": 128,
             "writeOnly": true,
             "description": "Standard Webhooks signing secret. A string replaces the stored secret, null stops the signatures, and omitting the field leaves it unchanged. Stored encrypted and never returned."
+          },
+          "include_reply_text": {
+            "type": "boolean",
+            "description": "Add `reply_text`, the sender's new text without quoted history or signature, to `message.received` deliveries. Turning it on needs an API key that also grants `messages:read`. Otherwise the request fails with 403. The same check applies to a URL, event, mailbox or domain change on a webhook that includes it. `false` turns it off."
+          },
+          "authenticated_senders_only": {
+            "type": "boolean",
+            "description": "Deliver `message.received` only when the sender passed DMARC (`sender_authenticated: true`). Other events are unaffected. Use it for agents that act on mail and must not trust a forged From address. `false` delivers every `message.received` again."
+          },
+          "allowed_senders": {
+            "type": ["array", "null"],
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "maxLength": 320
+            },
+            "description": "Replace the senders `message.received` is limited to: addresses (`jane@customer.com`) or exact domains (`customer.com`). Entries are trimmed, lowercased and deduplicated. `null` or `[]` delivers every sender again; omit to keep the list."
           }
         }
       },
@@ -12224,7 +12316,7 @@
           "thread_id": {
             "type": "string",
             "deprecated": true,
-            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+            "description": "Deprecated and not stable: a legacy thread ID that changes when the mail server re-threads its IDs or a relayed send's placeholder key is replaced. It remains supported in thread paths; store conversation_id instead."
           },
           "conversation_id": {
             "type": ["string", "null"],
@@ -12318,7 +12410,8 @@
           "text_body",
           "html_body",
           "attachments",
-          "authentication_results"
+          "authentication_results",
+          "reply_text"
         ],
         "properties": {
           "object": {
@@ -12331,7 +12424,7 @@
           "thread_id": {
             "type": "string",
             "deprecated": true,
-            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+            "description": "Deprecated and not stable: a legacy thread ID that changes when the mail server re-threads its IDs or a relayed send's placeholder key is replaced. It remains supported in thread paths; store conversation_id instead."
           },
           "conversation_id": {
             "type": ["string", "null"],
@@ -12449,6 +12542,11 @@
                 "type": "null"
               }
             ]
+          },
+          "reply_text": {
+            "type": ["string", "null"],
+            "maxLength": 20000,
+            "description": "What the sender newly wrote, computed from the text body (or the HTML body when there is no text part). Quoted history, the attribution line before it, signatures after `-- ` and mobile footers such as \"Sent from my iPhone\" are removed. Inline replies between quoted lines are kept. Null when nothing is left; read `body_values` then. At most 20,000 characters."
           }
         }
       },
@@ -12475,7 +12573,7 @@
       },
       "InboxMessages": {
         "type": "object",
-        "required": ["object", "mailbox_id", "address", "data", "pagination"],
+        "required": ["object", "mailbox_id", "address", "data", "junk_total", "pagination"],
         "properties": {
           "object": {
             "type": "string",
@@ -12493,6 +12591,10 @@
             "items": {
               "$ref": "#/components/schemas/InboxFullMessage"
             }
+          },
+          "junk_total": {
+            "type": ["integer", "null"],
+            "description": "Messages in Junk that match the other filters. Counted on the first page when a folder filter leaves Junk out, so an empty Inbox can be told apart from mail held as spam. Null otherwise."
           },
           "pagination": {
             "$ref": "#/components/schemas/InboxCursorPagination"
@@ -12609,7 +12711,7 @@
           "thread_id": {
             "type": "string",
             "deprecated": true,
-            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+            "description": "Deprecated and not stable: a legacy thread ID that changes when the mail server re-threads its IDs or a relayed send's placeholder key is replaced. It remains supported in thread paths; store conversation_id instead."
           },
           "conversation_id": {
             "type": "string",
@@ -12715,7 +12817,7 @@
           "thread_id": {
             "type": "string",
             "deprecated": true,
-            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+            "description": "Deprecated and not stable: a legacy thread ID that changes when the mail server re-threads its IDs or a relayed send's placeholder key is replaced. It remains supported in thread paths; store conversation_id instead."
           },
           "conversation_id": {
             "type": "string",
@@ -12886,7 +12988,7 @@
           "thread_id": {
             "type": "string",
             "deprecated": true,
-            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+            "description": "Deprecated and not stable: a legacy thread ID that changes when the mail server re-threads its IDs or a relayed send's placeholder key is replaced. It remains supported in thread paths; store conversation_id instead."
           },
           "conversation_id": {
             "type": "string",
@@ -13096,7 +13198,7 @@
           "thread_id": {
             "type": "string",
             "deprecated": true,
-            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+            "description": "Deprecated and not stable: a legacy thread ID that changes when the mail server re-threads its IDs or a relayed send's placeholder key is replaced. It remains supported in thread paths; store conversation_id instead."
           },
           "conversation_id": {
             "type": "string",
@@ -13192,7 +13294,7 @@
           "thread_id": {
             "type": "string",
             "deprecated": true,
-            "description": "Deprecated. The mail server's thread ID. It remains supported and its value is unchanged; store conversation_id instead."
+            "description": "Deprecated and not stable: a legacy thread ID that changes when the mail server re-threads its IDs or a relayed send's placeholder key is replaced. It remains supported in thread paths; store conversation_id instead."
           },
           "conversation_id": {
             "type": ["string", "null"],
@@ -13208,7 +13310,15 @@
       },
       "InboxMessageAction": {
         "type": "object",
-        "required": ["object", "mailbox_id", "address", "message_id", "ok"],
+        "required": [
+          "object",
+          "mailbox_id",
+          "address",
+          "message_id",
+          "ok",
+          "folder_ids",
+          "keywords"
+        ],
         "properties": {
           "object": {
             "type": "string",
@@ -13227,6 +13337,20 @@
           "ok": {
             "type": "boolean",
             "const": true
+          },
+          "folder_ids": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            },
+            "description": "Folders the message is in after the change, read back from the mail server. Null when it could not be read back."
+          },
+          "keywords": {
+            "type": ["object", "null"],
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "description": "Keywords such as $seen and $flagged after the change. Null when they could not be read back."
           }
         }
       },
@@ -14271,6 +14395,7 @@
           "feed_entry_url",
           "styling_mode",
           "track_engagement",
+          "add_utm_tags",
           "opened_count",
           "clicked_count",
           "preflight_status",
@@ -14363,6 +14488,11 @@
             "type": "boolean",
             "default": false,
             "description": "Whether this issue tracks opens and clicks."
+          },
+          "add_utm_tags": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this issue adds UTM tags to its links. Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the issue's http and https links. Links that already carry a utm_ parameter, links with a merge tag in the host, and Shipmail's own unsubscribe and archive links are left alone. The web archive is never tagged."
           },
           "opened_count": {
             "type": ["integer", "null"],
@@ -14512,6 +14642,11 @@
             "default": false,
             "description": "Track opens and clicks for this issue. Defaults to false. Returns 422 validation_error when open and click tracking is not available. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
           },
+          "add_utm_tags": {
+            "type": "boolean",
+            "default": false,
+            "description": "Add UTM tags to the links of this issue. Defaults to false. Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the issue's http and https links. Links that already carry a utm_ parameter, links with a merge tag in the host, and Shipmail's own unsubscribe and archive links are left alone. The web archive is never tagged. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
+          },
           "blocks": {
             "type": "array",
             "maxItems": 200,
@@ -14575,6 +14710,10 @@
           "track_engagement": {
             "type": "boolean",
             "description": "Track opens and clicks for this issue. Omit to keep the current value. Returns 422 validation_error when open and click tracking is not available. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
+          },
+          "add_utm_tags": {
+            "type": "boolean",
+            "description": "Add UTM tags to the links of this issue. Omit to keep the current value. Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the issue's http and https links. Links that already carry a utm_ parameter, links with a merge tag in the host, and Shipmail's own unsubscribe and archive links are left alone. The web archive is never tagged. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
           },
           "blocks": {
             "type": "array",

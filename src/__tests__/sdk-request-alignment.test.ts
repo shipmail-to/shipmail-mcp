@@ -23,6 +23,7 @@ import type {
   CreateWebhookParams,
   InjectSandboxInboundParams,
   ListInboxMessagesParams,
+  ListInboxThreadsParams,
   MoveInboxMessageParams,
   ReplyToMessageParams,
   ReplyToThreadParams,
@@ -60,6 +61,7 @@ import type {
   createWebhookInputSchema,
   injectSandboxInboundInputSchema,
   listMailboxInboxMessagesInputSchema,
+  listMailboxInboxThreadsInputSchema,
   moveInboxMessageInputSchema,
   replyToMessageInputSchema,
   replyToThreadInputSchema,
@@ -183,6 +185,12 @@ type _ListInboxMessages = AssertTrue<
     StripMcpOnlyKeepFolderId<z.infer<typeof listMailboxInboxMessagesInputSchema>>
   >
 >;
+type _ListInboxThreads = AssertTrue<
+  KeysMatch<
+    ListInboxThreadsParams,
+    StripMcpOnly<z.infer<typeof listMailboxInboxThreadsInputSchema>>
+  >
+>;
 type _UpdateInboxMessage = AssertTrue<
   KeysMatch<UpdateInboxMessageParams, StripMcpOnly<z.infer<typeof updateInboxMessageInputSchema>>>
 >;
@@ -249,6 +257,7 @@ type _AllChecks = [
   _ResetMailboxPassword,
   _UpdateAutoReply,
   _ListInboxMessages,
+  _ListInboxThreads,
   _UpdateInboxMessage,
   _MoveInboxMessage,
   _SendMessage,
@@ -298,7 +307,8 @@ describe("SDK request params / MCP input schema alignment", () => {
       true,
       true,
       true,
+      true,
     ];
-    if (checks.length !== 32) throw new Error("alignment matrix size changed");
+    if (checks.length !== 33) throw new Error("alignment matrix size changed");
   });
 });

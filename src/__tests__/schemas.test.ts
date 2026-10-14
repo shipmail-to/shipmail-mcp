@@ -494,6 +494,28 @@ describe("listMailboxInboxMessagesInputSchema", () => {
     expect(out.has_keyword).toBe("$seen");
   });
 
+  test("accepts from, to, subject and has_attachment filters", () => {
+    const out = listMailboxInboxMessagesInputSchema.parse({
+      id: "mbx_abc123",
+      from: "jane@example.com",
+      to: "billing",
+      subject: "Invoice",
+      has_attachment: false,
+    });
+    expect(out).toMatchObject({
+      from: "jane@example.com",
+      to: "billing",
+      subject: "Invoice",
+      has_attachment: false,
+    });
+    expect(() =>
+      listMailboxInboxMessagesInputSchema.parse({ id: "mbx_abc123", has_attachment: "false" }),
+    ).toThrow();
+    expect(() =>
+      listMailboxInboxMessagesInputSchema.parse({ id: "mbx_abc123", subject: "a".repeat(501) }),
+    ).toThrow();
+  });
+
   test("rejects ambiguous folder filters", () => {
     expect(() =>
       listMailboxInboxMessagesInputSchema.parse({
@@ -1215,6 +1237,12 @@ describe("newsletter schemas", () => {
     expect(() =>
       updateNewsletterInputSchema.parse({ id: "nws_123", track_engagement: "yes" }),
     ).toThrow();
+    expect(
+      updateNewsletterInputSchema.parse({ id: "nws_123", add_utm_tags: true }).add_utm_tags,
+    ).toBe(true);
+    expect(() =>
+      updateNewsletterInputSchema.parse({ id: "nws_123", add_utm_tags: "yes" }),
+    ).toThrow();
     expect(() => updateNewsletterInputSchema.parse({ id: "nws_123" })).toThrow();
     expect(() =>
       createNewsletterInputSchema.parse({
@@ -1275,6 +1303,7 @@ describe("newsletter schemas", () => {
         feed_entry_url: null,
         styling_mode: "styled",
         track_engagement: true,
+        add_utm_tags: false,
         opened_count: 12,
         clicked_count: 4,
         preflight_status: "not_run",

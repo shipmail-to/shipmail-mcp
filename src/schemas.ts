@@ -566,6 +566,12 @@ export const inboxFullMessageSchema = inboxMessageSchema.omit({ object: true }).
   text_body: z.array(inboxBodyPartSchema),
   html_body: z.array(inboxBodyPartSchema),
   attachments: z.array(inboxAttachmentSchema),
+  reply_text: z
+    .string()
+    .nullable()
+    .describe(
+      "What the sender newly wrote, without quoted history or signature. Null when nothing is left; read body_values then.",
+    ),
 });
 
 export const inboxAttachmentContentSchema = inboxAttachmentSchema
@@ -582,6 +588,12 @@ export const inboxMessagesSchema = z.object({
   mailbox_id: z.string(),
   address: z.string(),
   data: z.array(inboxFullMessageSchema),
+  junk_total: z
+    .number()
+    .nullable()
+    .describe(
+      "Messages in Junk that match the other filters, counted on the first page when a folder filter leaves Junk out. Null otherwise.",
+    ),
   pagination: z.object({
     limit: z.number(),
     total: z.number(),
@@ -777,6 +789,11 @@ export const inboxMessageActionSchema = z.object({
   address: z.string(),
   message_id: z.string(),
   ok: z.literal(true),
+  folder_ids: z
+    .array(z.string())
+    .nullable()
+    .describe("Folders the message is in after the change. Null when it could not be read back."),
+  keywords: z.record(z.string(), z.boolean()).nullable(),
 });
 
 const folderNameSchema = z
@@ -1072,6 +1089,18 @@ export const webhookSchema = z.object({
     .boolean()
     .describe(
       "True when deliveries carry Standard Webhooks signatures from a stored signing secret. The secret is never returned.",
+    ),
+  include_reply_text: z
+    .boolean()
+    .describe("True when message.received deliveries carry reply_text."),
+  authenticated_senders_only: z
+    .boolean()
+    .describe("True when message.received is skipped for senders that did not pass DMARC."),
+  allowed_senders: z
+    .array(z.string())
+    .nullable()
+    .describe(
+      "Addresses and domains message.received is limited to. Null when every sender is delivered.",
     ),
   created_at: z.string(),
   updated_at: z.string(),
@@ -1660,6 +1689,15 @@ export const listMailboxInboxMessagesInputSchema = z
     folder_id: folderIdSchema.optional(),
     folder_role: z.enum(SYSTEM_FOLDER_NAMES).optional(),
     search_text: noControlString(500, "search_text").optional(),
+    from: noControlString(500, "from").optional().describe("Matches the From name or address."),
+    to: noControlString(500, "to")
+      .optional()
+      .describe("Matches the To recipients by name or address. Cc and Bcc are not searched."),
+    subject: noControlString(500, "subject").optional().describe("Matches the subject."),
+    has_attachment: z
+      .boolean()
+      .optional()
+      .describe("true for messages with an attachment, false for messages without one."),
     cursor: z.string().optional(),
     after: z.iso.datetime().optional(),
     before: z.iso.datetime().optional(),
@@ -2130,6 +2168,26 @@ export const createWebhookInputSchema = z.object({
     .describe(
       "A whsec_ signing secret from the receiving service, such as a Grok automation webhook trigger. Every delivery then also carries webhook-id, webhook-timestamp and webhook-signature. Write-only: stored encrypted and never returned.",
     ),
+  include_reply_text: z
+    .boolean()
+    .optional()
+    .describe(
+      "Add reply_text, the sender's new text without quoted history, to message.received deliveries. Needs the messages:read scope.",
+    ),
+  authenticated_senders_only: z
+    .boolean()
+    .optional()
+    .describe(
+      "Skip message.received deliveries whose sender did not pass DMARC. Use it when an agent acts on the mail it receives.",
+    ),
+  allowed_senders: z
+    .array(z.string().max(320))
+    .max(100)
+    .nullable()
+    .optional()
+    .describe(
+      "Deliver message.received only from these senders. Each entry is an address (jane@customer.com) or a domain (customer.com) that matches that exact domain, not its subdomains. At most 100. Omit or pass null for every sender.",
+    ),
   idempotency_key: idempotencyKeySchema,
 });
 export const updateWebhookInputSchema = z
@@ -2157,6 +2215,26 @@ export const updateWebhookInputSchema = z
       .describe(
         "Replace the Standard Webhooks signing secret. Null stops the signatures; omit to keep it. Write-only: never returned.",
       ),
+    include_reply_text: z
+      .boolean()
+      .optional()
+      .describe(
+        "Turn reply_text on message.received deliveries on or off. Turning it on needs the messages:read scope.",
+      ),
+    authenticated_senders_only: z
+      .boolean()
+      .optional()
+      .describe(
+        "Skip message.received deliveries whose sender did not pass DMARC, or stop skipping them.",
+      ),
+    allowed_senders: z
+      .array(z.string().max(320))
+      .max(100)
+      .nullable()
+      .optional()
+      .describe(
+        "Replace the senders message.received is limited to: addresses or exact domains, at most 100. Null or [] delivers every sender again; omit to keep the list.",
+      ),
     idempotency_key: idempotencyKeySchema,
   })
   .refine(
@@ -2168,7 +2246,10 @@ export const updateWebhookInputSchema = z
       value.mailbox_ids !== undefined ||
       value.domain_ids !== undefined ||
       value.authorization !== undefined ||
-      value.standard_webhooks_secret !== undefined,
+      value.standard_webhooks_secret !== undefined ||
+      value.include_reply_text !== undefined ||
+      value.authenticated_senders_only !== undefined ||
+      value.allowed_senders !== undefined,
     {
       message: "Provide at least one webhook field to update.",
     },
@@ -2469,6 +2550,7 @@ export const newsletterSchema = z.object({
       "styled applies Shipmail's email theme. plain sends your HTML without injected styles, width, or centering, so the reader's email client styles it.",
     ),
   track_engagement: z.boolean().describe("Whether this issue tracks opens and clicks."),
+  add_utm_tags: z.boolean().describe("Whether this issue adds UTM tags to its links."),
   opened_count: z
     .number()
     .int()
@@ -2789,6 +2871,12 @@ const newsletterDraftFieldsInputSchema = {
     .describe(
       "Track opens and clicks for this issue. Off by default; omit on update to keep the current value. Fails with validation_error when open and click tracking is not available. Changes only while the newsletter is an editable draft or a future scheduled newsletter.",
     ),
+  add_utm_tags: z
+    .boolean()
+    .optional()
+    .describe(
+      "Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the issue's http and https links. Links that already carry a utm_ parameter are left alone. Off by default; omit on update to keep the current value. Changes only while the newsletter is an editable draft or a future scheduled newsletter.",
+    ),
 } as const;
 
 export const createNewsletterInputSchema = z
@@ -2874,6 +2962,7 @@ export const updateNewsletterInputSchema = z
     feed_entry_url: newsletterDraftFieldsInputSchema.feed_entry_url,
     styling_mode: newsletterDraftFieldsInputSchema.styling_mode,
     track_engagement: newsletterDraftFieldsInputSchema.track_engagement,
+    add_utm_tags: newsletterDraftFieldsInputSchema.add_utm_tags,
     idempotency_key: idempotencyKeySchema,
   })
   .refine(
@@ -2890,7 +2979,8 @@ export const updateNewsletterInputSchema = z
       value.archive_visibility !== undefined ||
       value.feed_entry_url !== undefined ||
       value.styling_mode !== undefined ||
-      value.track_engagement !== undefined,
+      value.track_engagement !== undefined ||
+      value.add_utm_tags !== undefined,
     {
       message: "Provide at least one newsletter field to update.",
     },
