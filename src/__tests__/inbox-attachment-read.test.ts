@@ -81,6 +81,13 @@ function inboxMessage(contentType = "application/pdf", attachmentSize = 4, name 
     text_body: [],
     html_body: [],
     reply_text: null,
+    security: {
+      status: "not_flagged",
+      risk_codes: [],
+      scanner: "pattern_v1",
+      content_sha256: "a".repeat(64),
+      review: null,
+    },
     attachments: [
       {
         part_id: "part_1",
@@ -88,7 +95,8 @@ function inboxMessage(contentType = "application/pdf", attachmentSize = 4, name 
         name,
         content_type: contentType,
         size: attachmentSize,
-        download_path: "/mailboxes/mbx_123/inbox/attachments?blob_id=blob%2F123&name=invoice.pdf",
+        download_path:
+          "/mailboxes/mbx_123/inbox/attachments?message_id=eml_123&blob_id=blob%2F123&name=invoice.pdf",
       },
     ],
   };

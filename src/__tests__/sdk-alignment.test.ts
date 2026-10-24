@@ -17,6 +17,7 @@ import type {
   Audience,
   AudienceFeed,
   Automation,
+  BookingLink,
   BookingPage,
   CalendarEvent,
   CalendarEventMutationResult,
@@ -24,10 +25,14 @@ import type {
   Domain,
   DomainSearchResult,
   DomainVerificationResult,
+  InboxDraft,
   InboxFullMessage,
   InboxMessage,
   InboxMessageAction,
   InboxMessages,
+  InboxReplyDraft,
+  InboxReplyDraftList,
+  InboxReplyDraftWrite,
   InboxThread,
   Mailbox,
   MailboxAppPassword,
@@ -59,6 +64,7 @@ import {
   audienceFeedSchema,
   audienceSchema,
   automationSchema,
+  bookingLinkSchema,
   bookingPageSchema,
   calendarEventMutationSchema,
   calendarEventSchema,
@@ -66,10 +72,14 @@ import {
   domainSchema,
   domainSearchResultSchema,
   domainVerificationSchema,
+  inboxDraftSchema,
   inboxFullMessageSchema,
   inboxMessageActionSchema,
   inboxMessageSchema,
   inboxMessagesSchema,
+  inboxReplyDraftListSchema,
+  inboxReplyDraftSchema,
+  inboxReplyDraftWriteSchema,
   inboxThreadSchema,
   mailboxAppPasswordSchema,
   mailboxExportSchema,
@@ -118,6 +128,7 @@ type _DomainKeys = AssertTrue<KeysMatch<Domain, z.infer<typeof domainSchema>>>;
 type _AudienceKeys = AssertTrue<KeysMatch<Audience, z.infer<typeof audienceSchema>>>;
 type _AudienceFeedKeys = AssertTrue<KeysMatch<AudienceFeed, z.infer<typeof audienceFeedSchema>>>;
 type _AutomationKeys = AssertTrue<KeysMatch<Automation, z.infer<typeof automationSchema>>>;
+type _BookingLinkKeys = AssertTrue<KeysMatch<BookingLink, z.infer<typeof bookingLinkSchema>>>;
 type _BookingPageKeys = AssertTrue<KeysMatch<BookingPage, z.infer<typeof bookingPageSchema>>>;
 type _CalendarEventKeys = AssertTrue<KeysMatch<CalendarEvent, z.infer<typeof calendarEventSchema>>>;
 type _CalendarEventMutationKeys = AssertTrue<
@@ -154,6 +165,16 @@ type _InboxFullMessageKeys = AssertTrue<
 >;
 type _InboxMessagesKeys = AssertTrue<KeysMatch<InboxMessages, z.infer<typeof inboxMessagesSchema>>>;
 type _InboxThreadKeys = AssertTrue<KeysMatch<InboxThread, z.infer<typeof inboxThreadSchema>>>;
+type _InboxDraftKeys = AssertTrue<KeysMatch<InboxDraft, z.infer<typeof inboxDraftSchema>>>;
+type _InboxReplyDraftKeys = AssertTrue<
+  KeysMatch<InboxReplyDraft, z.infer<typeof inboxReplyDraftSchema>>
+>;
+type _InboxReplyDraftWriteKeys = AssertTrue<
+  KeysMatch<InboxReplyDraftWrite, z.infer<typeof inboxReplyDraftWriteSchema>>
+>;
+type _InboxReplyDraftListKeys = AssertTrue<
+  KeysMatch<InboxReplyDraftList, z.infer<typeof inboxReplyDraftListSchema>>
+>;
 type _MessageKeys = AssertTrue<KeysMatch<Message, z.infer<typeof messageSchema>>>;
 type _MemberKeys = AssertTrue<KeysMatch<Member, z.infer<typeof memberSchema>>>;
 type _MemberRoleValues = AssertTrue<

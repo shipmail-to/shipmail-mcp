@@ -105,6 +105,25 @@ describe("MCP transport capability derivation", () => {
     });
   });
 
+  test("keeps security review separate from ordinary mail reads", () => {
+    const reader = getAllowedMcpToolNames(["messages:read"], "hostedOAuth");
+    const reviewer = getAllowedMcpToolNames(
+      ["mailboxes:read", "messages:read", "threads:read", "messages:review"],
+      "hostedOAuth",
+    );
+    expect(reader).not.toContain("shipmail_release_mailbox_inbox_message_security");
+    expect(reviewer).toContain("shipmail_release_mailbox_inbox_message_security");
+    expect(
+      MCP_CAPABILITIES.find(
+        (capability) => capability.toolName === "shipmail_release_mailbox_inbox_message_security",
+      ),
+    ).toMatchObject({
+      requiredScope: "messages:review",
+      permissionGroup: "security_review",
+      effect: "local_write",
+    });
+  });
+
   test("derives hosted OAuth permission groups from the hosted tool catalog", () => {
     for (const group of MCP_HOSTED_OAUTH_PERMISSION_GROUP_NAMES) {
       expect(

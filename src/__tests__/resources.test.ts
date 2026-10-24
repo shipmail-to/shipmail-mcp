@@ -11,6 +11,7 @@ type StubFetch = (...args: Parameters<typeof fetch>) => Promise<Response>;
 function buildPair(
   fetchImpl: StubFetch,
   organizationGrants: readonly CrossOrganizationGrant[] = [],
+  allowedTools?: ReadonlySet<string>,
 ) {
   const shipmail = new ShipmailClient({
     apiKey: "sk_test",
@@ -19,7 +20,7 @@ function buildPair(
     fetch: fetchImpl as typeof fetch,
   });
   const server = new McpServer({ name: "test", version: "0.0.0" });
-  registerResources(server, shipmail, undefined, organizationGrants);
+  registerResources(server, shipmail, undefined, organizationGrants, allowedTools);
   const client = new Client({ name: "test-client", version: "0.0.0" });
   return { server, client };
 }
@@ -36,6 +37,7 @@ function mailboxRow(id: string, address: string) {
     suspended_at: null,
     suspension_reasons: [],
     auto_reply: { enabled: false, subject: null, body: null, from_date: null, to_date: null },
+    agent_security_hold: false,
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
   };
@@ -110,6 +112,33 @@ function textContent(result: Awaited<ReturnType<Client["readResource"]>>): strin
 }
 
 describe("MCP resources", () => {
+  test("offers a resource only with the tool that reads the same data", async () => {
+    const requests: string[] = [];
+    const { server, client } = buildPair(
+      async (input) => {
+        requests.push(new URL(String(input)).pathname);
+        return Response.json({ data: [domainRow("one")], pagination: PAGINATION });
+      },
+      [],
+      new Set(["shipmail_status", "shipmail_list_domains", "shipmail_get_domain"]),
+    );
+    await connectPair(server, client);
+
+    const uris = (await client.listResources()).resources.map((resource) => resource.uri);
+    expect(uris).toContain("shipmail://domains");
+    expect(uris).not.toContain("shipmail://mailboxes");
+    expect(uris).not.toContain("ui://shipmail/attachment-composer-v1.html");
+    const templates = (await client.listResourceTemplates()).resourceTemplates.map(
+      (template) => template.uriTemplate,
+    );
+    expect(templates).toContain("shipmail://domains/{id}");
+    expect(templates).not.toContain("shipmail://messages/{id}");
+    expect(templates).not.toContain("shipmail://mailboxes/{id}/inbox/threads/{thread_id}");
+
+    await expect(client.readResource({ uri: "shipmail://messages/msg_1" })).rejects.toThrow();
+    expect(requests).toEqual([]);
+  });
+
   test("serves the versioned attachment composer with MCP Apps metadata", async () => {
     const { server, client } = buildPair(async () => Response.json({}));
     await connectPair(server, client);

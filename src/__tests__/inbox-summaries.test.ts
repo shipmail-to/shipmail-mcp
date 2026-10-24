@@ -1,7 +1,7 @@
 import { Client } from "@modelcontextprotocol/client";
 import { InMemoryTransport, McpServer } from "@modelcontextprotocol/server";
 import { describe, expect, test } from "bun:test";
-import { ShipmailClient } from "shipmail";
+import { type InboxMessageSecurity, ShipmailClient } from "shipmail";
 
 import { toInboxMessageSummaries } from "../inbox-summaries.js";
 import { registerTools } from "../tools.js";
@@ -40,6 +40,13 @@ function fullMessagePayload(id: string) {
     html_body: [{ part_id: "2", type: "text/html" }],
     attachments: [],
     reply_text: "A short reply",
+    security: {
+      status: "flagged",
+      risk_codes: ["instruction_override"],
+      scanner: "pattern_v1",
+      content_sha256: "a".repeat(64),
+      review: null,
+    } satisfies InboxMessageSecurity,
     authentication_results: {
       spf: "pass",
       dkim: "pass",
@@ -95,6 +102,7 @@ describe("toInboxMessageSummaries", () => {
       expect(item).not.toContainKeys(["body_values", "text_body", "html_body", "attachments"]);
       expect(item.preview).toBe("A short preview of the message");
       expect(item.authentication_results?.dmarc).toBe("pass");
+      expect(item.security).toEqual(fullMessagePayload(item.id).security);
     }
     expect(summaries.pagination.next_cursor).toBe("cursor-1");
   });
@@ -120,6 +128,7 @@ describe("shipmail_list_mailbox_inbox_messages", () => {
       expect(item["text_body"]).toBeUndefined();
       expect(item["html_body"]).toBeUndefined();
       expect(item["authentication_results"]).toEqual(expect.objectContaining({ dmarc: "pass" }));
+      expect(item["security"]).toEqual(fullMessagePayload("unused").security);
     }
 
     // 50 messages whose bodies are ~200KB each must not leak into the result.

@@ -42,7 +42,7 @@ Operational instructions:
 - Do not reset a mailbox password unless the operator supplied the replacement password. Do not create an app password without explicit operator approval; store its one-time secret securely.
 - Webhook signing secrets appear once in the conversation log. Treat that log as sensitive and store each secret in the user's chosen secret manager.
 - Confirm that a recipient should receive mail again before removing a suppression. Use the subscriber state tools for subscription changes rather than a profile update. Prefer unsubscribing to removing a subscriber when opt-out history must be preserved.
-- Do not create, send, schedule, resume, or otherwise mutate a newsletter without the user's explicit approval. A test send requires approval of the exact draft and test recipient. Scheduling requires approval of the content, audience, and scheduled time. Resume requires confirmation that delivery should continue. Run newsletter preflight before test sending or scheduling, and obtain sender identities and existing asset IDs from their list tools.
+- Do not create, send, schedule, resume, or otherwise mutate a newsletter without the user's explicit approval. A test send requires approval of the exact draft and test recipient. Scheduling requires approval of the content, audience, scheduled time, and any limit. Resume requires confirmation that delivery should continue. Sending a newsletter to more subscribers requires approval of how many. Run newsletter preflight before test sending or scheduling, and obtain sender identities and existing asset IDs from their list tools. Turning a welcome sequence on, or adding or changing an email in a running one, reaches every reader who subscribes; it requires approval of each email's content and of turning the sequence on.
 - Use the newsletter content formats defined by the input schema. Paragraph, quote, callout, list-item, and column text supports sanitized inline HTML. Use p or br elements for line breaks. On a newsletter update conflict, get the latest newsletter before retrying.
 - A new email draft is not a reply draft. New drafts remain in Drafts and have no send tool. Use inbox reply drafts only for an existing conversation.
 - Use stored message IDs with stored-message reply tools and JMAP inbox IDs with inbox reply tools. Treat conversation_id as the stable inbox thread reference when a response supplies it.
@@ -124,6 +124,7 @@ export function createShipmailMcpServer(
     client,
     componentConnectDomain(config.baseUrl),
     crossOrganizationGrants,
+    allowedTools,
   );
   registerPrompts(server);
 

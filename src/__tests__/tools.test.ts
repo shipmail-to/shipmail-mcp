@@ -108,6 +108,7 @@ describe("registerTools", () => {
       "shipmail_list_domains",
       "shipmail_get_domain",
       "shipmail_get_domain_dns_records",
+      "shipmail_get_domain_health",
       "shipmail_create_domain",
       "shipmail_update_domain",
       "shipmail_delete_domain",
@@ -137,6 +138,7 @@ describe("registerTools", () => {
       "shipmail_list_mailbox_identities",
       "shipmail_list_mailbox_inbox_messages",
       "shipmail_get_mailbox_inbox_message",
+      "shipmail_release_mailbox_inbox_message_security",
       "shipmail_read_mailbox_inbox_attachment",
       "shipmail_get_mailbox_inbox_thread",
       "shipmail_reply_to_inbox_message",
@@ -179,6 +181,7 @@ describe("registerTools", () => {
       "shipmail_test_webhook",
       "shipmail_list_webhook_deliveries",
       "shipmail_list_suppressions",
+      "shipmail_add_suppression",
       "shipmail_remove_suppression",
       "shipmail_list_audiences",
       "shipmail_get_audience",
@@ -215,6 +218,7 @@ describe("registerTools", () => {
       "shipmail_schedule_newsletter",
       "shipmail_cancel_newsletter",
       "shipmail_resume_newsletter",
+      "shipmail_send_newsletter_to_more",
       "shipmail_list_calendar_events",
       "shipmail_get_calendar_event",
       "shipmail_create_calendar_event",
@@ -226,6 +230,11 @@ describe("registerTools", () => {
       "shipmail_create_booking_page",
       "shipmail_update_booking_page",
       "shipmail_delete_booking_page",
+      "shipmail_list_booking_links",
+      "shipmail_get_booking_link",
+      "shipmail_create_booking_link",
+      "shipmail_update_booking_link",
+      "shipmail_revoke_booking_link",
     ];
     for (const name of expected) {
       expect(result.knownTools).toContain(name);

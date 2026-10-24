@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "shipmail API",
-    "description": "API-first email provider for creators, freelancers, and businesses of all sizes.",
+    "description": "API-first email provider for creators, freelancers, and businesses of all sizes. The version is in the server URL (/api/v1). Compatible changes ship in v1 at any time; a breaking change ships in a new version or after at least 12 months of notice, during which deprecated operations are marked deprecated and their responses carry Deprecation (RFC 9745) and Sunset (RFC 8594) headers. Policy: https://shipmail.to/docs/api/versioning",
     "version": "0.1.0",
     "contact": {
       "name": "shipmail",
@@ -24,6 +24,14 @@
         "tags": ["Calendar"],
         "x-rate-limit-tier": "read",
         "x-scope": "calendar:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["calendar:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "mailbox",
@@ -129,6 +137,14 @@
         "tags": ["Calendar"],
         "x-rate-limit-tier": "write",
         "x-scope": "calendar:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["calendar:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -185,6 +201,14 @@
         "tags": ["Calendar"],
         "x-rate-limit-tier": "read",
         "x-scope": "calendar:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["calendar:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "mailbox",
@@ -228,6 +252,14 @@
         "tags": ["Calendar"],
         "x-rate-limit-tier": "write",
         "x-scope": "calendar:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["calendar:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -271,6 +303,14 @@
         "tags": ["Calendar"],
         "x-rate-limit-tier": "write",
         "x-scope": "calendar:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["calendar:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "mailbox",
@@ -310,6 +350,14 @@
         "tags": ["Calendar"],
         "x-rate-limit-tier": "read",
         "x-scope": "calendar:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["calendar:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "mailbox",
@@ -452,6 +500,14 @@
         "tags": ["Automations"],
         "x-rate-limit-tier": "read",
         "x-scope": "automations:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["automations:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of automations.",
@@ -492,6 +548,14 @@
         "tags": ["Automations"],
         "x-rate-limit-tier": "write",
         "x-scope": "automations:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["automations:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -549,6 +613,14 @@
         "tags": ["Automations"],
         "x-rate-limit-tier": "read",
         "x-scope": "automations:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["automations:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Automation object.",
@@ -583,6 +655,14 @@
         "tags": ["Automations"],
         "x-rate-limit-tier": "write",
         "x-scope": "automations:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["automations:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -647,6 +727,14 @@
         "tags": ["Automations"],
         "x-rate-limit-tier": "write",
         "x-scope": "automations:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["automations:write"]
+          }
+        ],
         "responses": {
           "202": {
             "description": "Automation run queued.",
@@ -688,6 +776,14 @@
         "tags": ["Booking Pages"],
         "x-rate-limit-tier": "read",
         "x-scope": "booking_pages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
@@ -736,6 +832,14 @@
         "tags": ["Booking Pages"],
         "x-rate-limit-tier": "write",
         "x-scope": "booking_pages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -795,6 +899,14 @@
         "tags": ["Booking Pages"],
         "x-rate-limit-tier": "read",
         "x-scope": "booking_pages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Booking page object.",
@@ -825,6 +937,14 @@
         "tags": ["Booking Pages"],
         "x-rate-limit-tier": "write",
         "x-scope": "booking_pages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -871,9 +991,298 @@
         "tags": ["Booking Pages"],
         "x-rate-limit-tier": "write",
         "x-scope": "booking_pages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Booking page deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
+    "/booking-links": {
+      "get": {
+        "operationId": "listBookingLinks",
+        "summary": "List one-off booking links",
+        "tags": ["Booking Links"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "booking_pages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Only links in this state.",
+            "schema": {
+              "type": "string",
+              "enum": ["open", "booked", "expired", "revoked"]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of one-off booking links, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "pagination"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BookingLink"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createBookingLink",
+        "summary": "Create a one-off booking link",
+        "tags": ["Booking Links"],
+        "description": "Creates a link that offers the given time ranges, or the weekly hours of source_page_id, and stops taking bookings after max_bookings.",
+        "x-rate-limit-tier": "write",
+        "x-scope": "booking_pages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookingLinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking link created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingLink"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
+    "/booking-links/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Booking link ID.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getBookingLink",
+        "summary": "Get a one-off booking link",
+        "tags": ["Booking Links"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "booking_pages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:read"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking link object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingLink"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateBookingLink",
+        "summary": "Update a one-off booking link",
+        "tags": ["Booking Links"],
+        "description": "Fields left out keep their value. The slug and the bookings already taken stay. A revoked link cannot be edited.",
+        "x-rate-limit-tier": "write",
+        "x-scope": "booking_pages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookingLinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated booking link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingLink"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
+    "/booking-links/{id}/revoke": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Booking link ID.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "revokeBookingLink",
+        "summary": "Revoke a one-off booking link",
+        "tags": ["Booking Links"],
+        "description": "Stops the link from taking bookings. The link stays readable with status revoked. This cannot be undone.",
+        "x-rate-limit-tier": "write",
+        "x-scope": "booking_pages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["booking_pages:write"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revoked booking link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingLink"
+                }
+              }
+            }
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -959,6 +1368,14 @@
         "tags": ["Domains"],
         "x-rate-limit-tier": "write",
         "x-scope": "domains:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1003,6 +1420,14 @@
         "tags": ["Domains"],
         "x-rate-limit-tier": "read",
         "x-scope": "domains:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
@@ -1058,6 +1483,14 @@
         "tags": ["Domains"],
         "x-rate-limit-tier": "read",
         "x-scope": "domains:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Domain object.",
@@ -1089,6 +1522,14 @@
         "tags": ["Domains"],
         "x-rate-limit-tier": "write",
         "x-scope": "domains:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1133,12 +1574,23 @@
         "tags": ["Domains"],
         "x-rate-limit-tier": "write",
         "x-scope": "domains:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Domain deleted."
           },
           "409": {
             "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -1167,6 +1619,14 @@
         "tags": ["Domains"],
         "x-rate-limit-tier": "verification",
         "x-scope": "domains:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:write"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Verification result.",
@@ -1205,6 +1665,14 @@
         "tags": ["Domains"],
         "x-rate-limit-tier": "verification",
         "x-scope": "domains:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Required DNS records with live diagnostics.",
@@ -1212,6 +1680,55 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DomainDnsRecordSet"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
+    "/domains/{id}/health": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "get": {
+        "operationId": "getDomainHealth",
+        "summary": "Get domain health",
+        "description": "Return a domain's health in one read. `dns` and `blocklist` are the stored results of the check Shipmail runs every 6 hours: whether the MX, SPF, DKIM and DMARC records pass, and whether the Spamhaus Domain Block List (DBL) lists the domain. This endpoint does not run a new DNS check; use `GET /domains/{id}/dns-records` for a live one. `delivery` covers the recipients of messages sent from the domain's mailboxes that the API key can see, in the last 30 days, in total and split by recipient provider.",
+        "tags": ["Domains"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "domains:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:read"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The domain's stored DNS and blocklist state and its last 30 days of delivery.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainHealth"
                 }
               }
             }
@@ -1241,6 +1758,14 @@
         "tags": ["Domains"],
         "x-rate-limit-tier": "read",
         "x-scope": "domains:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:read"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1300,6 +1825,14 @@
         "tags": ["Domains"],
         "x-rate-limit-tier": "write",
         "x-scope": "domains:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1372,6 +1905,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1418,6 +1959,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailboxes:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "domain_id",
@@ -1481,6 +2030,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailboxes:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Mailbox object.",
@@ -1508,9 +2065,21 @@
       "patch": {
         "operationId": "updateMailbox",
         "summary": "Update a mailbox",
+        "description": "Update the display name and/or API-agent security hold. Changing agent_security_hold in either direction requires messages:review in addition to mailboxes:write; a credential without both scopes receives 403 and no field is changed.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "x-conditional-scopes": {
+          "agent_security_hold": ["messages:review"]
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1531,6 +2100,12 @@
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -1554,9 +2129,23 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Mailbox deleted."
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -1569,7 +2158,8 @@
           {
             "$ref": "#/components/parameters/ShipmailOrganization"
           }
-        ]
+        ],
+        "description": "Refused with 422 while something still depends on the mailbox: an active application sender that sends its replies to it, delivery routing that sends mail to it, or a newsletter sending domain that uses it. The error message names the dependency. Refused with 409 while the mailbox's archive or deletion is in progress, or while its organization is being deleted or changes owners."
       }
     },
     "/mailboxes/{id}/suspend": {
@@ -1585,6 +2175,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Suspended mailbox.",
@@ -1626,6 +2224,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Mailbox after removing the manual suspension.",
@@ -1667,6 +2273,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailbox_credentials:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_credentials:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Active and recoverable app-password metadata.",
@@ -1717,6 +2331,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailbox_credentials:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_credentials:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1784,6 +2406,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailbox_credentials:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_credentials:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "App password revoked."
@@ -1821,6 +2451,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:export",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:export"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Existing active export, or a completed export younger than 15 minutes, returned.",
@@ -1898,6 +2536,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailboxes:export",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:export"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Mailbox export status.",
@@ -1945,6 +2591,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2002,6 +2656,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailboxes:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Mailbox delivery routing and eligible destination mailboxes.",
@@ -2039,6 +2701,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2096,6 +2766,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailbox_credentials:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_credentials:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2153,6 +2831,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailboxes:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Mailbox folders.",
@@ -2193,6 +2879,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:write"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -2259,6 +2953,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2312,6 +3014,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Mailbox folder deleted."
@@ -2355,6 +3065,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailboxes:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Mailbox identities.",
@@ -2402,6 +3120,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailbox_rules:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_rules:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Mailbox rules and folder options.",
@@ -2442,6 +3168,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailbox_rules:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_rules:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2499,6 +3233,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailbox_forwarding:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_forwarding:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Mailbox forwarding destinations.",
@@ -2539,6 +3281,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailbox_forwarding:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_forwarding:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2606,6 +3356,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailbox_forwarding:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_forwarding:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Forwarding destination removed."
@@ -2646,6 +3404,14 @@
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:write"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -2706,6 +3472,14 @@
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -2775,6 +3549,14 @@
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2879,6 +3661,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "mailbox_id",
@@ -2946,6 +3736,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -3012,6 +3810,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "updated_after",
@@ -3087,6 +3893,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Message object.",
@@ -3125,6 +3939,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -3187,6 +4009,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "include_held",
@@ -3250,9 +4080,18 @@
       "get": {
         "operationId": "getScheduledMessage",
         "summary": "Get a scheduled message",
+        "description": "Get a scheduled message body. When API-agent security hold applies to its stored draft, credentials without messages:review receive 403 instead of the body.",
         "tags": ["Messages"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Scheduled message detail.",
@@ -3263,6 +4102,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -3284,6 +4126,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -3334,6 +4184,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Scheduled message cancelled."
@@ -3373,6 +4231,14 @@
         "tags": ["Threads"],
         "x-rate-limit-tier": "read",
         "x-scope": "threads:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["threads:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "mailbox_id",
@@ -3438,6 +4304,14 @@
         "tags": ["Threads"],
         "x-rate-limit-tier": "read",
         "x-scope": "threads:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["threads:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "mailbox_id",
@@ -3503,6 +4377,14 @@
         "tags": ["Threads"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -3558,6 +4440,14 @@
         "tags": ["Members"],
         "x-rate-limit-tier": "read",
         "x-scope": "members:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["members:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
@@ -3614,6 +4504,14 @@
         "tags": ["Members"],
         "x-rate-limit-tier": "read",
         "x-scope": "members:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["members:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Member object.",
@@ -3650,6 +4548,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "write",
         "x-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -3704,6 +4610,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "read",
         "x-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
@@ -3759,6 +4673,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "read",
         "x-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Webhook object.",
@@ -3789,6 +4711,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "write",
         "x-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -3832,6 +4762,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "write",
         "x-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Webhook deleted."
@@ -3863,6 +4801,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "write",
         "x-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:write"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "New secret generated.",
@@ -3901,6 +4847,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "write",
         "x-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:write"]
+          }
+        ],
         "responses": {
           "202": {
             "description": "Test event queued.",
@@ -3947,6 +4901,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "read",
         "x-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "status",
@@ -4032,6 +4994,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "read",
         "x-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Webhook delivery detail.",
@@ -4079,6 +5049,14 @@
         "tags": ["Webhooks"],
         "x-rate-limit-tier": "write",
         "x-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:write"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -4114,19 +5092,99 @@
       }
     },
     "/suppressions": {
+      "post": {
+        "operationId": "createSuppression",
+        "summary": "Suppress an email address",
+        "description": "Adds a `manual` suppression so nothing is sent to the address. The address is trimmed and lowercased. When an active entry already covers the address, it is returned with status 200: its scope widens to `all` if you ask for `all`, a soft-bounce pause becomes a permanent manual entry, and a permanent entry is never shortened. When there is no active entry, or the previous one has expired, a new entry is stored and returned with status 201. Calling it twice with the same body has the same effect as calling it once.",
+        "tags": ["Suppressions"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "suppressions:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["suppressions:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSuppressionRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An active entry already covered the address. Returns it, widened if requested.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Suppression"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Suppression created, or an expired entry replaced.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Suppression"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
       "get": {
         "operationId": "listSuppressions",
         "summary": "List suppressed email addresses",
-        "description": "Returns a paginated list of email addresses that have been suppressed for your organization. Addresses are suppressed automatically on hard bounces and complaints, or manually via the dashboard.",
+        "description": "Returns a paginated list of email addresses that have been suppressed for your organization. Addresses are suppressed automatically on hard bounces, complaints and repeated soft bounces, or by importing a suppression list into an audience. A complaint about a newsletter has scope `marketing` and blocks newsletter sends only; every other entry has scope `all` and blocks every send. A soft-bounce entry expires 30 days after it is created, unless the address had already been paused once.",
         "tags": ["Suppressions"],
         "x-rate-limit-tier": "read",
         "x-scope": "suppressions:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["suppressions:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
           },
           {
             "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "description": "Return only entries with this scope.",
+            "schema": {
+              "type": "string",
+              "enum": ["all", "marketing"]
+            }
           },
           {
             "$ref": "#/components/parameters/ShipmailOrganization"
@@ -4171,6 +5229,14 @@
         "tags": ["Suppressions"],
         "x-rate-limit-tier": "write",
         "x-scope": "suppressions:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["suppressions:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "email",
@@ -4210,6 +5276,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -4275,6 +5349,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Reply scan status.",
@@ -4327,6 +5409,14 @@
         "tags": ["Messages"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
@@ -4383,6 +5473,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "folder_id",
@@ -4544,6 +5642,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Exact full inbox message.",
@@ -4584,6 +5690,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -4634,6 +5748,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Inbox message permanently deleted."
@@ -4646,6 +5768,79 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
+    "/mailboxes/{id}/inbox/messages/{message_id}/security-review": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        },
+        {
+          "$ref": "#/components/parameters/InboxMessageId"
+        }
+      ],
+      "post": {
+        "operationId": "releaseMailboxInboxMessageSecurity",
+        "summary": "Release a reviewed inbox message snapshot",
+        "description": "Release the exact current message snapshot identified by expected_content_sha256. Requires messages:review and messages:read, the caller's current mailbox grant, and a message in the credential's organization and live/test mode. Use the separate securityReview preset (mailboxes:read, messages:read, threads:read, messages:review); fullAgent, draftOnly, and readOnly do not include messages:review. Repeating the same release with the same actor and reason is idempotent. A stale content hash or an incompatible repeat returns 409. Release does not waive assistant safety checks.",
+        "tags": ["Mailboxes"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "messages:review",
+        "x-additional-scopes": ["messages:read"],
+        "x-scope-preset": "securityReview",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:review", "messages:read"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseInboxMessageSecurityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The exact message snapshot is released for lower-privilege API credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxMessageSecurityReviewResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
@@ -4677,6 +5872,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -4737,6 +5940,14 @@
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -4800,6 +6011,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "attention_state",
@@ -4893,10 +6112,18 @@
       "get": {
         "operationId": "getMailboxInboxThread",
         "summary": "Get mailbox inbox thread",
-        "description": "Fetch full inbound JMAP thread messages for a mailbox, including body parts and attachment metadata.",
+        "description": "Fetch full inbound JMAP thread messages for a mailbox, including body parts and attachment metadata. The response carries the conversation's current version: pass it as expected_version when creating a reply draft.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Mailbox inbox thread.",
@@ -4937,6 +6164,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "messages:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -4993,10 +6228,18 @@
       "post": {
         "operationId": "createMailboxInboxDraft",
         "summary": "Save a new message draft",
-        "description": "Save a new message (not a reply) to the mailbox's Drafts folder for a person to review, edit, and send from Shipmail or any mail client. Nothing is sent, and there is no endpoint to send it. The returned id is an inbox message ID, so the draft can be read or deleted with the inbox message endpoints. Recipients must be allowed by the API key's recipient limits.",
+        "description": "Save a new message (not a reply) to the mailbox's Drafts folder for a person to review, edit, and send from Shipmail or any mail client. Nothing is sent, and there is no endpoint to send it. The returned id is an inbox message ID, so the draft can be read or deleted with the inbox message endpoints. Recipients must be allowed by the API key's recipient limits. The response lists in removed_formatting any formatting the HTML sanitiser dropped. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it.",
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "write",
         "x-scope": "drafts:compose",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["drafts:compose"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -5050,13 +6293,69 @@
           "$ref": "#/components/parameters/InboxThreadId"
         }
       ],
+      "get": {
+        "operationId": "listMailboxInboxReplyDrafts",
+        "summary": "List inbox reply drafts",
+        "description": "List the conversation's reply drafts in every status, newest first, at most 100. Returns 404 when the thread has no conversation. When API-agent security hold is enabled, returns 403 without any draft data if a stored draft snapshot is flagged or not scanned and the caller lacks messages:review and no exact release matches that snapshot.",
+        "tags": ["Mailboxes", "Messages"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "drafts:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["drafts:write"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reply drafts of the conversation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxReplyDraftList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      },
       "post": {
         "operationId": "createMailboxInboxReplyDraft",
         "summary": "Create a recipient-safe inbox reply draft",
-        "description": "Shipmail derives To/Cc from the latest inbound message and binds the draft to expected_version.",
+        "description": "Shipmail derives To/Cc from the latest inbound message and binds the draft to expected_version, the version returned by GET /mailboxes/{id}/inbox/threads/{thread_id}. The response lists in removed_formatting any formatting the HTML sanitiser dropped. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it.",
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "write",
         "x-scope": "drafts:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["drafts:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -5073,10 +6372,182 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "$ref": "#/components/schemas/InboxReplyDraftWrite"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
+    "/mailboxes/{id}/inbox/threads/{thread_id}/drafts/{draft_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        },
+        {
+          "$ref": "#/components/parameters/InboxThreadId"
+        },
+        {
+          "name": "draft_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^drf_"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getMailboxInboxReplyDraft",
+        "summary": "Get an inbox reply draft",
+        "description": "Read one reply draft with its status and stored content. Returns 404 when the draft is not in that conversation. subject, html and text are null, and to and cc are empty, once the stored draft no longer exists (after a send or cleanup). When API-agent security hold is enabled, returns 403 if the stored draft snapshot is flagged or not scanned and the caller lacks messages:review and no exact release matches that snapshot. A content change after release requires a new review.",
+        "tags": ["Mailboxes", "Messages"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "drafts:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["drafts:write"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reply draft.",
+            "content": {
+              "application/json": {
+                "schema": {
                   "$ref": "#/components/schemas/InboxReplyDraft"
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateMailboxInboxReplyDraft",
+        "summary": "Update an inbox reply draft",
+        "description": "Replace the body of a reply draft in status draft. The new body replaces the old one: html alone derives the text part; text alone makes a plain-text draft. Recipients, subject and reply headers stay derived from the source message, and the draft ID stays the same. Returns 409 conflict when the status is not draft, when the thread changed since expected_version (the draft becomes invalidated; create a new draft from a fresh thread read), when the draft changed concurrently, or when the draft belongs to the Shipmail Assistant. Returns 422 when html keeps no text or image and no text is given. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it.",
+        "tags": ["Mailboxes", "Messages"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "drafts:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["drafts:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInboxReplyDraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated reply draft.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxReplyDraftWrite"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteMailboxInboxReplyDraft",
+        "summary": "Delete an inbox reply draft",
+        "description": "Delete a reply draft in status draft, invalidated or failed. Returns 409 for a draft that is sending or sent, or that belongs to the Shipmail Assistant. The stored draft is removed from the Drafts folder first; if that fails the request fails with 500 and can be retried.",
+        "tags": ["Mailboxes", "Messages"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "drafts:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["drafts:write"]
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Reply draft deleted."
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationError"
@@ -5125,10 +6596,28 @@
       "post": {
         "operationId": "sendMailboxInboxReplyDraft",
         "summary": "Send an approved inbox reply draft",
-        "description": "Returns 409 without sending when the thread version changed after draft creation.",
+        "description": "Optionally pass expected_content_sha256 from the final draft read to bind approval to its exact canonical subject, text and HTML. Returns 409 without sending when the thread version changed after draft creation, when the draft was updated concurrently, or when its content changed. Omitting the hash preserves legacy sends.",
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendInboxReplyDraftRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Draft sent.",
@@ -5182,6 +6671,14 @@
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:send"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -5241,11 +6738,30 @@
       "get": {
         "operationId": "downloadMailboxInboxAttachment",
         "summary": "Download mailbox inbox attachment",
-        "description": "Download a raw attachment blob from a mailbox inbox message. Blob IDs are query parameters because they can contain slash characters.",
+        "description": "Download a raw attachment blob from a mailbox inbox message. Blob IDs are query parameters because they can contain slash characters. When API-agent security hold is enabled, message_id is required so Shipmail can deny an unreleased flagged or unscannable message to credentials without messages:review.",
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
         "parameters": [
+          {
+            "name": "message_id",
+            "in": "query",
+            "required": false,
+            "description": "JMAP inbox message ID that owns the attachment. Required while API-agent security hold is enabled; omit only for a mailbox without that hold.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
           {
             "name": "blob_id",
             "in": "query",
@@ -5313,6 +6829,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5369,6 +6893,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailboxes:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5417,6 +6949,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5472,6 +7012,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5516,6 +7064,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5576,6 +7132,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "read",
         "x-scope": "mailboxes:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5633,6 +7197,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5687,6 +7259,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5744,6 +7324,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5811,6 +7399,14 @@
         "tags": ["Mailboxes"],
         "x-rate-limit-tier": "write",
         "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -5868,6 +7464,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -5908,6 +7512,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "read",
         "x-scope": "audiences:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
@@ -5963,6 +7575,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "read",
         "x-scope": "audiences:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Audience object.",
@@ -5993,6 +7613,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -6039,6 +7667,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Audience deleted. Subscribers cascade; newsletters keep their history."
@@ -6070,6 +7706,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "read",
         "x-scope": "audiences:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Audience feed settings.",
@@ -6104,6 +7748,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -6161,6 +7813,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Audience feed settings with the replacement URL, or null URL when disabled.",
@@ -6205,6 +7865,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Audience feed settings with the replacement URL, or null URL when disabled.",
@@ -6246,6 +7914,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -6266,6 +7942,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -6289,6 +7968,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "read",
         "x-scope": "audiences:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "status",
@@ -6303,7 +7990,8 @@
                 "bounced",
                 "complained",
                 "suppressed",
-                "transactional_only"
+                "transactional_only",
+                "dormant"
               ]
             }
           },
@@ -6374,6 +8062,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -6403,6 +8099,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -6443,6 +8142,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "read",
         "x-scope": "audiences:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Subscriber object.",
@@ -6489,6 +8196,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "read",
         "x-scope": "audiences:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:read"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Subscriber object.",
@@ -6520,6 +8235,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -6563,6 +8286,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "responses": {
           "204": {
             "description": "Subscriber deleted. Prefer unsubscribe to preserve opt-out history."
@@ -6603,6 +8334,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Updated subscriber (status unsubscribed).",
@@ -6650,6 +8389,14 @@
         "tags": ["Audiences"],
         "x-rate-limit-tier": "write",
         "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -6670,6 +8417,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -6696,6 +8446,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "write",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -6736,6 +8494,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "read",
         "x-scope": "newsletters:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
@@ -6787,6 +8553,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "read",
         "x-scope": "newsletters:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
@@ -6838,6 +8612,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "read",
         "x-scope": "newsletters:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read"]
+          }
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/Cursor"
@@ -6888,6 +8670,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "read",
         "x-scope": "newsletters:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -6930,6 +8720,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "write",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -6986,6 +8784,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "write",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -7029,6 +8835,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "send",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -7082,6 +8896,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "send",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -7135,6 +8957,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "write",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -7178,6 +9008,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "write",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -7214,6 +9052,68 @@
         }
       }
     },
+    "/newsletters/{id}/send-more": {
+      "post": {
+        "operationId": "sendNewsletterToMore",
+        "summary": "Send a newsletter to more subscribers",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "send",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The newsletter, sending again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Newsletter"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "description": "Sends a newsletter scheduled with a limit to the next most engaged subscribers it held, or to all of them. Nobody gets the newsletter twice. Subscribers the organization has never emailed still go in a first-send slice. Fails while a subject test has not picked a winner.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendNewsletterToMoreRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/newsletter-assets": {
       "get": {
         "operationId": "listNewsletterAssets",
@@ -7221,6 +9121,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "read",
         "x-scope": "newsletters:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "kind",
@@ -7301,6 +9209,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "write",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "parameters": [
           {
             "name": "filename",
@@ -7436,6 +9352,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "write",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -7527,6 +9451,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "read",
         "x-scope": "newsletters:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read"]
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -7570,6 +9502,14 @@
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "write",
         "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -7646,6 +9586,288 @@
           }
         ]
       }
+    },
+    "/audiences/{id}/welcome-sequence": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "get": {
+        "operationId": "getWelcomeSequence",
+        "summary": "Get the welcome sequence",
+        "description": "Fetch an audience's welcome sequence: whether it runs, its emails in order with their waits and send counts, and how many readers are in it.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "newsletters:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The welcome sequence. An audience without one returns enabled false and no steps.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WelcomeSequence"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateWelcomeSequence",
+        "summary": "Turn the welcome sequence on or off",
+        "description": "Turn the sequence on or off. While it is on, readers who subscribe through a signup form or the API (or confirm, with double opt-in) get its emails through the newsletter send path: the same footer, unsubscribe headers, suppressions and monthly limit as newsletters. At most 100 welcome emails per audience go out in any ten minutes; the rest wait, and the owner gets an email.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWelcomeSequenceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated welcome sequence.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WelcomeSequence"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/audiences/{id}/welcome-sequence/steps": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "post": {
+        "operationId": "createWelcomeStep",
+        "summary": "Add a welcome email",
+        "description": "Add an email to the end of the audience's welcome sequence. wait_minutes counts from the previous email, or from the subscribe for the first email.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWelcomeStepRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new welcome email.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WelcomeStep"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/audiences/{id}/welcome-sequence/steps/{stepId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        },
+        {
+          "name": "stepId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Welcome step ID (nwswstp_...)."
+        }
+      ],
+      "patch": {
+        "operationId": "updateWelcomeStep",
+        "summary": "Update a welcome email",
+        "description": "Change a welcome email's content, sender, tracking or wait. Readers already past it are not affected.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWelcomeStepRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated welcome email.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WelcomeStep"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWelcomeStep",
+        "summary": "Remove a welcome email",
+        "description": "Remove an email from the sequence. Readers waiting for it go on to the next one. A running sequence keeps at least one email.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The removed welcome email.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedWelcomeStep"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7653,11 +9875,11 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "API key authentication. Keys are prefixed with sm_live_ or sm_test_. An OAuth access token issued for the https://shipmail.to/api/v1 resource is also accepted as the Bearer token; see oauth2."
+        "description": "API key authentication. Keys are prefixed with sm_live_ or sm_test_ and carry their own scopes. An OAuth access token issued for the https://shipmail.to/api/v1 resource is also accepted as the Bearer token. It is limited to the API scopes it names; a token that names none can do everything its consent allows. See oauth2."
       },
       "oauth2": {
         "type": "oauth2",
-        "description": "OAuth 2.1 for agents and command-line tools. Register a public client with dynamic client registration (https://shipmail.to/api/auth/oauth2/register), then use the authorization code flow with PKCE (S256) and resource=https://shipmail.to/api/v1 on the authorize and token requests. Send the access token as Authorization: Bearer <token>. Permissions come from the organizations and access approved on the consent page, not from OAuth scopes. Tokens issued for https://shipmail.to/api/mcp are rejected. Protected resource metadata: https://shipmail.to/.well-known/oauth-protected-resource/api/v1.",
+        "description": "OAuth 2.1 for agents and command-line tools. Register a public client with dynamic client registration (https://shipmail.to/api/auth/oauth2/register), then use the authorization code flow with PKCE (S256) and resource=https://shipmail.to/api/v1 on the authorize and token requests. Send the access token as Authorization: Bearer <token>. OAuth scopes use the API key scope names. A token that names API scopes can use only those, and only within the organizations and access approved on the consent page. A token that names no API scope, only openid, profile, email or offline_access, can do everything the consent page approved. A request outside the token's scopes gets 403 with WWW-Authenticate: Bearer error=\"insufficient_scope\" and the scope it needs. Tokens issued for https://shipmail.to/api/mcp are rejected. Protected resource metadata: https://shipmail.to/.well-known/oauth-protected-resource/api/v1.",
         "flows": {
           "authorizationCode": {
             "authorizationUrl": "https://shipmail.to/api/auth/oauth2/authorize",
@@ -7667,7 +9889,40 @@
               "openid": "Sign in with your Shipmail account.",
               "profile": "Read your name.",
               "email": "Read your account email address.",
-              "offline_access": "Receive a refresh token."
+              "offline_access": "Receive a refresh token.",
+              "audiences:read": "List and retrieve newsletter audiences and their subscribers.",
+              "audiences:write": "Create audiences and add, update, or remove their subscribers.",
+              "automations:read": "List and retrieve assistant automations.",
+              "automations:write": "Create, update, and manually run assistant automations.",
+              "booking_pages:read": "List and retrieve booking pages.",
+              "booking_pages:write": "Create, update, and delete booking pages.",
+              "calendar:read": "List and retrieve calendar events and open availability.",
+              "calendar:write": "Create, update, and delete calendar events.",
+              "domains:read": "List, retrieve, and verify domains.",
+              "domains:write": "Create, update, and delete domains.",
+              "mailboxes:read": "List and retrieve mailboxes.",
+              "mailboxes:export": "Create and download mailbox content exports.",
+              "mailboxes:write": "Create, update, suspend, resume, and delete mailboxes. Does not include setting mailbox passwords.",
+              "mailbox_credentials:read": "List revocable app passwords for allowed mailboxes.",
+              "mailbox_credentials:write": "Set primary mailbox passwords and create and revoke app passwords for allowed mailboxes.",
+              "mailbox_forwarding:read": "List forwarding destinations for allowed mailboxes.",
+              "mailbox_forwarding:write": "Create and remove forwarding destinations for allowed mailboxes.",
+              "mailbox_rules:read": "List deterministic server-side rules for allowed mailboxes.",
+              "mailbox_rules:write": "Create, replace, and remove deterministic rules for allowed mailboxes.",
+              "members:read": "List and retrieve organization members.",
+              "messages:read": "List and retrieve messages.",
+              "messages:review": "Inspect and release messages held by API-agent security review.",
+              "messages:write": "Update, move, delete, and inject sandbox messages.",
+              "drafts:write": "Create agent-safe reply drafts with server-derived recipients.",
+              "drafts:compose": "Save new-message drafts to a mailbox's Drafts folder for review. Cannot send.",
+              "messages:send": "Send messages, replies, and approved reply drafts.",
+              "newsletters:read": "List and retrieve newsletter drafts and campaigns.",
+              "newsletters:write": "Create, update, test, schedule, cancel, and resume newsletters.",
+              "threads:read": "List threads and retrieve thread messages.",
+              "webhooks:read": "List webhooks, retrieve webhooks, and list deliveries.",
+              "webhooks:write": "Create, update, delete, test, and rotate webhooks.",
+              "suppressions:read": "List suppressed recipient addresses.",
+              "suppressions:write": "Remove addresses from the suppression list."
             }
           }
         }
@@ -8882,6 +11137,131 @@
           }
         }
       },
+      "BookingLink": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "mailbox",
+          "slug",
+          "url",
+          "name",
+          "description",
+          "duration_minutes",
+          "timezone",
+          "offered_ranges",
+          "source_page_id",
+          "buffer_minutes",
+          "minimum_notice_minutes",
+          "conferencing_provider",
+          "max_bookings",
+          "bookings_count",
+          "expires_at",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "enum": ["booking_link"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "mailbox": {
+            "type": "string",
+            "format": "email",
+            "description": "The mailbox whose calendar the link books into."
+          },
+          "slug": {
+            "type": "string",
+            "description": "Random public slug."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Public booking URL to share."
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "duration_minutes": {
+            "type": "integer"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA time zone shown to visitors."
+          },
+          "offered_ranges": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/BookingLinkRange"
+            },
+            "description": "The offered times. Null when the link offers the weekly hours of its source page."
+          },
+          "source_page_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The booking page the link took its weekly hours and settings from."
+          },
+          "buffer_minutes": {
+            "type": "integer"
+          },
+          "minimum_notice_minutes": {
+            "type": "integer"
+          },
+          "conferencing_provider": {
+            "type": "string",
+            "enum": ["zoom", "google_meet"],
+            "nullable": true
+          },
+          "max_bookings": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The link stops taking bookings after this many. Null means unlimited."
+          },
+          "bookings_count": {
+            "type": "integer",
+            "description": "Bookings taken so far."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "After this time the link takes no bookings."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["open", "booked", "expired", "revoked"],
+            "description": "open takes bookings; booked has used all of max_bookings; expired is past expires_at; revoked was revoked."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookingLinkRange": {
+        "type": "object",
+        "required": ["start", "end"],
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Must be after start."
+          }
+        }
+      },
       "CreateBookingPageRequest": {
         "type": "object",
         "required": [
@@ -8902,7 +11282,7 @@
           "mailbox": {
             "type": "string",
             "format": "email",
-            "description": "The mailbox whose availability the page exposes."
+            "description": "The mailbox whose availability the page exposes. It must be on your own domain: a temporary try.shipmail.to inbox is rejected with a validation error."
           },
           "slug": {
             "type": "string",
@@ -8966,6 +11346,83 @@
           "active": {
             "type": "boolean",
             "default": true
+          }
+        }
+      },
+      "CreateBookingLinkRequest": {
+        "type": "object",
+        "required": ["name", "mailbox", "duration_minutes", "timezone"],
+        "description": "Send offered_ranges, source_page_id, or both. With both, the link offers the ranges and copies nothing else from the page.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true
+          },
+          "mailbox": {
+            "type": "string",
+            "format": "email",
+            "description": "Full address of a mailbox on your own domain. Temporary and suspended mailboxes are refused."
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 480
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA time zone shown to visitors."
+          },
+          "offered_ranges": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/BookingLinkRange"
+            },
+            "description": "Time ranges visitors can book inside, as ISO 8601 instants. Each must start in the future, be at least duration_minutes long, and end within 90 days."
+          },
+          "source_page_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "A booking page whose weekly hours the link offers when it has no offered_ranges. The API key must reach that page's mailbox."
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 240,
+            "default": 0
+          },
+          "minimum_notice_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 43200,
+            "default": 0
+          },
+          "conferencing_provider": {
+            "type": "string",
+            "enum": ["zoom", "google_meet"],
+            "nullable": true,
+            "description": "Opt-in provider used to create a meeting for each booking. Null or omission means no meeting link. The provider must already be connected to the link's mailbox, or the request is rejected."
+          },
+          "max_bookings": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "nullable": true,
+            "default": 1,
+            "description": "The link stops taking bookings after this many. Null means unlimited."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "A future time after which the link takes no bookings."
           }
         }
       },
@@ -9040,9 +11497,101 @@
           }
         }
       },
+      "UpdateBookingLinkRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "description": "Fields left out keep their value.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true
+          },
+          "mailbox": {
+            "type": "string",
+            "format": "email",
+            "description": "Move the link to another mailbox on your own domain."
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 480
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA time zone shown to visitors."
+          },
+          "offered_ranges": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/BookingLinkRange"
+            },
+            "description": "Time ranges visitors can book inside, as ISO 8601 instants. Each must start in the future, be at least duration_minutes long, and end within 90 days. Null drops the ranges, so the link offers the weekly hours of its source page.",
+            "nullable": true
+          },
+          "source_page_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "A booking page whose weekly hours the link offers when it has no offered_ranges. The API key must reach that page's mailbox."
+          },
+          "buffer_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 240
+          },
+          "minimum_notice_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 43200
+          },
+          "conferencing_provider": {
+            "type": "string",
+            "enum": ["zoom", "google_meet"],
+            "nullable": true,
+            "description": "Opt-in provider used to create a meeting for each booking. Null or omission means no meeting link. The provider must already be connected to the link's mailbox, or the request is rejected."
+          },
+          "max_bookings": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "nullable": true,
+            "description": "The link stops taking bookings after this many. Null means unlimited."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "A future time after which the link takes no bookings."
+          }
+        }
+      },
+      "CreateSuppressionRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "The address to suppress. Trimmed and lowercased before it is stored."
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["all", "marketing"],
+            "default": "all",
+            "description": "`all` blocks every send. `marketing` blocks newsletter sends only."
+          }
+        }
+      },
       "Suppression": {
         "type": "object",
-        "required": ["object", "email_address", "reason", "created_at"],
+        "required": ["object", "email_address", "reason", "scope", "expires_at", "created_at"],
         "properties": {
           "object": {
             "type": "string",
@@ -9055,8 +11604,18 @@
           },
           "reason": {
             "type": "string",
-            "enum": ["hard_bounce", "complaint", "manual"],
-            "description": "Why the address was suppressed."
+            "enum": ["hard_bounce", "complaint", "manual", "soft_bounce"],
+            "description": "Why the address was suppressed. `soft_bounce`: at least 3 temporary bounces (mailbox full or a general temporary failure) in 14 days."
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["all", "marketing"],
+            "description": "Which sends the entry blocks. `all` blocks every send. `marketing` blocks newsletter sends only and is set by a complaint about a newsletter."
+          },
+          "expires_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "When the entry stops blocking sends, or null when it is permanent. A soft-bounce entry lasts 30 days; a second one for the same address is permanent."
           },
           "created_at": {
             "type": "string",
@@ -9287,6 +11846,215 @@
           }
         }
       },
+      "DomainHealthProviderDelivery": {
+        "type": "object",
+        "required": [
+          "provider",
+          "recipients",
+          "delivered",
+          "bounced",
+          "deferred",
+          "complained",
+          "delivery_rate"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["google", "microsoft", "yahoo", "apple", "other"],
+            "description": "Recipient mail provider, read from the recipient address: google is Gmail, microsoft is Outlook and Hotmail, yahoo is Yahoo and AOL, apple is iCloud. Business domains hosted by Google Workspace or Microsoft 365 count as other."
+          },
+          "recipients": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Recipients at this provider."
+          },
+          "delivered": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Recipients the receiving server accepted."
+          },
+          "bounced": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Recipients that bounced."
+          },
+          "deferred": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Recipients the receiving server temporarily refused."
+          },
+          "complained": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Recipients who marked the message as spam."
+          },
+          "delivery_rate": {
+            "type": ["number", "null"],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Percentage of recipients with a final outcome that were delivered, from 0 to 100, rounded to one decimal. Delivered and complained count as delivered; bounced, deferred and failed do not. Null when no recipient has a final outcome yet."
+          }
+        }
+      },
+      "DomainHealth": {
+        "type": "object",
+        "required": [
+          "object",
+          "domain_id",
+          "domain",
+          "generated_at",
+          "dns",
+          "blocklist",
+          "delivery"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "domain_health"
+          },
+          "domain_id": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Domain name."
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dns": {
+            "type": "object",
+            "description": "Stored results of the DNS check that runs every 6 hours.",
+            "required": ["mx", "spf", "dkim", "dmarc", "last_checked_at"],
+            "properties": {
+              "mx": {
+                "type": "boolean"
+              },
+              "spf": {
+                "type": "boolean"
+              },
+              "dkim": {
+                "type": "boolean"
+              },
+              "dmarc": {
+                "type": "boolean"
+              },
+              "last_checked_at": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "When the stored DNS check last ran. Null if it has not run yet."
+              }
+            }
+          },
+          "blocklist": {
+            "type": "object",
+            "description": "Stored Spamhaus DBL state from the same check that runs every 6 hours.",
+            "required": ["list", "listed", "listed_since"],
+            "properties": {
+              "list": {
+                "type": "string",
+                "const": "spamhaus_dbl"
+              },
+              "listed": {
+                "type": "boolean"
+              },
+              "listed_since": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "When the check first found the domain listed. Null when it is not listed."
+              }
+            }
+          },
+          "delivery": {
+            "type": "object",
+            "description": "Recipients of messages sent from the domain's mailboxes that the API key can see, in the last 30 days.",
+            "required": [
+              "since",
+              "until",
+              "recipients",
+              "delivered",
+              "bounced",
+              "deferred",
+              "complained",
+              "failed",
+              "suppressed",
+              "queued",
+              "sent",
+              "delivery_rate",
+              "providers"
+            ],
+            "properties": {
+              "since": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "until": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "recipients": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "All recipients in the period."
+              },
+              "delivered": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Recipients the receiving server accepted."
+              },
+              "bounced": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Recipients that bounced."
+              },
+              "deferred": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Recipients the receiving server temporarily refused."
+              },
+              "complained": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Recipients who marked the message as spam."
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Recipients Shipmail could not send to."
+              },
+              "suppressed": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Recipients skipped because they are on a suppression list."
+              },
+              "queued": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Recipients still waiting to be sent."
+              },
+              "sent": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Recipients sent with no delivery result yet."
+              },
+              "delivery_rate": {
+                "type": ["number", "null"],
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Percentage of recipients with a final outcome that were delivered, from 0 to 100, rounded to one decimal. Delivered and complained count as delivered; bounced, deferred and failed do not. Null when no recipient has a final outcome yet."
+              },
+              "providers": {
+                "type": "array",
+                "description": "One entry per recipient provider with at least one recipient in the period.",
+                "items": {
+                  "$ref": "#/components/schemas/DomainHealthProviderDelivery"
+                }
+              }
+            }
+          }
+        }
+      },
       "DomainSearchResult": {
         "type": "object",
         "required": ["domain_name", "available", "purchase_price", "renewal_price", "currency"],
@@ -9371,6 +12139,7 @@
           "domain_id",
           "address",
           "display_name",
+          "agent_security_hold",
           "suspended_at",
           "suspension_reasons",
           "auto_reply",
@@ -9394,6 +12163,10 @@
           },
           "display_name": {
             "type": ["string", "null"]
+          },
+          "agent_security_hold": {
+            "type": "boolean",
+            "description": "Whether flagged or unscannable message content is held from lower-privilege API credentials. Bodies, previews, reply text, and attachment names are redacted; attachment reads and mailbox exports are denied. Message and thread metadata endpoints, the scheduled-message list, and scheduled-message PATCH responses replace all stored attachment filenames with attachment while the hold is on for non-review credentials; use inbox message reads for names from released snapshots. Subjects, address metadata, and list/search membership remain visible. Credentials with messages:review (including wildcard credentials), mail apps, and signed-in member sessions bypass this API-agent boundary, so it is not a universal mailbox quarantine."
           },
           "suspended_at": {
             "type": ["string", "null"],
@@ -10641,10 +13414,9 @@
           },
           "contact_addresses": {
             "type": "array",
-            "description": "Normalized unique sender address for inbound messages or To/Cc addresses for outbound messages. BCC addresses are never included. Contains personal data.",
+            "description": "Normalized unique sender address for inbound messages or To/Cc addresses for outbound messages. BCC addresses are never included. Contains personal data. Addresses are returned as the mail server stored them, so they may not pass a strict email format check.",
             "items": {
-              "type": "string",
-              "format": "email"
+              "type": "string"
             }
           },
           "recipient_count": {
@@ -10897,7 +13669,7 @@
           },
           "authenticated_senders_only": {
             "type": "boolean",
-            "description": "True when `message.received` is delivered only for messages whose sender passed DMARC (`sender_authenticated: true`)."
+            "description": "True when `message.received` is delivered only for messages whose sender is authenticated (`sender_authenticated: true`): the sender passed DMARC, or Shipmail's own record shows a Shipmail mailbox sent the message."
           },
           "allowed_senders": {
             "type": ["array", "null"],
@@ -10982,7 +13754,17 @@
             "properties": {
               "payload": {
                 "type": "object",
-                "description": "The exact versioned webhook envelope sent to the endpoint."
+                "description": "The exact versioned webhook envelope sent to the endpoint. A message.received payload may contain data.security with the original scan verdict. Legacy stored deliveries may omit it; replay preserves the stored verdict, so fetch the current message to obtain its current review state.",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "security": {
+                        "$ref": "#/components/schemas/MessageSecurityMetadata"
+                      }
+                    }
+                  }
+                }
               },
               "next_attempt_at": {
                 "type": ["string", "null"],
@@ -11249,7 +14031,7 @@
           "snapshot_at": {
             "type": "string",
             "format": "date-time",
-            "description": "Exclusive upper bound retained across every page. Use it as updated_after for the next incremental sync."
+            "description": "Exclusive upper bound retained across every page. Without updated_before it is a few seconds behind server time and behind the start of any database transaction still open, so no write still committing can land behind it; an updated_after later than that snapshot returns an empty page with snapshot_at equal to it. Use it as updated_after for the next incremental sync."
           }
         }
       },
@@ -11318,11 +14100,16 @@
       },
       "UpdateMailboxRequest": {
         "type": "object",
+        "minProperties": 1,
         "properties": {
           "display_name": {
             "type": ["string", "null"],
             "description": "Display name, or null to clear.",
             "maxLength": 200
+          },
+          "agent_security_hold": {
+            "type": "boolean",
+            "description": "Enable or disable the API-agent security hold. Changing this field in either direction requires messages:review in addition to mailboxes:write, and is audited with the actor plus old and new values."
           }
         }
       },
@@ -11998,7 +14785,7 @@
           "authenticated_senders_only": {
             "type": "boolean",
             "default": false,
-            "description": "Deliver `message.received` only when the sender passed DMARC (`sender_authenticated: true`). Other events are unaffected. Use it for agents that act on mail and must not trust a forged From address."
+            "description": "Deliver `message.received` only when the sender is authenticated (`sender_authenticated: true`): the sender passed DMARC, or Shipmail's own record shows a Shipmail mailbox sent the message. Other events are unaffected. Use it for agents that act on mail and must not trust a forged From address."
           },
           "allowed_senders": {
             "type": ["array", "null"],
@@ -12073,7 +14860,7 @@
           },
           "authenticated_senders_only": {
             "type": "boolean",
-            "description": "Deliver `message.received` only when the sender passed DMARC (`sender_authenticated: true`). Other events are unaffected. Use it for agents that act on mail and must not trust a forged From address. `false` delivers every `message.received` again."
+            "description": "Deliver `message.received` only when the sender is authenticated (`sender_authenticated: true`): the sender passed DMARC, or Shipmail's own record shows a Shipmail mailbox sent the message. Other events are unaffected. Use it for agents that act on mail and must not trust a forged From address. `false` delivers every `message.received` again."
           },
           "allowed_senders": {
             "type": ["array", "null"],
@@ -12156,8 +14943,141 @@
                 "type": "string",
                 "format": "uri",
                 "description": "Present with `reason`. A Shipmail page where the organization owner reviews and confirms. It carries identifiers only; prices are computed on the page."
+              },
+              "limit": {
+                "type": "object",
+                "description": "Present on a `quota_exceeded` error caused by a plan, trial or fixed limit. Storage values are bytes. A `fixed` limit is the same on every plan and has no `reason`.",
+                "required": ["resource", "used", "limit", "scope"],
+                "properties": {
+                  "resource": {
+                    "type": "string",
+                    "description": "The limited resource, such as `audience_subscribers`, `newsletter_sends`, `sends`, `mailboxes`, `aliases`, `team_members`, `newsletter_storage`, `api_keys` or `webhooks`. New values may be added."
+                  },
+                  "used": {
+                    "type": "number"
+                  },
+                  "limit": {
+                    "type": "number"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "enum": ["trial", "plan", "fixed"]
+                  }
+                }
               }
             }
+          }
+        }
+      },
+      "MessageSecurityRiskCode": {
+        "type": "string",
+        "description": "Deterministic risk category. Public metadata contains codes only, never matched attacker evidence, detector labels, sender strings, or a review reason.",
+        "enum": [
+          "instruction_override",
+          "prompt_or_secret_disclosure",
+          "role_override",
+          "covert_instruction",
+          "hidden_html_instruction",
+          "context_exfiltration",
+          "oversized_untrusted_content",
+          "unauthorized_action"
+        ]
+      },
+      "MessageSecurityReview": {
+        "type": "object",
+        "required": ["decision", "released_at", "released_by"],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "const": "released"
+          },
+          "released_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "released_by": {
+            "type": "string",
+            "enum": ["user", "api_key"]
+          }
+        }
+      },
+      "MessageSecurityMetadata": {
+        "type": "object",
+        "description": "Additive deterministic review metadata for the exact returned message snapshot. not_flagged is never a safety guarantee. Empty, unreadable, or truncated bodies are not_scanned; oversized detector input is flagged. Attachment names are scanned, but attachment contents are not. A content or scanner-rule change invalidates an earlier release.",
+        "required": ["status", "risk_codes", "scanner", "content_sha256", "review"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["flagged", "not_flagged", "not_scanned"]
+          },
+          "risk_codes": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/MessageSecurityRiskCode"
+            }
+          },
+          "scanner": {
+            "type": "string",
+            "const": "pattern_v1"
+          },
+          "content_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "Hash of the exact subject, body completeness/content, and attachment names reviewed by this scanner. Submit it unchanged when releasing the snapshot."
+          },
+          "review": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MessageSecurityReview"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ReleaseInboxMessageSecurityRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision", "reason", "expected_content_sha256"],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "const": "release"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "pattern": "\\S",
+            "writeOnly": true,
+            "description": "Private reviewer rationale. Stored for audit and never emitted in public message metadata or webhook events. Leading and trailing whitespace is removed."
+          },
+          "expected_content_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "Exact security.content_sha256 returned by the current full-message read. A stale value returns 409."
+          }
+        }
+      },
+      "InboxMessageSecurityReviewResult": {
+        "type": "object",
+        "required": ["object", "mailbox_id", "message_id", "security"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "inbox_message_security_review"
+          },
+          "mailbox_id": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": "string"
+          },
+          "security": {
+            "$ref": "#/components/schemas/MessageSecurityMetadata"
           }
         }
       },
@@ -12303,7 +15223,8 @@
           "preview",
           "has_attachment",
           "size",
-          "authentication_results"
+          "authentication_results",
+          "security"
         ],
         "properties": {
           "object": {
@@ -12380,6 +15301,9 @@
                 "type": "null"
               }
             ]
+          },
+          "security": {
+            "$ref": "#/components/schemas/MessageSecurityMetadata"
           }
         }
       },
@@ -12411,7 +15335,8 @@
           "html_body",
           "attachments",
           "authentication_results",
-          "reply_text"
+          "reply_text",
+          "security"
         ],
         "properties": {
           "object": {
@@ -12547,6 +15472,9 @@
             "type": ["string", "null"],
             "maxLength": 20000,
             "description": "What the sender newly wrote, computed from the text body (or the HTML body when there is no text part). Quoted history, the attribution line before it, signatures after `-- ` and mobile footers such as \"Sent from my iPhone\" are removed. Inline replies between quoted lines are kept. Null when nothing is left; read `body_values` then. At most 20,000 characters."
+          },
+          "security": {
+            "$ref": "#/components/schemas/MessageSecurityMetadata"
           }
         }
       },
@@ -13064,7 +15992,7 @@
           "html": {
             "type": "string",
             "maxLength": 512000,
-            "description": "HTML body. At least one of html or text is required."
+            "description": "HTML body. At least one of html or text is required. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it."
           }
         }
       },
@@ -13092,6 +16020,7 @@
           "cc",
           "bcc",
           "subject",
+          "removed_formatting",
           "created_at"
         ],
         "properties": {
@@ -13130,6 +16059,13 @@
           "subject": {
             "type": "string"
           },
+          "removed_formatting": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Formatting the HTML sanitiser dropped: \"table\" for any table part, \"h4\" to \"h6\", and other dropped elements such as \"script\". Their text stays as paragraphs. Empty when nothing was dropped."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -13151,11 +16087,13 @@
         "properties": {
           "text": {
             "type": "string",
-            "maxLength": 256000
+            "maxLength": 256000,
+            "description": "Plain text body. At least one of html or text is required."
           },
           "html": {
             "type": "string",
-            "maxLength": 512000
+            "maxLength": 512000,
+            "description": "HTML body. At least one of html or text is required. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it."
           },
           "reply_mode": {
             "type": "string",
@@ -13164,7 +16102,44 @@
           },
           "expected_version": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "description": "The conversation version from GET /mailboxes/{id}/inbox/threads/{thread_id} (version) or the inbox thread queue."
+          }
+        }
+      },
+      "UpdateInboxReplyDraftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": ["text"]
+          },
+          {
+            "required": ["html"]
+          }
+        ],
+        "description": "The new body replaces the old one. html alone derives the text part; text alone makes a plain-text draft. Recipients, subject and reply headers stay derived from the source message.",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 256000,
+            "description": "Plain text body. At least one of html or text is required."
+          },
+          "html": {
+            "type": "string",
+            "maxLength": 512000,
+            "description": "HTML body. At least one of html or text is required. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it."
+          }
+        }
+      },
+      "SendInboxReplyDraftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expected_content_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "content_sha256 from the exact final draft snapshot that was approved. If the subject, text or HTML changed, the send fails with 409 before delivery."
           }
         }
       },
@@ -13182,7 +16157,14 @@
           "status",
           "to",
           "cc",
-          "created_at"
+          "subject",
+          "html",
+          "text",
+          "content_sha256",
+          "sent_message_id",
+          "created_at",
+          "updated_at",
+          "sent_at"
         ],
         "properties": {
           "object": {
@@ -13232,7 +16214,8 @@
                   "type": ["string", "null"]
                 }
               }
-            }
+            },
+            "description": "Recipients derived from the source message. Empty, like cc, once the stored draft no longer exists."
           },
           "cc": {
             "type": "array",
@@ -13250,9 +16233,76 @@
               }
             }
           },
+          "subject": {
+            "type": ["string", "null"],
+            "description": "Stored subject. Null once the stored draft no longer exists (after a send or cleanup)."
+          },
+          "html": {
+            "type": ["string", "null"],
+            "description": "Stored HTML after sanitisation. Null once the stored draft no longer exists."
+          },
+          "text": {
+            "type": ["string", "null"],
+            "description": "Stored text part. Null once the stored draft no longer exists."
+          },
+          "content_sha256": {
+            "type": ["string", "null"],
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 of the complete canonical subject, text and HTML snapshot. Null when provider content is unavailable or incomplete; do not approve that draft until a complete read succeeds."
+          },
+          "sent_message_id": {
+            "type": ["string", "null"],
+            "description": "ID of the sent message once the draft is sent."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sent_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        }
+      },
+      "InboxReplyDraftWrite": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/InboxReplyDraft"
+          },
+          {
+            "type": "object",
+            "required": ["removed_formatting"],
+            "properties": {
+              "removed_formatting": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Formatting the HTML sanitiser dropped: \"table\" for any table part, \"h4\" to \"h6\", and other dropped elements such as \"script\". Their text stays as paragraphs. Empty when nothing was dropped."
+              }
+            }
+          }
+        ],
+        "description": "A reply draft returned by create and update, with the formatting the HTML sanitiser dropped."
+      },
+      "InboxReplyDraftList": {
+        "type": "object",
+        "required": ["object", "data"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "list"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InboxReplyDraft"
+            },
+            "maxItems": 100
           }
         }
       },
@@ -13278,7 +16328,15 @@
       },
       "InboxThread": {
         "type": "object",
-        "required": ["object", "mailbox_id", "address", "thread_id", "conversation_id", "data"],
+        "required": [
+          "object",
+          "mailbox_id",
+          "address",
+          "thread_id",
+          "conversation_id",
+          "version",
+          "data"
+        ],
         "properties": {
           "object": {
             "type": "string",
@@ -13299,6 +16357,10 @@
           "conversation_id": {
             "type": ["string", "null"],
             "description": "Stable Shipmail conversation identifier (thd_...). Store this: it survives thread merges and mail-server re-threading, which thread_id does not."
+          },
+          "version": {
+            "type": ["integer", "null"],
+            "description": "Current conversation version. Pass it as expected_version when creating a reply draft. Null when the thread has no conversation."
           },
           "data": {
             "type": "array",
@@ -13885,6 +16947,9 @@
           "consent_source",
           "feed_enabled",
           "feed_url",
+          "cleanup_enabled",
+          "cleanup_ignored_issues",
+          "cleanup_inactive_days",
           "created_at",
           "updated_at"
         ],
@@ -13917,7 +16982,7 @@
           },
           "feed_enabled": {
             "type": "boolean",
-            "description": "Whether this audience publishes an Atom feed of its sent issues."
+            "description": "Whether this audience publishes an Atom feed of its sent newsletters."
           },
           "feed_url": {
             "type": "string",
@@ -13931,6 +16996,22 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "cleanup_enabled": {
+            "type": "boolean",
+            "description": "List cleanup. A cold subscriber gets one last-chance email in place of a newsletter, and becomes dormant if they do not click keep within 14 days. On by default for audiences created since list cleanup shipped."
+          },
+          "cleanup_ignored_issues": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 100,
+            "description": "How many tracked newsletters in a row a subscriber ignores before they count as cold. Default 6."
+          },
+          "cleanup_inactive_days": {
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 3650,
+            "description": "How many days without a sign of life (a human open or click, a reply, a confirmation, a signup again, a keep click) before a subscriber counts as cold. Default 180."
           }
         }
       },
@@ -13981,13 +17062,14 @@
           },
           "icon_url": {
             "type": ["string", "null"],
-            "format": "uri"
+            "format": "uri",
+            "description": "The feed's own icon. When null, the feed shows the website logo, if the audience's website has one."
           },
           "entry_limit": {
             "type": ["integer", "null"],
             "minimum": 10,
             "maximum": 100,
-            "description": "Stored number of recent issues carried by the feed, or null when the publisher has not chosen a value and the default of 50 applies."
+            "description": "Stored number of recent newsletters carried by the feed, or null when the publisher has not chosen a value and the default of 50 applies."
           },
           "url": {
             "type": ["string", "null"],
@@ -14049,8 +17131,10 @@
               "bounced",
               "complained",
               "suppressed",
-              "transactional_only"
-            ]
+              "transactional_only",
+              "dormant"
+            ],
+            "description": "dormant: stopped reading and did not answer the last-chance email of list cleanup. Newsletters skip dormant subscribers until they sign up again or click the keep link; resubscribe brings one back."
           },
           "merge_fields": {
             "$ref": "#/components/schemas/MergeFields"
@@ -14125,6 +17209,19 @@
             "type": "string",
             "maxLength": 2000,
             "nullable": true
+          },
+          "cleanup_enabled": {
+            "type": "boolean"
+          },
+          "cleanup_ignored_issues": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 100
+          },
+          "cleanup_inactive_days": {
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 3650
           }
         }
       },
@@ -14166,7 +17263,7 @@
             "type": ["integer", "null"],
             "minimum": 10,
             "maximum": 100,
-            "description": "Number of recent issues carried by the feed, or null to revert to the default of 50."
+            "description": "Number of recent newsletters carried by the feed, or null to revert to the default of 50."
           }
         }
       },
@@ -14392,6 +17489,7 @@
           "name",
           "status",
           "archive_visibility",
+          "publish_target",
           "feed_entry_url",
           "styling_mode",
           "track_engagement",
@@ -14402,7 +17500,11 @@
           "published_at",
           "archive_url",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "send_limit",
+          "held_count",
+          "subject_b",
+          "subject_test_winner"
         ],
         "properties": {
           "object": {
@@ -14456,15 +17558,18 @@
           },
           "status": {
             "type": "string",
+            "description": "`in_review`: Shipmail's content check holds the newsletter until a person at Shipmail looks at it. It returns to `scheduled` and goes out, or to `draft` with an email to the owners when it cannot be sent. Cancel still works.",
             "enum": [
               "draft",
               "imported",
               "pending_approval",
               "approved",
               "scheduled",
+              "in_review",
               "sending",
               "paused",
               "sent",
+              "published",
               "cancelled",
               "failed"
             ]
@@ -14473,10 +17578,15 @@
             "type": "string",
             "enum": ["private", "public"]
           },
+          "publish_target": {
+            "type": "string",
+            "enum": ["email_and_website", "email", "website"],
+            "description": "Where the newsletter goes. email_and_website (default) sends it, and archive_visibility decides whether it also appears on the website and feed. email never appears on the web: no archive page, website, sitemap, feed entry or View in browser link. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the website must be on."
+          },
           "feed_entry_url": {
             "type": ["string", "null"],
             "format": "uri",
-            "description": "Optional http(s) Atom entry destination. Feed readers link the issue title here instead of to its Shipmail web archive, including when the archive is private."
+            "description": "Optional http(s) Atom entry destination. Feed readers link the newsletter title here instead of to its Shipmail web archive, including when the archive is private."
           },
           "styling_mode": {
             "type": "string",
@@ -14487,12 +17597,12 @@
           "track_engagement": {
             "type": "boolean",
             "default": false,
-            "description": "Whether this issue tracks opens and clicks."
+            "description": "Whether this newsletter tracks opens and clicks."
           },
           "add_utm_tags": {
             "type": "boolean",
             "default": false,
-            "description": "Whether this issue adds UTM tags to its links. Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the issue's http and https links. Links that already carry a utm_ parameter, links with a merge tag in the host, and Shipmail's own unsubscribe and archive links are left alone. The web archive is never tagged."
+            "description": "Whether this newsletter adds UTM tags to its links. Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the newsletter's http and https links. Links that already carry a utm_ parameter, links with a merge tag in the host, and Shipmail's own unsubscribe and archive links are left alone. The web archive is never tagged."
           },
           "opened_count": {
             "type": ["integer", "null"],
@@ -14501,6 +17611,35 @@
           "clicked_count": {
             "type": ["integer", "null"],
             "description": "Unique recipients who clicked at least one tracked link, excluding clicks attributed to link scanners. Null when track_engagement is false."
+          },
+          "send_limit": {
+            "type": ["integer", "null"],
+            "description": "The limit the newsletter was scheduled with: only this many of the most engaged subscribers went first. Null sends to everyone."
+          },
+          "held_count": {
+            "type": "integer",
+            "description": "Subscribers held past send_limit. Send them the newsletter with POST /newsletters/{id}/send-more."
+          },
+          "subject_b": {
+            "type": ["string", "null"],
+            "description": "A second subject tested against subject. Requires track_engagement."
+          },
+          "subject_test_percent": {
+            "type": ["integer", "null"],
+            "description": "The share of subscribers each subject goes to first, from 1 to 25. Null when there is no subject test."
+          },
+          "subject_test_hours": {
+            "type": ["integer", "null"],
+            "description": "Hours after both test slices finish before the subject with more human clicks goes to the rest, from 1 to 72."
+          },
+          "subject_test_winner": {
+            "type": ["string", "null"],
+            "enum": ["a", "b", null],
+            "description": "a is subject, b is subject_b. Null until the test decides. A tie keeps a."
+          },
+          "subject_test_decided_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
           },
           "preflight_status": {
             "type": "string",
@@ -14626,6 +17765,12 @@
             "enum": ["private", "public"],
             "default": "private"
           },
+          "publish_target": {
+            "type": "string",
+            "enum": ["email_and_website", "email", "website"],
+            "default": "email_and_website",
+            "description": "Where the newsletter goes. email_and_website (default) sends it, and archive_visibility decides whether it also appears on the website and feed. email never appears on the web: no archive page, website, sitemap, feed entry or View in browser link. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the website must be on."
+          },
           "feed_entry_url": {
             "type": ["string", "null"],
             "format": "uri",
@@ -14640,12 +17785,12 @@
           "track_engagement": {
             "type": "boolean",
             "default": false,
-            "description": "Track opens and clicks for this issue. Defaults to false. Returns 422 validation_error when open and click tracking is not available. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
+            "description": "Track opens and clicks for this newsletter. Defaults to false. Returns 422 validation_error when open and click tracking is not available. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
           },
           "add_utm_tags": {
             "type": "boolean",
             "default": false,
-            "description": "Add UTM tags to the links of this issue. Defaults to false. Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the issue's http and https links. Links that already carry a utm_ parameter, links with a merge tag in the host, and Shipmail's own unsubscribe and archive links are left alone. The web archive is never tagged. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
+            "description": "Add UTM tags to the links of this newsletter. Defaults to false. Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the newsletter's http and https links. Links that already carry a utm_ parameter, links with a merge tag in the host, and Shipmail's own unsubscribe and archive links are left alone. The web archive is never tagged. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
           },
           "blocks": {
             "type": "array",
@@ -14654,6 +17799,28 @@
               "$ref": "#/components/schemas/NewsletterBlock"
             },
             "description": "Preferred body format. Shipmail stores blocks and renders body_html and body_text from them. Rich prose fields accept bare text or sanitized inline HTML."
+          },
+          "content_markdown": {
+            "type": "string",
+            "maxLength": 100000,
+            "description": "The body as Markdown, instead of blocks or body_html. Shipmail converts headings, paragraphs, lists, quotes, code, images, links, dividers and tables to blocks and stores blocks only. A callout starts with a line `:::callout` (optionally followed by info, warning or success, then a title) and ends with a line `:::`. Raw HTML stays visible text. Send only one of blocks, body_html or content_markdown."
+          },
+          "subject_b": {
+            "type": ["string", "null"],
+            "maxLength": 200,
+            "description": "A second subject to test against subject. Each goes to a slice of subject_test_percent of the subscribers; after subject_test_hours the one with more human clicks goes to the rest. Opens do not decide, because Apple Mail Privacy Protection opens every message. Requires track_engagement. Null removes the test."
+          },
+          "subject_test_percent": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "maximum": 25,
+            "default": 10
+          },
+          "subject_test_hours": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "maximum": 72,
+            "default": 4
           }
         }
       },
@@ -14696,6 +17863,11 @@
             "enum": ["private", "public"],
             "default": "private"
           },
+          "publish_target": {
+            "type": "string",
+            "enum": ["email_and_website", "email", "website"],
+            "description": "Where the newsletter goes. email_and_website (default) sends it, and archive_visibility decides whether it also appears on the website and feed. email never appears on the web: no archive page, website, sitemap, feed entry or View in browser link. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the website must be on."
+          },
           "feed_entry_url": {
             "type": ["string", "null"],
             "format": "uri",
@@ -14709,11 +17881,11 @@
           },
           "track_engagement": {
             "type": "boolean",
-            "description": "Track opens and clicks for this issue. Omit to keep the current value. Returns 422 validation_error when open and click tracking is not available. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
+            "description": "Track opens and clicks for this newsletter. Omit to keep the current value. Returns 422 validation_error when open and click tracking is not available. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
           },
           "add_utm_tags": {
             "type": "boolean",
-            "description": "Add UTM tags to the links of this issue. Omit to keep the current value. Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the issue's http and https links. Links that already carry a utm_ parameter, links with a merge tag in the host, and Shipmail's own unsubscribe and archive links are left alone. The web archive is never tagged. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
+            "description": "Add UTM tags to the links of this newsletter. Omit to keep the current value. Adds utm_source=shipmail, utm_medium (email or feed) and utm_campaign (a slug of the subject) to the newsletter's http and https links. Links that already carry a utm_ parameter, links with a merge tag in the host, and Shipmail's own unsubscribe and archive links are left alone. The web archive is never tagged. Can only change while the newsletter is an editable draft or a future scheduled newsletter."
           },
           "blocks": {
             "type": "array",
@@ -14722,6 +17894,28 @@
               "$ref": "#/components/schemas/NewsletterBlock"
             },
             "description": "Preferred body format. Shipmail stores blocks and renders body_html and body_text from them. Rich prose fields accept bare text or sanitized inline HTML."
+          },
+          "content_markdown": {
+            "type": "string",
+            "maxLength": 100000,
+            "description": "The body as Markdown, instead of blocks or body_html. Shipmail converts headings, paragraphs, lists, quotes, code, images, links, dividers and tables to blocks and stores blocks only. A callout starts with a line `:::callout` (optionally followed by info, warning or success, then a title) and ends with a line `:::`. Raw HTML stays visible text. Send only one of blocks, body_html or content_markdown."
+          },
+          "subject_b": {
+            "type": ["string", "null"],
+            "maxLength": 200,
+            "description": "A second subject to test against subject. Each goes to a slice of subject_test_percent of the subscribers; after subject_test_hours the one with more human clicks goes to the rest. Opens do not decide, because Apple Mail Privacy Protection opens every message. Requires track_engagement. Null removes the test."
+          },
+          "subject_test_percent": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "maximum": 25,
+            "default": 10
+          },
+          "subject_test_hours": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "maximum": 72,
+            "default": 4
           }
         }
       },
@@ -14825,6 +18019,11 @@
           "scheduled_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "limit": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "description": "Send only to this many of the most engaged subscribers: last click, then last open, then imported click and open rates, then join date. The rest wait; send them the newsletter with POST /newsletters/{id}/send-more. Subscribers the organization has never emailed still go in a first-send slice."
           }
         }
       },
@@ -15995,6 +19194,12 @@
             "enum": ["private", "public"],
             "default": "private"
           },
+          "publish_target": {
+            "type": "string",
+            "enum": ["email_and_website", "email", "website"],
+            "default": "email_and_website",
+            "description": "Where the newsletter goes. email_and_website (default) sends it, and archive_visibility decides whether it also appears on the website and feed. email never appears on the web: no archive page, website, sitemap, feed entry or View in browser link. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the website must be on."
+          },
           "feed_entry_url": {
             "type": ["string", "null"],
             "format": "uri",
@@ -16118,7 +19323,269 @@
           },
           "newsletters_allowed": {
             "type": "boolean",
-            "description": "Newsletter sending is available. It is not during a trial."
+            "description": "Newsletter sending is available. A trial sends newsletters within its trial limits."
+          }
+        }
+      },
+      "WelcomeStep": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "audience_id",
+          "position",
+          "wait_minutes",
+          "sender_identity_id",
+          "subject",
+          "preview_text",
+          "blocks",
+          "track_engagement",
+          "add_utm_tags",
+          "styling_mode",
+          "sent_count",
+          "delivered_count",
+          "bounced_count",
+          "complained_count",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "welcome_step"
+          },
+          "id": {
+            "type": "string"
+          },
+          "audience_id": {
+            "type": ["string", "null"]
+          },
+          "position": {
+            "type": "integer",
+            "description": "Order in the sequence. Positions only grow; gaps are normal."
+          },
+          "wait_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 525600,
+            "description": "Minutes after the previous email (or after the subscribe, for the first email) before this one is sent."
+          },
+          "sender_identity_id": {
+            "type": ["string", "null"]
+          },
+          "subject": {
+            "type": ["string", "null"]
+          },
+          "preview_text": {
+            "type": ["string", "null"]
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NewsletterBlock"
+            }
+          },
+          "track_engagement": {
+            "type": "boolean"
+          },
+          "add_utm_tags": {
+            "type": "boolean"
+          },
+          "styling_mode": {
+            "type": "string",
+            "enum": ["styled", "plain"]
+          },
+          "sent_count": {
+            "type": "integer"
+          },
+          "delivered_count": {
+            "type": "integer"
+          },
+          "bounced_count": {
+            "type": "integer"
+          },
+          "complained_count": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WelcomeSequence": {
+        "type": "object",
+        "required": [
+          "object",
+          "audience_id",
+          "enabled",
+          "paused",
+          "pause_reason",
+          "active_readers",
+          "completed_readers",
+          "steps"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "welcome_sequence"
+          },
+          "audience_id": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Readers who subscribe through a signup form or the API while this is true start the sequence. With double opt-in, they start when they confirm."
+          },
+          "paused": {
+            "type": "boolean",
+            "description": "True when bounces or complaints passed the pause limits. Sends wait until the sequence is enabled again."
+          },
+          "pause_reason": {
+            "type": ["string", "null"]
+          },
+          "active_readers": {
+            "type": "integer"
+          },
+          "completed_readers": {
+            "type": "integer"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WelcomeStep"
+            }
+          }
+        }
+      },
+      "UpdateWelcomeSequenceRequest": {
+        "type": "object",
+        "required": ["enabled"],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Turn the sequence on or off. Turning it on needs at least one email with a subject and a body, and resumes a paused sequence."
+          }
+        }
+      },
+      "CreateWelcomeStepRequest": {
+        "type": "object",
+        "required": ["subject"],
+        "properties": {
+          "subject": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "preview_text": {
+            "type": ["string", "null"],
+            "maxLength": 240
+          },
+          "blocks": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "$ref": "#/components/schemas/NewsletterBlock"
+            }
+          },
+          "content_markdown": {
+            "type": "string",
+            "maxLength": 100000,
+            "description": "The body as Markdown, converted to blocks on the server. Send blocks or content_markdown, not both."
+          },
+          "wait_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 525600,
+            "default": 0
+          },
+          "sender_identity_id": {
+            "type": "string",
+            "description": "Defaults to the organization's default sender identity."
+          },
+          "track_engagement": {
+            "type": "boolean"
+          },
+          "add_utm_tags": {
+            "type": "boolean"
+          },
+          "styling_mode": {
+            "type": "string",
+            "enum": ["styled", "plain"]
+          }
+        }
+      },
+      "UpdateWelcomeStepRequest": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "preview_text": {
+            "type": ["string", "null"],
+            "maxLength": 240
+          },
+          "blocks": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "$ref": "#/components/schemas/NewsletterBlock"
+            }
+          },
+          "content_markdown": {
+            "type": "string",
+            "maxLength": 100000,
+            "description": "The body as Markdown, converted to blocks on the server. Send blocks or content_markdown, not both."
+          },
+          "wait_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 525600
+          },
+          "sender_identity_id": {
+            "type": "string",
+            "description": "Defaults to the organization's default sender identity."
+          },
+          "track_engagement": {
+            "type": "boolean"
+          },
+          "add_utm_tags": {
+            "type": "boolean"
+          },
+          "styling_mode": {
+            "type": "string",
+            "enum": ["styled", "plain"]
+          }
+        }
+      },
+      "DeletedWelcomeStep": {
+        "type": "object",
+        "required": ["object", "id", "deleted"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "welcome_step"
+          },
+          "id": {
+            "type": "string"
+          },
+          "deleted": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      },
+      "SendNewsletterToMoreRequest": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "description": "The next this many most engaged held subscribers. Omit it to send to all of them."
           }
         }
       }
@@ -16234,6 +19701,10 @@
     {
       "name": "Calendar",
       "description": "Calendar events and single-mailbox availability."
+    },
+    {
+      "name": "Booking Links",
+      "description": "One-off booking links that stop after a number of bookings."
     },
     {
       "name": "Booking Pages",

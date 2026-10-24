@@ -6,6 +6,7 @@ export const MCP_PERMISSION_GROUP_NAMES = [
   "account_status",
   "automations",
   "mail_read",
+  "security_review",
   "drafts",
   "compose_drafts",
   "mail_organize",
@@ -31,6 +32,7 @@ export type McpPermissionGroupName = (typeof MCP_PERMISSION_GROUP_NAMES)[number]
 export const MCP_MEMBER_PERMISSION_GROUP_NAMES = [
   "account_status",
   "mail_read",
+  "security_review",
   "drafts",
   "compose_drafts",
   "mail_organize",
@@ -75,6 +77,13 @@ export const MCP_PERMISSION_GROUPS = [
     label: "Read mail",
     description: "Read mailboxes, messages, threads, folders, identities, and import status.",
     scopes: ["mailboxes:read", "messages:read", "threads:read"],
+    persistent: false,
+  },
+  {
+    name: "security_review",
+    label: "Review held mail",
+    description: "Inspect and release message snapshots held by API-agent security review.",
+    scopes: ["mailboxes:read", "messages:read", "threads:read", "messages:review"],
     persistent: false,
   },
   {
@@ -224,6 +233,7 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_domains", "listDomains", "domains:read"],
   ["shipmail_get_domain", "getDomain", "domains:read"],
   ["shipmail_get_domain_dns_records", "getDomainDnsRecords", "domains:read"],
+  ["shipmail_get_domain_health", "getDomainHealth", "domains:read"],
   ["shipmail_update_domain", "updateDomain", "domains:write"],
   ["shipmail_delete_domain", "deleteDomain", "domains:write"],
   ["shipmail_verify_domain", "verifyDomain", "domains:write"],
@@ -252,12 +262,21 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_mailbox_identities", "listMailboxIdentities", "mailboxes:read"],
   ["shipmail_list_mailbox_inbox_messages", "listMailboxInboxMessages", "messages:read"],
   ["shipmail_get_mailbox_inbox_message", "getMailboxInboxMessage", "messages:read"],
+  [
+    "shipmail_release_mailbox_inbox_message_security",
+    "releaseMailboxInboxMessageSecurity",
+    "messages:review",
+  ],
   ["shipmail_read_mailbox_inbox_attachment", "downloadMailboxInboxAttachment", "messages:read"],
   ["shipmail_list_mailbox_inbox_threads", "listMailboxInboxThreads", "messages:read"],
   ["shipmail_get_mailbox_inbox_thread", "getMailboxInboxThread", "messages:read"],
   ["shipmail_update_inbox_thread_attention", "updateMailboxInboxThreadAttention", "messages:write"],
   ["shipmail_create_draft", "createMailboxInboxDraft", "drafts:compose"],
   ["shipmail_create_inbox_reply_draft", "createMailboxInboxReplyDraft", "drafts:write"],
+  ["shipmail_list_inbox_reply_drafts", "listMailboxInboxReplyDrafts", "drafts:write"],
+  ["shipmail_get_inbox_reply_draft", "getMailboxInboxReplyDraft", "drafts:write"],
+  ["shipmail_update_inbox_reply_draft", "updateMailboxInboxReplyDraft", "drafts:write"],
+  ["shipmail_delete_inbox_reply_draft", "deleteMailboxInboxReplyDraft", "drafts:write"],
   ["shipmail_send_inbox_reply_draft", "sendMailboxInboxReplyDraft", "messages:send"],
   ["shipmail_reply_to_inbox_message", "replyToMailboxInboxMessage", "messages:send"],
   ["shipmail_reply_to_inbox_thread", "replyToMailboxInboxThread", "messages:send"],
@@ -309,6 +328,7 @@ const CAPABILITY_ROWS = [
   ["shipmail_get_webhook_delivery", "getWebhookDelivery", "webhooks:read"],
   ["shipmail_replay_webhook_delivery", "replayWebhookDelivery", "webhooks:write"],
   ["shipmail_list_suppressions", "listSuppressions", "suppressions:read"],
+  ["shipmail_add_suppression", "createSuppression", "suppressions:write"],
   ["shipmail_remove_suppression", "removeSuppression", "suppressions:write"],
   ["shipmail_create_audience", "createAudience", "audiences:write"],
   ["shipmail_list_audiences", "listAudiences", "audiences:read"],
@@ -357,6 +377,12 @@ const CAPABILITY_ROWS = [
   ["shipmail_schedule_newsletter", "scheduleNewsletter", "newsletters:write"],
   ["shipmail_cancel_newsletter", "cancelNewsletter", "newsletters:write"],
   ["shipmail_resume_newsletter", "resumeNewsletter", "newsletters:write"],
+  ["shipmail_get_welcome_sequence", "getWelcomeSequence", "newsletters:read"],
+  ["shipmail_update_welcome_sequence", "updateWelcomeSequence", "newsletters:write"],
+  ["shipmail_create_welcome_step", "createWelcomeStep", "newsletters:write"],
+  ["shipmail_update_welcome_step", "updateWelcomeStep", "newsletters:write"],
+  ["shipmail_delete_welcome_step", "deleteWelcomeStep", "newsletters:write"],
+  ["shipmail_send_newsletter_to_more", "sendNewsletterToMore", "newsletters:write"],
   ["shipmail_list_calendar_events", "listCalendarEvents", "calendar:read"],
   ["shipmail_create_calendar_event", "createCalendarEvent", "calendar:write"],
   ["shipmail_get_calendar_event", "getCalendarEvent", "calendar:read"],
@@ -368,6 +394,11 @@ const CAPABILITY_ROWS = [
   ["shipmail_get_booking_page", "getBookingPage", "booking_pages:read"],
   ["shipmail_update_booking_page", "updateBookingPage", "booking_pages:write"],
   ["shipmail_delete_booking_page", "deleteBookingPage", "booking_pages:write"],
+  ["shipmail_list_booking_links", "listBookingLinks", "booking_pages:read"],
+  ["shipmail_create_booking_link", "createBookingLink", "booking_pages:write"],
+  ["shipmail_get_booking_link", "getBookingLink", "booking_pages:read"],
+  ["shipmail_update_booking_link", "updateBookingLink", "booking_pages:write"],
+  ["shipmail_revoke_booking_link", "revokeBookingLink", "booking_pages:write"],
 ] as const satisfies readonly CapabilityRow[];
 
 export type McpToolName = (typeof CAPABILITY_ROWS)[number][0];
@@ -428,6 +459,10 @@ const EXTERNAL_WRITE_TOOLS: ReadonlySet<string> = new Set([
   "shipmail_replay_webhook_delivery",
   "shipmail_send_newsletter_test",
   "shipmail_schedule_newsletter",
+  "shipmail_update_welcome_sequence",
+  "shipmail_create_welcome_step",
+  "shipmail_update_welcome_step",
+  "shipmail_send_newsletter_to_more",
   "shipmail_create_calendar_event",
   "shipmail_update_calendar_event",
   "shipmail_update_scheduled_message",
@@ -473,6 +508,7 @@ function permissionGroupFor(
   if (requiredScope === "drafts:compose") return "compose_drafts";
   if (requiredScope === "messages:send") return "send_mail";
   if (requiredScope === "messages:write") return "mail_organize";
+  if (requiredScope === "messages:review") return "security_review";
   if (requiredScope === "messages:read" || requiredScope === "threads:read") return "mail_read";
   if (requiredScope === "calendar:read") return "calendar_read";
   if (requiredScope === "calendar:write") return "calendar_write";
@@ -524,6 +560,7 @@ function durationFor(toolName: McpToolName): McpCapabilityDuration {
     toolName.includes("mailbox_rule") ||
     toolName.includes("webhook") ||
     toolName.includes("booking_page") ||
+    toolName.includes("booking_link") ||
     toolName.includes("automation")
   ) {
     return "persistent";

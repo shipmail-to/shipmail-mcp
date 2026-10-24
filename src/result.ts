@@ -66,6 +66,17 @@ function formatShipmailError(error: ShipmailError): string {
     parts.push(`action_url=${actionUrl}`);
     parts.push("Send action_url to the organization owner; do not pay or choose a plan yourself.");
   }
+  // The limit that refused the request, so the agent can say what is full without parsing prose.
+  if (isSafeMessage && error.limit) {
+    parts.push(
+      `limit=${JSON.stringify({
+        resource: sanitizeString(error.limit.resource, 64),
+        used: error.limit.used,
+        limit: error.limit.limit,
+        scope: sanitizeString(error.limit.scope, 16),
+      })}`,
+    );
+  }
   if (isSafeMessage && error instanceof ValidationError && error.details?.length) {
     const fields = error.details
       .map((detail) => sanitizeString(detail.field, 100))

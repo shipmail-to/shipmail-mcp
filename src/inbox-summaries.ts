@@ -23,6 +23,7 @@ export function toInboxMessageSummary(message: InboxFullMessage): InboxMessage {
     has_attachment: message.has_attachment,
     size: message.size,
     authentication_results: message.authentication_results,
+    security: message.security,
   };
 }
 

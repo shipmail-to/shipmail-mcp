@@ -128,6 +128,22 @@ describe("owner recovery links", () => {
     expect(text).toContain("status=403");
   });
 
+  test("passes the limit that refused the request", () => {
+    const text = getText(
+      errorResult(
+        new QuotaExceededError(
+          "Active subscriber limit reached (100).",
+          "req_4",
+          { reason: "trial_capacity", actionUrl: "https://shipmail.to/billing?org=org_1" },
+          { resource: "audience_subscribers", used: 100, limit: 100, scope: "trial" },
+        ),
+      ),
+    );
+    expect(text).toContain(
+      'limit={"resource":"audience_subscribers","used":100,"limit":100,"scope":"trial"}',
+    );
+  });
+
   test("an older server's error has no recovery line", () => {
     const text = getText(errorResult(new QuotaExceededError("Mailbox limit reached.", "req_2")));
     expect(text).not.toContain("action_url=");

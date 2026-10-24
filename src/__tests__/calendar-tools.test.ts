@@ -80,6 +80,31 @@ function bookingPayload() {
   };
 }
 
+function bookingLinkPayload(overrides: Record<string, unknown> = {}) {
+  return {
+    object: "booking_link",
+    id: "bkp_link",
+    mailbox: ADDRESS,
+    slug: "o--abc123",
+    url: "https://shipmail.to/book/papertrail-studio.test/o--abc123",
+    name: "Call with Sam",
+    description: null,
+    duration_minutes: 30,
+    timezone: "Europe/Lisbon",
+    offered_ranges: [{ start: "2026-11-02T09:00:00.000Z", end: "2026-11-02T12:00:00.000Z" }],
+    source_page_id: null,
+    buffer_minutes: 0,
+    minimum_notice_minutes: 0,
+    conferencing_provider: null,
+    max_bookings: 1,
+    bookings_count: 0,
+    expires_at: null,
+    status: "open",
+    created_at: "2026-10-21T10:00:00.000Z",
+    ...overrides,
+  };
+}
+
 async function buildPair(responder: (req: CapturedRequest) => unknown) {
   const shipmail = new ShipmailClient({
     apiKey: "sk_test",
@@ -243,6 +268,81 @@ describe("calendar + booking MCP tools", () => {
     expect(result.isError).toBeFalsy();
     expect(captured[0]?.method).toBe("PATCH");
     expect(captured[0]?.body).toEqual({ conferencing_provider: null });
+  });
+
+  test("create_booking_link POSTs the ranges and an unlimited max_bookings", async () => {
+    const client = await buildPair(() => bookingLinkPayload({ max_bookings: null }));
+    const result = await client.callTool({
+      name: "shipmail_create_booking_link",
+      arguments: {
+        name: "Call with Sam",
+        mailbox: ADDRESS,
+        duration_minutes: 30,
+        timezone: "Europe/Lisbon",
+        offered_ranges: [{ start: "2026-11-02T09:00:00.000Z", end: "2026-11-02T12:00:00.000Z" }],
+        max_bookings: null,
+      },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(captured[0]?.method).toBe("POST");
+    expect(new URL(captured[0]?.url ?? "").pathname).toBe("/api/v1/booking-links");
+    expect(captured[0]?.body).toMatchObject({
+      offered_ranges: [{ start: "2026-11-02T09:00:00.000Z", end: "2026-11-02T12:00:00.000Z" }],
+      max_bookings: null,
+    });
+    const sc = (result.structuredContent ?? {}) as { booking_link?: { id?: string } };
+    expect(sc.booking_link?.id).toBe("bkp_link");
+  });
+
+  test("list_booking_links passes the status filter", async () => {
+    const client = await buildPair(() => ({
+      data: [bookingLinkPayload()],
+      pagination: { next_cursor: null, has_more: false, limit: 25 },
+    }));
+    const result = await client.callTool({
+      name: "shipmail_list_booking_links",
+      arguments: { status: "open" },
+    });
+    expect(result.isError).toBeFalsy();
+    const url = new URL(captured[0]?.url ?? "");
+    expect(url.pathname).toBe("/api/v1/booking-links");
+    expect(url.searchParams.get("status")).toBe("open");
+  });
+
+  test("update_booking_link PATCHes only the given fields", async () => {
+    const client = await buildPair(() => bookingLinkPayload({ max_bookings: 3 }));
+    const result = await client.callTool({
+      name: "shipmail_update_booking_link",
+      arguments: { id: "bkp_link", max_bookings: 3 },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(captured[0]?.method).toBe("PATCH");
+    expect(new URL(captured[0]?.url ?? "").pathname).toBe("/api/v1/booking-links/bkp_link");
+    expect(captured[0]?.body).toEqual({ max_bookings: 3 });
+  });
+
+  test("revoke_booking_link POSTs to the revoke path", async () => {
+    const client = await buildPair(() => bookingLinkPayload({ status: "revoked" }));
+    const result = await client.callTool({
+      name: "shipmail_revoke_booking_link",
+      arguments: { id: "bkp_link" },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(captured[0]?.method).toBe("POST");
+    expect(new URL(captured[0]?.url ?? "").pathname).toBe("/api/v1/booking-links/bkp_link/revoke");
+    const sc = (result.structuredContent ?? {}) as { booking_link?: { status?: string } };
+    expect(sc.booking_link?.status).toBe("revoked");
+  });
+
+  test("get_booking_link fetches one link", async () => {
+    const client = await buildPair(() => bookingLinkPayload());
+    const result = await client.callTool({
+      name: "shipmail_get_booking_link",
+      arguments: { id: "bkp_link" },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(captured[0]?.method).toBe("GET");
+    expect(new URL(captured[0]?.url ?? "").pathname).toBe("/api/v1/booking-links/bkp_link");
   });
 
   test("delete_calendar_event issues DELETE with mailbox and returns ok", async () => {

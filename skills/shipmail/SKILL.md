@@ -28,7 +28,9 @@ Use Shipmail's hosted MCP server at `https://shipmail.to/api/mcp`. Prefer the na
 
 ## Drafting and sending
 
-For inbox replies, prefer `shipmail_create_inbox_reply_draft`. Present the draft to the user and stop. After explicit approval, use `shipmail_send_inbox_reply_draft`.
+For inbox replies, prefer `shipmail_create_inbox_reply_draft`, with `expected_version` set to the `version` returned by `shipmail_get_mailbox_inbox_thread`. Present the draft to the user, including any `removed_formatting`, and stop. If the user asks for changes, use `shipmail_update_inbox_reply_draft`: the new body replaces the old one and the draft keeps its ID. Use `shipmail_list_inbox_reply_drafts` or `shipmail_get_inbox_reply_draft` to read drafts back, and `shipmail_delete_inbox_reply_draft` to discard one. After explicit approval, use `shipmail_send_inbox_reply_draft`. If a draft returns a conflict because the thread changed, read the thread again and create a new draft.
+
+Draft HTML supports `p`, `br`, `strong`, `em`, `u`, `s`, `a`, `ul`, `ol`, `li`, `blockquote`, `code`, `pre`, `h2`, `h3` and inline `cid:` images. Do not use tables or `h4` to `h6`: their text stays but the formatting is dropped. Do not add `<p><br></p>` between paragraphs.
 
 For a new message, assemble the sender identity, To/Cc/Bcc recipients, subject, text or HTML body, and attachments. Present those fields for approval before `shipmail_send_message`. When the user wants a new message to review and send themselves, or the connection cannot send, use `shipmail_create_draft`: it saves the message to the mailbox's Drafts folder and sends nothing. Use `shipmail_reply_to_inbox_message`, `shipmail_reply_to_inbox_thread`, `shipmail_reply_to_message`, or `shipmail_reply_to_thread` only after the user approves the exact reply.
 

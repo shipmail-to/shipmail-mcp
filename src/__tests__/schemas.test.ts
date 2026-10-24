@@ -5,6 +5,7 @@ import {
   automationSchema,
   bookingPageSchema,
   createAutomationInputSchema,
+  createBookingLinkInputSchema,
   createBookingPageInputSchema,
   createCalendarEventInputSchema,
   createDomainInputSchema,
@@ -24,6 +25,7 @@ import {
   mailboxFoldersSchema,
   mailboxIdentitiesSchema,
   mailboxRulesSchema,
+  messageAnalyticsSchema,
   messageSchema,
   moveInboxMessageInputSchema,
   newsletterDomainSchema,
@@ -149,6 +151,30 @@ describe("calendar invitation language schemas", () => {
   });
 });
 
+describe("messageAnalyticsSchema", () => {
+  test("accepts sender addresses a strict email check would reject", () => {
+    const row = {
+      object: "message_analytics",
+      id: "msg_1",
+      mailbox_id: "mbx_1",
+      thread_id: null,
+      conversation_id: null,
+      client_reference: null,
+      direction: "inbound",
+      contact_addresses: ['"customer name"@example.com', "josé@exemple.fr", "user@bücher.de"],
+      recipient_count: 1,
+      attachment_count: 0,
+      source: "inbound",
+      mode: "live",
+      status: "delivered",
+      scheduled_at: null,
+      created_at: "2026-10-17T00:00:00.000Z",
+      updated_at: "2026-10-17T00:00:00.000Z",
+    };
+    expect(messageAnalyticsSchema.safeParse(row).success).toBe(true);
+  });
+});
+
 describe("listMessageAnalyticsInputSchema", () => {
   test("accepts a realistically sized signed v2 analytics cursor", () => {
     const body = Buffer.from(
@@ -187,6 +213,31 @@ describe("listMessageAnalyticsInputSchema", () => {
         updated_before: "2026-07-28T09:00:00+01:00",
       }),
     ).toThrow();
+  });
+});
+
+describe("booking link schemas", () => {
+  const base = {
+    name: "Call with Sam",
+    mailbox: "hello@example.com",
+    duration_minutes: 30,
+    timezone: "Europe/Lisbon",
+    offered_ranges: [{ start: "2026-11-02T09:00:00.000Z", end: "2026-11-02T12:00:00.000Z" }],
+  };
+
+  test("accept an unlimited max_bookings and refuse zero", () => {
+    expect(createBookingLinkInputSchema.parse({ ...base, max_bookings: null }).max_bookings).toBe(
+      null,
+    );
+    expect(createBookingLinkInputSchema.safeParse({ ...base, max_bookings: 0 }).success).toBe(
+      false,
+    );
+  });
+
+  test("refuse an empty offered_ranges list", () => {
+    expect(createBookingLinkInputSchema.safeParse({ ...base, offered_ranges: [] }).success).toBe(
+      false,
+    );
   });
 });
 
@@ -1256,6 +1307,28 @@ describe("newsletter schemas", () => {
     ).toThrow();
   });
 
+  test("blocks with body_html stay accepted; content_markdown comes alone", () => {
+    const blocks = [{ type: "paragraph", body: "Hi" }];
+    expect(
+      updateNewsletterInputSchema.safeParse({ id: "nws_123", blocks, body_html: "<p>Hi</p>" })
+        .success,
+    ).toBe(true);
+    expect(
+      createNewsletterInputSchema.safeParse({
+        audience_id: "aud_123",
+        sender_identity_id: "nwsid_123",
+        name: "July Update",
+        subject: "What shipped in July",
+        blocks,
+        body_html: "<p>Hi</p>",
+      }).success,
+    ).toBe(true);
+    expect(
+      updateNewsletterInputSchema.safeParse({ id: "nws_123", blocks, content_markdown: "Hi" })
+        .success,
+    ).toBe(false);
+  });
+
   test("test send normalizes recipient email", () => {
     const out = sendNewsletterTestInputSchema.parse({
       id: "nws_123",
@@ -1279,6 +1352,10 @@ describe("newsletter schemas", () => {
     ).toThrow();
   });
 
+  test("newsletter output accepts a newsletter held in review", () => {
+    expect(newsletterSchema.shape.status.parse("in_review")).toBe("in_review");
+  });
+
   test("newsletter output accepts detached sending configuration for history", () => {
     expect(
       newsletterSchema.parse({
@@ -1300,12 +1377,20 @@ describe("newsletter schemas", () => {
         body_text: null,
         status: "sent",
         archive_visibility: "private",
+        publish_target: "email_and_website",
         feed_entry_url: null,
         styling_mode: "styled",
         track_engagement: true,
         add_utm_tags: false,
         opened_count: 12,
         clicked_count: 4,
+        send_limit: null,
+        held_count: 0,
+        subject_b: null,
+        subject_test_percent: null,
+        subject_test_hours: null,
+        subject_test_winner: null,
+        subject_test_decided_at: null,
         preflight_status: "not_run",
         preflight_results: {},
         send_window_hours: 6,
@@ -1466,17 +1551,34 @@ describe("listWebhookDeliveriesInputSchema", () => {
 });
 
 describe("suppressionSchema", () => {
-  test("accepts the three OpenAPI reasons", () => {
-    for (const reason of ["hard_bounce", "complaint", "manual"] as const) {
-      expect(() =>
-        suppressionSchema.parse({
-          object: "suppression",
-          email_address: "u@example.com",
-          reason,
-          created_at: "2026-01-01T00:00:00Z",
-        }),
-      ).not.toThrow();
+  test("accepts the OpenAPI reasons and scopes", () => {
+    for (const reason of ["hard_bounce", "complaint", "manual", "soft_bounce"] as const) {
+      for (const scope of ["all", "marketing"] as const) {
+        expect(() =>
+          suppressionSchema.parse({
+            object: "suppression",
+            email_address: "u@example.com",
+            reason,
+            scope,
+            expires_at: reason === "soft_bounce" ? "2026-02-01T00:00:00Z" : null,
+            created_at: "2026-01-01T00:00:00Z",
+          }),
+        ).not.toThrow();
+      }
     }
+  });
+
+  test("rejects a scope outside the OpenAPI enum", () => {
+    expect(() =>
+      suppressionSchema.parse({
+        object: "suppression",
+        email_address: "u@example.com",
+        reason: "complaint",
+        scope: "transactional",
+        expires_at: null,
+        created_at: "2026-01-01T00:00:00Z",
+      }),
+    ).toThrow();
   });
 
   test("rejects reasons outside the OpenAPI enum (parity guard)", () => {
@@ -1485,6 +1587,8 @@ describe("suppressionSchema", () => {
         object: "suppression",
         email_address: "u@example.com",
         reason: "spam",
+        scope: "all",
+        expires_at: null,
         created_at: "2026-01-01T00:00:00Z",
       }),
     ).toThrow();

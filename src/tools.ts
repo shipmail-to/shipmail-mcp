@@ -49,6 +49,7 @@ import {
   acknowledgmentOutputSchema,
   addSubscriberInputSchema,
   addSubscribersBatchInputSchema,
+  addSuppressionInputSchema,
   attachmentComposerOutputSchema,
   audienceFeedInputSchema,
   audienceFeedMutationInputSchema,
@@ -60,6 +61,9 @@ import {
   automationRunOutputSchema,
   automationsOutputSchema,
   autoReplyInputSchema,
+  bookingLinkByIdInputSchema,
+  bookingLinkOutputSchema,
+  bookingLinksOutputSchema,
   bookingPageByIdInputSchema,
   bookingPageOutputSchema,
   bookingPagesOutputSchema,
@@ -71,6 +75,7 @@ import {
   composeMessageWithFileInputSchema,
   createAudienceInputSchema,
   createAutomationInputSchema,
+  createBookingLinkInputSchema,
   createBookingPageInputSchema,
   createCalendarEventInputSchema,
   createdMailboxAppPasswordOutputSchema,
@@ -87,17 +92,22 @@ import {
   createNewsletterInputSchema,
   createReplyScanInputSchema,
   createWebhookInputSchema,
+  createWelcomeStepInputSchema,
   deleteCalendarEventInputSchema,
   deleteInboxMessageInputSchema,
+  deleteInboxReplyDraftInputSchema,
   deleteMailboxFolderInputSchema,
   deleteMailboxForwardingInputSchema,
   deleteMailboxRuleInputSchema,
+  deleteWelcomeStepInputSchema,
   domainDnsRecordsOutputSchema,
+  domainHealthOutputSchema,
   domainOutputSchema,
   domainSearchOutputSchema,
   domainsOutputSchema,
   getByIdInputSchema,
   getCalendarEventInputSchema,
+  getInboxReplyDraftInputSchema,
   getMailboxInboxMessageInputSchema,
   getMailboxInboxThreadInputSchema,
   getMailboxRuleInputSchema,
@@ -107,6 +117,7 @@ import {
   getSubscriberInputSchema,
   getThreadInputSchema,
   getWebhookDeliveryInputSchema,
+  getWelcomeSequenceInputSchema,
   idempotentByIdInputSchema,
   importOutputSchema,
   importScopedInputSchema,
@@ -116,17 +127,22 @@ import {
   inboxFullMessageSchema,
   inboxMessageActionOutputSchema,
   inboxMessageOutputSchema,
+  inboxMessageSecurityReviewOutputSchema,
   inboxMessageSummariesOutputSchema,
+  inboxReplyDraftListOutputSchema,
   inboxReplyDraftOutputSchema,
   inboxReplyDraftSendOutputSchema,
+  inboxReplyDraftWriteOutputSchema,
   inboxThreadAttentionOutputSchema,
   inboxThreadOutputSchema,
   inboxThreadsOutputSchema,
   injectSandboxInboundInputSchema,
   listAudiencesInputSchema,
+  listBookingLinksInputSchema,
   listBookingPagesInputSchema,
   listCalendarEventsInputSchema,
   listDomainsInputSchema,
+  listInboxReplyDraftsInputSchema,
   listMailboxesInputSchema,
   listMailboxInboxMessagesInputSchema,
   listMailboxInboxThreadsInputSchema,
@@ -178,6 +194,7 @@ import {
   previewNewsletterInputSchema,
   readMailboxInboxAttachmentInputSchema,
   registerNewsletterAssetInputSchema,
+  releaseMailboxInboxMessageSecurityInputSchema,
   removeSuppressionInputSchema,
   replayWebhookDeliveryInputSchema,
   replyScanOutputSchema,
@@ -189,6 +206,7 @@ import {
   resetPasswordInputSchema,
   restoreMailboxImportInputSchema,
   resubscribeSubscriberInputSchema,
+  revokeBookingLinkInputSchema,
   revokeMailboxAppPasswordInputSchema,
   runAutomationInputSchema,
   scheduledMessageOutputSchema,
@@ -198,6 +216,7 @@ import {
   sendInboxReplyDraftInputSchema,
   sendMessageInputSchema,
   sendNewsletterTestInputSchema,
+  sendNewsletterToMoreInputSchema,
   stagedAttachmentUploadPreparationOutputSchema,
   statusOutputSchema,
   subscriberActionInputSchema,
@@ -205,16 +224,19 @@ import {
   subscriberResultOutputSchema,
   subscribersBatchOutputSchema,
   subscribersOutputSchema,
+  suppressionOutputSchema,
   suppressionsOutputSchema,
   threadMessagesOutputSchema,
   threadsOutputSchema,
   updateAudienceFeedInputSchema,
   updateAudienceInputSchema,
   updateAutomationInputSchema,
+  updateBookingLinkInputSchema,
   updateBookingPageInputSchema,
   updateCalendarEventInputSchema,
   updateDomainInputSchema,
   updateInboxMessageInputSchema,
+  updateInboxReplyDraftInputSchema,
   updateInboxThreadAttentionInputSchema,
   updateMailboxDeliveryRoutingInputSchema,
   updateMailboxFolderInputSchema,
@@ -224,6 +246,8 @@ import {
   updateScheduledMessageInputSchema,
   updateSubscriberInputSchema,
   updateWebhookInputSchema,
+  updateWelcomeSequenceInputSchema,
+  updateWelcomeStepInputSchema,
   uploadNewsletterAssetWithFileInputSchema,
   verificationOutputSchema,
   webhookDeliveriesOutputSchema,
@@ -233,12 +257,17 @@ import {
   webhooksOutputSchema,
   webhookTestOutputSchema,
   webhookWithSecretOutputSchema,
+  welcomeSequenceOutputSchema,
+  welcomeStepOutputSchema,
 } from "./schemas.js";
 
 export type ToolRegistrationResult = {
   readonly knownTools: readonly string[];
   readonly enabledTools: readonly string[];
 };
+
+const REPLY_DRAFT_HTML_RULES =
+  "Supported HTML: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them ('table' for any table part, 'h4', ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are already spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it.";
 
 // All MCP tools are prefixed `shipmail_` so they cannot be shadowed or
 // confused with same-named tools registered by peer MCP servers in the same
@@ -253,6 +282,7 @@ export type ToolRegistrationResult = {
 const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_inject_sandbox_inbound: 20,
   shipmail_read_mailbox_inbox_attachment: 10,
+  shipmail_release_mailbox_inbox_message_security: 20,
   shipmail_compose_message_with_file: 10,
   shipmail_prepare_staged_attachment_upload: 10,
   shipmail_send_message: 10,
@@ -264,6 +294,8 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_reply_to_inbox_thread: 10,
   shipmail_create_draft: 20,
   shipmail_create_inbox_reply_draft: 20,
+  shipmail_update_inbox_reply_draft: 20,
+  shipmail_delete_inbox_reply_draft: 20,
   shipmail_send_inbox_reply_draft: 10,
   shipmail_update_inbox_thread_attention: 50,
   shipmail_create_reply_scan: 10,
@@ -303,6 +335,7 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_update_inbox_message: 50,
   shipmail_move_inbox_message: 50,
   shipmail_delete_inbox_message: 10,
+  shipmail_add_suppression: 50,
   shipmail_remove_suppression: 50,
   shipmail_verify_domain: 30,
   shipmail_search_domains: 20,
@@ -331,12 +364,19 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_schedule_newsletter: 10,
   shipmail_cancel_newsletter: 10,
   shipmail_resume_newsletter: 10,
+  shipmail_update_welcome_sequence: 10,
+  shipmail_create_welcome_step: 20,
+  shipmail_update_welcome_step: 50,
+  shipmail_delete_welcome_step: 20,
   shipmail_create_calendar_event: 50,
   shipmail_update_calendar_event: 100,
   shipmail_delete_calendar_event: 50,
   shipmail_create_booking_page: 20,
   shipmail_update_booking_page: 20,
   shipmail_delete_booking_page: 10,
+  shipmail_create_booking_link: 20,
+  shipmail_update_booking_link: 20,
+  shipmail_revoke_booking_link: 20,
   shipmail_create_automation: 20,
   shipmail_update_automation: 20,
   shipmail_run_automation: 20,
@@ -732,6 +772,24 @@ export function registerTools(
       async ({ id }) =>
         runTool("shipmail_get_domain_dns_records", domainDnsRecordsOutputSchema, async () => ({
           dns_records: await client.domains.getDnsRecords(id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_domain_health", () => {
+    server.registerTool(
+      "shipmail_get_domain_health",
+      {
+        title: "Get Domain Health",
+        description:
+          "Get a domain's health: whether its MX, SPF, DKIM and DMARC records pass, whether Spamhaus lists the domain, and the last 30 days of delivery from its mailboxes, split by recipient provider (Gmail, Outlook, Yahoo, iCloud, other).",
+        inputSchema: getByIdInputSchema,
+        outputSchema: domainHealthOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id }) =>
+        runTool("shipmail_get_domain_health", domainHealthOutputSchema, async () => ({
+          health: await client.domains.getHealth(id),
         })),
     );
   });
@@ -1253,7 +1311,7 @@ export function registerTools(
       "shipmail_update_mailbox",
       {
         title: "Update Mailbox",
-        description: "Update mailbox display name.",
+        description: "Update a mailbox display name or API-agent security hold setting.",
         inputSchema: updateMailboxInputSchema,
         outputSchema: mailboxOutputSchema,
         annotations: {
@@ -1267,7 +1325,12 @@ export function registerTools(
         runTool("shipmail_update_mailbox", mailboxOutputSchema, async () => ({
           mailbox: await client.mailboxes.update(
             args.id,
-            { display_name: args.display_name },
+            {
+              ...(args.display_name !== undefined ? { display_name: args.display_name } : {}),
+              ...(args.agent_security_hold !== undefined
+                ? { agent_security_hold: args.agent_security_hold }
+                : {}),
+            },
             mutationOptions(args),
           ),
         })),
@@ -1628,7 +1691,7 @@ export function registerTools(
       {
         title: "Get Mailbox Inbox Thread",
         description:
-          "Fetch full inbound thread messages for a mailbox, including body parts and attachment metadata. thread_id accepts a conversation ID or mail-server thread ID; responses include the stable conversation_id.",
+          "Fetch full inbound thread messages for a mailbox, including body parts and attachment metadata. thread_id accepts a conversation ID or mail-server thread ID; responses include the stable conversation_id and version, the conversation version a reply draft takes as expected_version.",
         inputSchema: getMailboxInboxThreadInputSchema,
         outputSchema: inboxThreadOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: true },
@@ -1654,6 +1717,37 @@ export function registerTools(
         runTool("shipmail_get_mailbox_inbox_message", inboxMessageOutputSchema, async () => ({
           inbox_message: await client.mailboxes.getInboxMessage(id, message_id),
         })),
+    );
+  });
+
+  registerIfAllowed("shipmail_release_mailbox_inbox_message_security", () => {
+    server.registerTool(
+      "shipmail_release_mailbox_inbox_message_security",
+      {
+        title: "Release Held Inbox Message",
+        description:
+          "Release the exact inbox message snapshot inspected by a security reviewer. Fetch the message first and pass its security.content_sha256. A changed snapshot returns a conflict.",
+        inputSchema: releaseMailboxInboxMessageSecurityInputSchema,
+        outputSchema: inboxMessageSecurityReviewOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      async ({ id, message_id, decision, reason, expected_content_sha256 }) =>
+        runTool(
+          "shipmail_release_mailbox_inbox_message_security",
+          inboxMessageSecurityReviewOutputSchema,
+          async () => ({
+            security_review: await client.mailboxes.releaseInboxMessageSecurity(id, message_id, {
+              decision,
+              reason,
+              expected_content_sha256,
+            }),
+          }),
+        ),
     );
   });
 
@@ -1690,6 +1784,7 @@ export function registerTools(
 
             const bytes = await client.mailboxes.downloadInboxAttachment(id, {
               blob_id: attachment.blob_id,
+              message_id: message.id,
               name: attachment.name ?? undefined,
             });
             if (bytes.byteLength > MAX_MCP_ATTACHMENT_BYTES) {
@@ -1805,8 +1900,7 @@ export function registerTools(
       "shipmail_create_draft",
       {
         title: "Save New Email Draft",
-        description:
-          "Save a new email, rather than a reply, in the mailbox's Drafts folder. It sends nothing, and this MCP has no send operation for it.",
+        description: `Save a new email, rather than a reply, in the mailbox's Drafts folder. It sends nothing, and this MCP has no send operation for it. ${REPLY_DRAFT_HTML_RULES}`,
         inputSchema: createInboxDraftInputSchema,
         outputSchema: inboxDraftOutputSchema,
         annotations: {
@@ -1831,10 +1925,9 @@ export function registerTools(
       "shipmail_create_inbox_reply_draft",
       {
         title: "Create Safe Inbox Reply Draft",
-        description:
-          "Create a server-recipient-derived reply draft against a thread version. This does not send email.",
+        description: `Create a server-recipient-derived reply draft against a thread version. This does not send email. expected_version is the version field of the inbox thread read or the inbox thread queue. ${REPLY_DRAFT_HTML_RULES}`,
         inputSchema: createInboxReplyDraftInputSchema,
-        outputSchema: inboxReplyDraftOutputSchema,
+        outputSchema: inboxReplyDraftWriteOutputSchema,
         annotations: {
           readOnlyHint: false,
           destructiveHint: false,
@@ -1843,7 +1936,7 @@ export function registerTools(
         },
       },
       async (args) =>
-        runTool("shipmail_create_inbox_reply_draft", inboxReplyDraftOutputSchema, async () => {
+        runTool("shipmail_create_inbox_reply_draft", inboxReplyDraftWriteOutputSchema, async () => {
           const { id, thread_id, ...params } = stripIdempotencyKey(args);
           return {
             inbox_reply_draft: await client.mailboxes.createInboxReplyDraft(
@@ -1857,13 +1950,109 @@ export function registerTools(
     );
   });
 
+  registerIfAllowed("shipmail_list_inbox_reply_drafts", () => {
+    server.registerTool(
+      "shipmail_list_inbox_reply_drafts",
+      {
+        title: "List Inbox Reply Drafts",
+        description:
+          "List a conversation's reply drafts in every status (draft, sending, sent, invalidated, failed), newest first, at most 100. html, text and subject are null once the stored draft no longer exists.",
+        inputSchema: listInboxReplyDraftsInputSchema,
+        outputSchema: inboxReplyDraftListOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id, thread_id }) =>
+        runTool("shipmail_list_inbox_reply_drafts", inboxReplyDraftListOutputSchema, async () => ({
+          inbox_reply_drafts: await client.mailboxes.listInboxReplyDrafts(id, thread_id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_inbox_reply_draft", () => {
+    server.registerTool(
+      "shipmail_get_inbox_reply_draft",
+      {
+        title: "Get Inbox Reply Draft",
+        description:
+          "Read one reply draft with its status, recipients, subject and stored html and text. Use it to check a draft before sending it.",
+        inputSchema: getInboxReplyDraftInputSchema,
+        outputSchema: inboxReplyDraftOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id, thread_id, draft_id }) =>
+        runTool("shipmail_get_inbox_reply_draft", inboxReplyDraftOutputSchema, async () => ({
+          inbox_reply_draft: await client.mailboxes.getInboxReplyDraft(id, thread_id, draft_id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_inbox_reply_draft", () => {
+    server.registerTool(
+      "shipmail_update_inbox_reply_draft",
+      {
+        title: "Update Inbox Reply Draft",
+        description: `Replace the body of a reply draft in status draft. This does not send email. The new body replaces the old one: html alone derives the text part, text alone makes a plain-text draft. Recipients, subject and reply headers stay derived from the source message, and the draft ID stays the same. Returns a conflict when the draft is not in status draft, when the thread changed since its expected_version (the draft becomes invalidated: read the thread again and create a new draft), when the draft changed concurrently, or when it belongs to the Shipmail Assistant. ${REPLY_DRAFT_HTML_RULES}`,
+        inputSchema: updateInboxReplyDraftInputSchema,
+        outputSchema: inboxReplyDraftWriteOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_update_inbox_reply_draft", inboxReplyDraftWriteOutputSchema, async () => {
+          const { id, thread_id, draft_id, ...params } = stripIdempotencyKey(args);
+          return {
+            inbox_reply_draft: await client.mailboxes.updateInboxReplyDraft(
+              id,
+              thread_id,
+              draft_id,
+              params,
+              mutationOptions(args),
+            ),
+          };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_inbox_reply_draft", () => {
+    server.registerTool(
+      "shipmail_delete_inbox_reply_draft",
+      {
+        title: "Delete Inbox Reply Draft",
+        description:
+          "Delete a reply draft in status draft, invalidated or failed, and remove it from the Drafts folder. Drafts that are sending or sent, and drafts that belong to the Shipmail Assistant, return a conflict.",
+        inputSchema: deleteInboxReplyDraftInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_delete_inbox_reply_draft", acknowledgmentOutputSchema, async () => {
+          await client.mailboxes.deleteInboxReplyDraft(
+            args.id,
+            args.thread_id,
+            args.draft_id,
+            mutationOptions(args),
+          );
+          return { result: { ok: true, id: args.draft_id } };
+        }),
+    );
+  });
+
   registerIfAllowed("shipmail_send_inbox_reply_draft", () => {
     server.registerTool(
       "shipmail_send_inbox_reply_draft",
       {
         title: "Send Approved Inbox Reply Draft",
         description:
-          "Send one previously created safe reply draft. Stale drafts return a conflict.",
+          "Send one previously created safe reply draft. Pass expected_content_sha256 from the exact draft the user approved. Stale, edited, or concurrently updated drafts return a conflict.",
         inputSchema: sendInboxReplyDraftInputSchema,
         outputSchema: inboxReplyDraftSendOutputSchema,
         annotations: {
@@ -1879,7 +2068,10 @@ export function registerTools(
             args.id,
             args.thread_id,
             args.draft_id,
-            mutationOptions(args),
+            {
+              ...mutationOptions(args),
+              expectedContentSha256: args.expected_content_sha256,
+            },
           ),
         })),
     );
@@ -2784,7 +2976,7 @@ export function registerTools(
       {
         title: "Update Webhook",
         description:
-          "Update webhook URL, subscribed events, description, active state, mailbox and domain filter, the Authorization header sent with deliveries, the Standard Webhooks signing secret, whether message.received carries reply_text, whether it skips senders that did not pass DMARC, or the senders it is limited to. A URL change redirects future deliveries. authorization and standard_webhooks_secret are write-only and never echoed back; null removes them.",
+          "Update webhook URL, subscribed events, description, active state, mailbox and domain filter, the Authorization header sent with deliveries, the Standard Webhooks signing secret, whether message.received carries reply_text, whether it skips unauthenticated senders, or the senders it is limited to. A URL change redirects future deliveries. authorization and standard_webhooks_secret are write-only and never echoed back; null removes them.",
         inputSchema: updateWebhookInputSchema,
         outputSchema: webhookOutputSchema,
         annotations: {
@@ -2979,17 +3171,46 @@ export function registerTools(
       "shipmail_list_suppressions",
       {
         title: "List Suppressions",
-        description: "List recipients currently suppressed due to bounces or complaints.",
+        description:
+          "List suppressed recipients. Each entry has a reason (hard_bounce, complaint, soft_bounce or manual), a scope (all blocks every send; marketing blocks newsletter sends only) and expires_at (null when permanent; soft-bounce pauses last 30 days).",
         inputSchema: listSuppressionsInputSchema,
         outputSchema: suppressionsOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: false },
       },
       async (args) =>
         runTool("shipmail_list_suppressions", suppressionsOutputSchema, async () => {
-          const params: { limit: number; cursor?: string } = { limit: args.limit };
+          const params: { limit: number; cursor?: string; scope?: "all" | "marketing" } = {
+            limit: args.limit,
+          };
           if (args.cursor !== undefined) params.cursor = args.cursor;
+          if (args.scope !== undefined) params.scope = args.scope;
           return client.suppressions.list(params);
         }),
+    );
+  });
+
+  registerIfAllowed("shipmail_add_suppression", () => {
+    server.registerTool(
+      "shipmail_add_suppression",
+      {
+        title: "Add Suppression",
+        description:
+          "Suppress an email address so nothing more is sent to it (reason manual). scope all (the default) blocks every send; marketing blocks newsletter sends only. If an active entry already covers the address it is returned, with its scope widened to all when asked; a permanent entry is never shortened.",
+        inputSchema: addSuppressionInputSchema,
+        outputSchema: suppressionOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ email, scope }) =>
+        runTool("shipmail_add_suppression", suppressionOutputSchema, async () => ({
+          suppression: await client.suppressions.create(
+            scope === undefined ? { email } : { email, scope },
+          ),
+        })),
     );
   });
 
@@ -3263,7 +3484,7 @@ export function registerTools(
       {
         title: "Create Newsletter",
         description:
-          "Create a newsletter draft for an audience and sender identity. Shipmail renders blocks to email-safe HTML and text. Paragraph, quote, callout, list-item, and column bodies accept text or sanitized inline HTML. styled applies Shipmail's email theme. plain preserves HTML without injected styles, width, or centering. track_engagement turns on open and click tracking for this issue; it is off by default.",
+          "Create a newsletter draft for an audience and sender identity. Shipmail renders blocks to email-safe HTML and text. Pass content_markdown to write the body in Markdown instead; it is converted to blocks. Paragraph, quote, callout, list-item, and column bodies accept text or sanitized inline HTML. styled applies Shipmail's email theme. plain preserves HTML without injected styles, width, or centering. track_engagement turns on open and click tracking for this issue; it is off by default.",
         inputSchema: createNewsletterInputSchema,
         outputSchema: newsletterOutputSchema,
         annotations: {
@@ -3315,7 +3536,7 @@ export function registerTools(
       {
         title: "Update Newsletter",
         description:
-          "Update an editable newsletter draft or future scheduled newsletter. Changing message content, presentation, or audience returns a scheduled newsletter to draft and clears scheduled_at; inspect the returned status, send a new test, and schedule again. Name, feed link, and send-window changes can keep the schedule. Paragraph, quote, callout, list-item, and column bodies accept text or sanitized inline HTML. body_text alone updates the plain-text override when blocks exist. Sending and sent newsletters cannot be edited. Concurrent saves return conflict (409). styled applies Shipmail's email theme. plain preserves HTML without injected styles, width, or centering. track_engagement turns open and click tracking on or off for this issue.",
+          "Update an editable newsletter draft or future scheduled newsletter. Changing message content, presentation, or audience returns a scheduled newsletter to draft and clears scheduled_at; inspect the returned status, send a new test, and schedule again. Name, feed link, and send-window changes can keep the schedule. content_markdown replaces the body with blocks converted from Markdown. Paragraph, quote, callout, list-item, and column bodies accept text or sanitized inline HTML. body_text alone updates the plain-text override when blocks exist. Sending and sent newsletters cannot be edited. Concurrent saves return conflict (409). styled applies Shipmail's email theme. plain preserves HTML without injected styles, width, or centering. track_engagement turns open and click tracking on or off for this issue.",
         inputSchema: updateNewsletterInputSchema,
         outputSchema: newsletterOutputSchema,
         annotations: {
@@ -3341,18 +3562,29 @@ export function registerTools(
               ...(rest.body_html !== undefined ? { body_html: rest.body_html } : {}),
               ...(rest.body_text !== undefined ? { body_text: rest.body_text } : {}),
               ...(rest.blocks !== undefined ? { blocks: rest.blocks } : {}),
+              ...(rest.content_markdown !== undefined
+                ? { content_markdown: rest.content_markdown }
+                : {}),
               ...(rest.send_window_hours !== undefined
                 ? { send_window_hours: rest.send_window_hours }
                 : {}),
               ...(rest.archive_visibility !== undefined
                 ? { archive_visibility: rest.archive_visibility }
                 : {}),
+              ...(rest.publish_target !== undefined ? { publish_target: rest.publish_target } : {}),
               ...(rest.feed_entry_url !== undefined ? { feed_entry_url: rest.feed_entry_url } : {}),
               ...(rest.styling_mode !== undefined ? { styling_mode: rest.styling_mode } : {}),
               ...(rest.track_engagement !== undefined
                 ? { track_engagement: rest.track_engagement }
                 : {}),
               ...(rest.add_utm_tags !== undefined ? { add_utm_tags: rest.add_utm_tags } : {}),
+              ...(rest.subject_b !== undefined ? { subject_b: rest.subject_b } : {}),
+              ...(rest.subject_test_percent !== undefined
+                ? { subject_test_percent: rest.subject_test_percent }
+                : {}),
+              ...(rest.subject_test_hours !== undefined
+                ? { subject_test_hours: rest.subject_test_hours }
+                : {}),
             },
             mutationOptions(args),
           ),
@@ -3428,7 +3660,37 @@ export function registerTools(
         runTool("shipmail_schedule_newsletter", newsletterOutputSchema, async () => ({
           newsletter: await client.newsletters.schedule(
             args.id,
-            { scheduled_at: args.scheduled_at },
+            {
+              scheduled_at: args.scheduled_at,
+              ...(args.limit !== undefined && args.limit !== null ? { limit: args.limit } : {}),
+            },
+            mutationOptions(args),
+          ),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_send_newsletter_to_more", () => {
+    server.registerTool(
+      "shipmail_send_newsletter_to_more",
+      {
+        title: "Send Newsletter To More Subscribers",
+        description:
+          "Send a newsletter that was scheduled with a limit to the next most engaged subscribers it held, or to all of them. Nobody gets the newsletter twice. held_count on the newsletter says how many are waiting.",
+        inputSchema: sendNewsletterToMoreInputSchema,
+        outputSchema: newsletterOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_send_newsletter_to_more", newsletterOutputSchema, async () => ({
+          newsletter: await client.newsletters.sendToMore(
+            args.id,
+            args.count !== undefined && args.count !== null ? { count: args.count } : {},
             mutationOptions(args),
           ),
         })),
@@ -3672,6 +3934,138 @@ export function registerTools(
         runTool("shipmail_revoke_audience_feed", audienceFeedOutputSchema, async () => ({
           feed: await client.audiences.feeds.revoke(args.audience_id, mutationOptions(args)),
         })),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_welcome_sequence", () => {
+    server.registerTool(
+      "shipmail_get_welcome_sequence",
+      {
+        title: "Get Welcome Sequence",
+        description:
+          "Fetch an audience's welcome sequence: whether it runs or paused, its emails in order with their waits and send counts, and how many readers are in it.",
+        inputSchema: getWelcomeSequenceInputSchema,
+        outputSchema: welcomeSequenceOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ audience_id }) =>
+        runTool("shipmail_get_welcome_sequence", welcomeSequenceOutputSchema, async () => ({
+          welcome_sequence: await client.audiences.welcomeSequence.get(audience_id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_welcome_sequence", () => {
+    server.registerTool(
+      "shipmail_update_welcome_sequence",
+      {
+        title: "Turn Welcome Sequence On Or Off",
+        description:
+          "Turn an audience's welcome sequence on or off. While it is on, every reader who subscribes through a signup form or the API (or confirms, with double opt-in) gets its emails, at most 100 per audience in any ten minutes. Turning it on also resumes a sequence paused on bounces or complaints.",
+        inputSchema: updateWelcomeSequenceInputSchema,
+        outputSchema: welcomeSequenceOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_update_welcome_sequence", welcomeSequenceOutputSchema, async () => ({
+          welcome_sequence: await client.audiences.welcomeSequence.update(
+            args.audience_id,
+            { enabled: args.enabled },
+            mutationOptions(args),
+          ),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_welcome_step", () => {
+    server.registerTool(
+      "shipmail_create_welcome_step",
+      {
+        title: "Add Welcome Email",
+        description:
+          "Add an email to the end of an audience's welcome sequence, written as blocks or content_markdown. wait_minutes counts from the previous email, or from the subscribe for the first one. When the sequence is on, readers in it get this email.",
+        inputSchema: createWelcomeStepInputSchema,
+        outputSchema: welcomeStepOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      async (args) => {
+        const { audience_id, ...rest } = stripIdempotencyKey(args);
+        return runTool("shipmail_create_welcome_step", welcomeStepOutputSchema, async () => ({
+          welcome_step: await client.audiences.welcomeSequence.createStep(
+            audience_id,
+            rest,
+            mutationOptions(args),
+          ),
+        }));
+      },
+    );
+  });
+
+  registerIfAllowed("shipmail_update_welcome_step", () => {
+    server.registerTool(
+      "shipmail_update_welcome_step",
+      {
+        title: "Update Welcome Email",
+        description:
+          "Change a welcome email's subject, body (blocks or content_markdown), sender, tracking or wait. Readers already past it are not affected.",
+        inputSchema: updateWelcomeStepInputSchema,
+        outputSchema: welcomeStepOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      async (args) => {
+        const { audience_id, step_id, ...rest } = stripIdempotencyKey(args);
+        return runTool("shipmail_update_welcome_step", welcomeStepOutputSchema, async () => ({
+          welcome_step: await client.audiences.welcomeSequence.updateStep(
+            audience_id,
+            step_id,
+            rest,
+            mutationOptions(args),
+          ),
+        }));
+      },
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_welcome_step", () => {
+    server.registerTool(
+      "shipmail_delete_welcome_step",
+      {
+        title: "Remove Welcome Email",
+        description:
+          "Remove an email from a welcome sequence. Readers waiting for it go on to the next email. A running sequence keeps at least one email.",
+        inputSchema: deleteWelcomeStepInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_delete_welcome_step", acknowledgmentOutputSchema, async () => {
+          await client.audiences.welcomeSequence.deleteStep(
+            args.audience_id,
+            args.step_id,
+            mutationOptions(args),
+          );
+          return { result: { ok: true, id: args.step_id } };
+        }),
     );
   });
 
@@ -4236,6 +4630,117 @@ export function registerTools(
           await client.bookingPages.delete(id);
           return { result: { ok: true, id } };
         }),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_booking_links", () => {
+    server.registerTool(
+      "shipmail_list_booking_links",
+      {
+        title: "List Booking Links",
+        description:
+          "List one-off booking links in the authenticated organization, newest first. Filter by status: open, booked (used all of max_bookings), expired or revoked.",
+        inputSchema: listBookingLinksInputSchema,
+        outputSchema: bookingLinksOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async (args) =>
+        runTool("shipmail_list_booking_links", bookingLinksOutputSchema, async () =>
+          client.bookingLinks.list(args),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_booking_link", () => {
+    server.registerTool(
+      "shipmail_get_booking_link",
+      {
+        title: "Get Booking Link",
+        description:
+          "Fetch one one-off booking link by ID, with its public URL, offered times, bookings taken and status.",
+        inputSchema: bookingLinkByIdInputSchema,
+        outputSchema: bookingLinkOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id }) =>
+        runTool("shipmail_get_booking_link", bookingLinkOutputSchema, async () => ({
+          booking_link: await client.bookingLinks.get(id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_booking_link", () => {
+    server.registerTool(
+      "shipmail_create_booking_link",
+      {
+        title: "Create Booking Link",
+        description:
+          "Create a one-off booking link for one mailbox. Only create one when the user asked for it. It offers offered_ranges, or the weekly hours of source_page_id. The link stops taking bookings after max_bookings (default 1, null means unlimited) and after expires_at. Share the returned url with the person who should book.",
+        inputSchema: createBookingLinkInputSchema,
+        outputSchema: bookingLinkOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_create_booking_link", bookingLinkOutputSchema, async () => ({
+          booking_link: await client.bookingLinks.create(
+            stripIdempotencyKey(args),
+            mutationOptions(args),
+          ),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_booking_link", () => {
+    server.registerTool(
+      "shipmail_update_booking_link",
+      {
+        title: "Update Booking Link",
+        description:
+          "Update a one-off booking link that is not revoked. Fields left out keep their value; provide at least one. The link stops taking bookings after max_bookings (null means unlimited). The url and the bookings already taken stay.",
+        inputSchema: updateBookingLinkInputSchema,
+        outputSchema: bookingLinkOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_update_booking_link", bookingLinkOutputSchema, async () => {
+          const { id, idempotency_key: _key, ...params } = args;
+          return {
+            booking_link: await client.bookingLinks.update(id, params, mutationOptions(args)),
+          };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_revoke_booking_link", () => {
+    server.registerTool(
+      "shipmail_revoke_booking_link",
+      {
+        title: "Revoke Booking Link",
+        description:
+          "Revoke a one-off booking link so it takes no more bookings. Only revoke when the user asked for it. This cannot be undone; the link stays readable with status revoked, and bookings already made are kept.",
+        inputSchema: revokeBookingLinkInputSchema,
+        outputSchema: bookingLinkOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_revoke_booking_link", bookingLinkOutputSchema, async () => ({
+          booking_link: await client.bookingLinks.revoke(args.id, mutationOptions(args)),
+        })),
     );
   });
 

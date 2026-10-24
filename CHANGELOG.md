@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.9.7](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.6...shipmail-mcp-v0.9.7) (2026-10-23)
+
+
+### Features
+
+* add scoped agent mail review and reliable reply workflows ([#3532](https://github.com/shipmail-to/Shipmail/issues/3532)) ([5710425](https://github.com/shipmail-to/Shipmail/commit/5710425eab334b445f092ed44a6be845c62c2a88))
+* **api:** one-off booking links in the API, SDKs, CLI and MCP ([#3495](https://github.com/shipmail-to/Shipmail/issues/3495)) ([66dc16b](https://github.com/shipmail-to/Shipmail/commit/66dc16b2c837891d809e5a05ebab0063d4ddf342))
+* **billing:** let trials test every feature with clear limits ([#3503](https://github.com/shipmail-to/Shipmail/issues/3503)) ([fe7abb3](https://github.com/shipmail-to/Shipmail/commit/fe7abb3f22977799fd11a5c5e97fd42f7472df7e))
+* composer code formatting, paragraph spacing and the reply-draft lifecycle API ([#3362](https://github.com/shipmail-to/Shipmail/issues/3362)) ([b1a1760](https://github.com/shipmail-to/Shipmail/commit/b1a176046014024cc119013dd79e789fc31983ad))
+* domain health API, MCP tool and shareable health reports ([#3414](https://github.com/shipmail-to/Shipmail/issues/3414)) ([e7bef26](https://github.com/shipmail-to/Shipmail/commit/e7bef2636bd38e7cd24985e50df274f6550d8194))
+* hero best-for line, no "own domain" copy, new welcome email steps ([#3335](https://github.com/shipmail-to/Shipmail/issues/3335)) ([a695006](https://github.com/shipmail-to/Shipmail/commit/a695006e0548b55748836ecd6c7603d2e8d4a1dc))
+* **newsletters:** AI content check with human review, and subscriber domain re-check ([#3494](https://github.com/shipmail-to/Shipmail/issues/3494)) ([042cd04](https://github.com/shipmail-to/Shipmail/commit/042cd04ddda599c2efdde1b85233408c012130ff))
+* **newsletters:** reader engagement: tiers, engaged first, send to more, list cleanup, subject tests ([#3330](https://github.com/shipmail-to/Shipmail/issues/3330)) ([440efa8](https://github.com/shipmail-to/Shipmail/commit/440efa8d020993b467d8d1045845dccb0f2ff1c7))
+* **newsletters:** summary email, subscriber page, issue timing and where an issue goes ([#3492](https://github.com/shipmail-to/Shipmail/issues/3492)) ([a9d7055](https://github.com/shipmail-to/Shipmail/commit/a9d705590f8b4912e66ab68c6e81f9733dda6cbf))
+* **newsletters:** website settings polish, and call a send a newsletter in the app and a post on the website ([#3387](https://github.com/shipmail-to/Shipmail/issues/3387)) ([9a07ded](https://github.com/shipmail-to/Shipmail/commit/9a07deda279f785b326955941390b35461785f7a))
+* **newsletters:** welcome sequences, newsletter websites, webmail button and Markdown input ([#3326](https://github.com/shipmail-to/Shipmail/issues/3326)) ([2c64c64](https://github.com/shipmail-to/Shipmail/commit/2c64c64a5d41f16e95c7c18c1dbd6a3a7f8db070))
+* **webhooks:** authenticate mail a Shipmail mailbox sent, matched to its send record ([#3298](https://github.com/shipmail-to/Shipmail/issues/3298)) ([166dbc3](https://github.com/shipmail-to/Shipmail/commit/166dbc3c19b619f1a9cc30d9fa520a3d02078fb7))
+
+
+### Bug Fixes
+
+* analytics sync and attachment counts, MCP sender addresses, calendar import undo ([#3384](https://github.com/shipmail-to/Shipmail/issues/3384)) ([81a57a8](https://github.com/shipmail-to/Shipmail/commit/81a57a82212983d2749fb4bc578736e41ee23ea3))
+* **sending:** suppression scopes, expiring soft-bounce pauses, signup bot protection ([#3309](https://github.com/shipmail-to/Shipmail/issues/3309)) ([ebdec1a](https://github.com/shipmail-to/Shipmail/commit/ebdec1a3b39229f4ed0bba09763a9e1539095eb7))
+
 ## [0.9.6](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.5...shipmail-mcp-v0.9.6) (2026-10-14)
 
 

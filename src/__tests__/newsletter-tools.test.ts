@@ -35,12 +35,20 @@ function newsletterPayload() {
     body_text: "Launch notes",
     status: "draft",
     archive_visibility: "private",
+    publish_target: "email_and_website",
     feed_entry_url: null,
     styling_mode: "styled",
     track_engagement: false,
     add_utm_tags: false,
     opened_count: null,
     clicked_count: null,
+    send_limit: null,
+    held_count: 0,
+    subject_b: null,
+    subject_test_percent: null,
+    subject_test_hours: null,
+    subject_test_winner: null,
+    subject_test_decided_at: null,
     preflight_status: "not_run",
     preflight_results: {},
     send_window_hours: 6,
@@ -67,6 +75,35 @@ function newsletterPayload() {
   };
 }
 
+const MULTILINE_CODE = "const a = 1;\n\tconst b = 2;";
+
+function welcomeStepPayload() {
+  return {
+    object: "welcome_step",
+    id: "nwswstp_123",
+    audience_id: "aud_123",
+    position: 1,
+    wait_minutes: 0,
+    sender_identity_id: null,
+    subject: "Welcome",
+    preview_text: null,
+    blocks: [
+      { type: "code", code: MULTILINE_CODE },
+      { type: "paragraph", body: "Line one<br>\nline two" },
+      { type: "image", url: "https://10.0.0.1/a.png", alt: "Stored", link_url: "{{site_url}}" },
+    ],
+    track_engagement: false,
+    add_utm_tags: false,
+    styling_mode: "styled",
+    sent_count: 0,
+    delivered_count: 0,
+    bounced_count: 0,
+    complained_count: 0,
+    created_at: "2026-08-08T00:00:00.000Z",
+    updated_at: "2026-08-08T00:00:00.000Z",
+  };
+}
+
 async function buildPair(captured: CapturedRequest[]): Promise<Client> {
   const fetcher: typeof fetch = Object.assign(
     async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
@@ -76,6 +113,9 @@ async function buildPair(captured: CapturedRequest[]): Promise<Client> {
         method: init?.method ?? "GET",
         body: typeof init?.body === "string" ? init.body : undefined,
       });
+      if (url.pathname.endsWith("/welcome-sequence/steps")) {
+        return Response.json(welcomeStepPayload(), { status: 201 });
+      }
       if (url.pathname === "/api/v1/newsletter-assets") {
         return Response.json({
           data: [],
@@ -110,6 +150,66 @@ async function buildPair(captured: CapturedRequest[]): Promise<Client> {
 }
 
 describe("newsletter MCP tools", () => {
+  test("accepts multiline code and returns whatever blocks the API stored", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const result = await client.callTool({
+      name: "shipmail_create_welcome_step",
+      arguments: {
+        audience_id: "aud_123",
+        subject: "Welcome",
+        blocks: [{ type: "code", code: MULTILINE_CODE }],
+      },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(captured[0]?.body).toContain(JSON.stringify({ type: "code", code: MULTILINE_CODE }));
+    expect(JSON.stringify(result.structuredContent)).toContain(JSON.stringify(MULTILINE_CODE));
+  });
+
+  test("schedules with a limit and sends to more readers", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const scheduled = await client.callTool({
+      name: "shipmail_schedule_newsletter",
+      arguments: { id: "nws_1", scheduled_at: "2026-08-10T09:00:00.000Z", limit: 500 },
+    });
+    expect(scheduled.isError).toBeFalsy();
+    const more = await client.callTool({
+      name: "shipmail_send_newsletter_to_more",
+      arguments: { id: "nws_1", count: 1000 },
+    });
+    expect(more.isError).toBeFalsy();
+    const rest = await client.callTool({
+      name: "shipmail_send_newsletter_to_more",
+      arguments: { id: "nws_1" },
+    });
+    expect(rest.isError).toBeFalsy();
+
+    expect(captured.map((request) => request.url.pathname)).toEqual([
+      "/api/v1/newsletters/nws_1/schedule",
+      "/api/v1/newsletters/nws_1/send-more",
+      "/api/v1/newsletters/nws_1/send-more",
+    ]);
+    expect(captured.map((request) => JSON.parse(request.body ?? "null"))).toEqual([
+      { scheduled_at: "2026-08-10T09:00:00.000Z", limit: 500 },
+      { count: 1000 },
+      {},
+    ]);
+
+    const { tools } = await client.listTools();
+    expect(
+      tools.find((tool) => tool.name === "shipmail_send_newsletter_to_more")?.annotations,
+    ).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true,
+    });
+  });
+
   test("lists filtered, paginated assets with unlimited storage", async () => {
     const captured: CapturedRequest[] = [];
     const client = await buildPair(captured);
@@ -243,6 +343,34 @@ describe("newsletter MCP tools", () => {
     expect(updateResult.isError).toBeFalsy();
     expect(JSON.parse(captured[0]?.body ?? "{}")).toMatchObject({ add_utm_tags: true });
     expect(JSON.parse(captured[1]?.body ?? "{}")).toEqual({ add_utm_tags: false });
+  });
+
+  test("forwards subject test changes on update, including removing the test", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const setResult = await client.callTool({
+      name: "shipmail_update_newsletter",
+      arguments: {
+        id: "nws_123",
+        subject_b: "Subject B",
+        subject_test_percent: 20,
+        subject_test_hours: 6,
+      },
+    });
+    const removeResult = await client.callTool({
+      name: "shipmail_update_newsletter",
+      arguments: { id: "nws_123", name: "Launch", subject_b: null },
+    });
+
+    expect(setResult.isError).toBeFalsy();
+    expect(removeResult.isError).toBeFalsy();
+    expect(JSON.parse(captured[0]?.body ?? "{}")).toEqual({
+      subject_b: "Subject B",
+      subject_test_percent: 20,
+      subject_test_hours: 6,
+    });
+    expect(JSON.parse(captured[1]?.body ?? "{}")).toEqual({ name: "Launch", subject_b: null });
   });
 
   test("rejects half-filled column CTAs before calling the API", async () => {
