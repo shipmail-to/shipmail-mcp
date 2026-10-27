@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.9 (2026-10-27)
+
+
+### Bug Fixes
+
+* **mcp:** use Shipmail's own description in package, registry and README
+
 ## 0.9.8 (2026-10-27)
 
 

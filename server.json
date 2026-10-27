@@ -1,12 +1,12 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.shipmail-to/shipmail-mcp",
-  "description": "Shipmail MCP server. Modern email for your business, with an API for your agents.",
+  "description": "Modern email for your business. Inboxes, calendars, newsletters and an API for your agents.",
   "repository": {
     "url": "https://github.com/shipmail-to/shipmail-mcp",
     "source": "github"
   },
-  "version": "0.9.8",
+  "version": "0.9.9",
   "websiteUrl": "https://shipmail.to/docs/mcp",
   "remotes": [
     {
@@ -27,7 +27,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "shipmail-mcp",
-      "version": "0.9.8",
+      "version": "0.9.9",
       "transport": {
         "type": "stdio"
       },

@@ -7,7 +7,7 @@
 [![source](https://img.shields.io/badge/source-GitHub-black.svg)](https://github.com/shipmail-to/shipmail-mcp)
 [![smithery badge](https://smithery.ai/badge/shipmail-to/shipmail-mcp)](https://smithery.ai/servers/shipmail-to/shipmail-mcp)
 
-Official Model Context Protocol server for [Shipmail](https://shipmail.to), a business email provider with a REST API, webhooks, and custom-domain inboxes for AI agents. Connect MCP-compatible agents (Claude Desktop, Cursor, VS Code, Windsurf, and others) to Shipmail domains, mailboxes, messages, threads, webhooks, suppressions, email templates, audiences, newsletters, calendars, booking pages, automations, and organization members.
+Official Model Context Protocol server for [Shipmail](https://shipmail.to). Shipmail is modern email for your business: inboxes, calendars, newsletters, bookings and an AI assistant, plus transactional email and an API for your agents. Connect MCP-compatible agents (Claude Desktop, Cursor, VS Code, Windsurf, and others) to Shipmail domains, mailboxes, messages, threads, webhooks, suppressions, email templates, audiences, newsletters, calendars, booking pages, automations, and organization members.
 The public source and npm publishing repository is [shipmail-to/shipmail-mcp](https://github.com/shipmail-to/shipmail-mcp).
 
 > [Model Context Protocol](https://modelcontextprotocol.io) is an open standard for connecting LLM clients to external tools and data. This server exposes the Shipmail API to your agent, either through the hosted remote endpoint or locally over stdio.
