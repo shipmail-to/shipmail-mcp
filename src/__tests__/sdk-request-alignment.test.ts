@@ -20,11 +20,13 @@ import type {
   CreateMailboxParams,
   CreateNewsletterFromChangelogParams,
   CreateNewsletterParams,
+  CreateTemplateParams,
   CreateWebhookParams,
   InjectSandboxInboundParams,
   ListInboxMessagesParams,
   ListInboxThreadsParams,
   MoveInboxMessageParams,
+  RenderTemplateParams,
   ReplyToMessageParams,
   ReplyToThreadParams,
   ResetMailboxPasswordParams,
@@ -42,6 +44,7 @@ import type {
   UpdateMailboxFolderParams,
   UpdateMailboxParams,
   UpdateNewsletterParams,
+  UpdateTemplateParams,
   UpdateWebhookParams,
 } from "shipmail";
 import type { z } from "zod/v4";
@@ -58,11 +61,13 @@ import type {
   createMailboxInputSchema,
   createNewsletterFromChangelogInputSchema,
   createNewsletterInputSchema,
+  createTemplateInputSchema,
   createWebhookInputSchema,
   injectSandboxInboundInputSchema,
   listMailboxInboxMessagesInputSchema,
   listMailboxInboxThreadsInputSchema,
   moveInboxMessageInputSchema,
+  previewTemplateInputSchema,
   replyToMessageInputSchema,
   replyToThreadInputSchema,
   resetPasswordInputSchema,
@@ -79,6 +84,7 @@ import type {
   updateMailboxFolderInputSchema,
   updateMailboxInputSchema,
   updateNewsletterInputSchema,
+  updateTemplateInputSchema,
   updateWebhookInputSchema,
 } from "../schemas.js";
 
@@ -234,6 +240,16 @@ type _UpdateWebhook = AssertTrue<
   KeysMatch<UpdateWebhookParams, StripMcpOnly<z.infer<typeof updateWebhookInputSchema>>>
 >;
 
+type _CreateTemplate = AssertTrue<
+  KeysMatch<CreateTemplateParams, StripMcpOnly<z.infer<typeof createTemplateInputSchema>>>
+>;
+type _UpdateTemplate = AssertTrue<
+  KeysMatch<UpdateTemplateParams, StripMcpOnly<z.infer<typeof updateTemplateInputSchema>>>
+>;
+type _RenderTemplate = AssertTrue<
+  KeysMatch<RenderTemplateParams, StripMcpOnly<z.infer<typeof previewTemplateInputSchema>>>
+>;
+
 // Suppress unused-type warnings; the type aliases above are what enforce the
 // assertion at compile time.
 type _AllChecks = [
@@ -270,6 +286,9 @@ type _AllChecks = [
   _ScheduleNewsletter,
   _CreateWebhook,
   _UpdateWebhook,
+  _CreateTemplate,
+  _UpdateTemplate,
+  _RenderTemplate,
 ];
 
 describe("SDK request params / MCP input schema alignment", () => {
@@ -308,7 +327,10 @@ describe("SDK request params / MCP input schema alignment", () => {
       true,
       true,
       true,
+      true,
+      true,
+      true,
     ];
-    if (checks.length !== 33) throw new Error("alignment matrix size changed");
+    if (checks.length !== 36) throw new Error("alignment matrix size changed");
   });
 });

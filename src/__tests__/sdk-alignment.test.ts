@@ -34,6 +34,7 @@ import type {
   InboxReplyDraftList,
   InboxReplyDraftWrite,
   InboxThread,
+  Invitation,
   Mailbox,
   MailboxAppPassword,
   MailboxExport,
@@ -53,7 +54,10 @@ import type {
   NewsletterPreflightItem,
   NewsletterPreview,
   NewsletterTestSend,
+  RenderedTemplate,
   Suppression,
+  Template,
+  TemplateVersion,
   Webhook,
   WebhookDelivery,
   WebhookDeliveryDetail,
@@ -81,6 +85,7 @@ import {
   inboxReplyDraftSchema,
   inboxReplyDraftWriteSchema,
   inboxThreadSchema,
+  invitationSchema,
   mailboxAppPasswordSchema,
   mailboxExportSchema,
   mailboxFolderSchema,
@@ -99,7 +104,10 @@ import {
   newsletterPreviewSchema,
   newsletterSchema,
   newsletterTestSendSchema,
+  renderedTemplateSchema,
   suppressionSchema,
+  templateSchema,
+  templateVersionSchema,
   webhookDeliveryDetailSchema,
   webhookDeliverySchema,
   webhookSchema,
@@ -183,6 +191,10 @@ type _MemberRoleValues = AssertTrue<
 type _MemberMailboxAccessKeys = AssertTrue<
   KeysMatch<MemberMailboxAccess, z.infer<typeof memberSchema>["mailbox_access"]>
 >;
+type _InvitationKeys = AssertTrue<KeysMatch<Invitation, z.infer<typeof invitationSchema>>>;
+type _InvitationRoleValues = AssertTrue<
+  ValuesMatch<Invitation["role"], z.infer<typeof invitationSchema>["role"]>
+>;
 type _MemberMailboxAccessScopeValues = AssertTrue<
   ValuesMatch<MemberMailboxAccess["scope"], z.infer<typeof memberSchema>["mailbox_access"]["scope"]>
 >;
@@ -213,6 +225,13 @@ type _WebhookDeliveryDetailKeys = AssertTrue<
   KeysMatch<WebhookDeliveryDetail, z.infer<typeof webhookDeliveryDetailSchema>>
 >;
 type _SuppressionKeys = AssertTrue<KeysMatch<Suppression, z.infer<typeof suppressionSchema>>>;
+type _TemplateKeys = AssertTrue<KeysMatch<Template, z.infer<typeof templateSchema>>>;
+type _TemplateVersionKeys = AssertTrue<
+  KeysMatch<TemplateVersion, z.infer<typeof templateVersionSchema>>
+>;
+type _RenderedTemplateKeys = AssertTrue<
+  KeysMatch<RenderedTemplate, z.infer<typeof renderedTemplateSchema>>
+>;
 type _DomainSearchKeys = AssertTrue<
   KeysMatch<DomainSearchResult, z.infer<typeof domainSearchResultSchema>>
 >;
@@ -250,6 +269,8 @@ type _AllChecks = [
   _MemberRoleValues,
   _MemberMailboxAccessKeys,
   _MemberMailboxAccessScopeValues,
+  _InvitationKeys,
+  _InvitationRoleValues,
   _NewsletterDomainKeys,
   _NewsletterKeys,
   _NewsletterAssetKeys,
@@ -261,6 +282,9 @@ type _AllChecks = [
   _WebhookDeliveryKeys,
   _WebhookDeliveryDetailKeys,
   _SuppressionKeys,
+  _TemplateKeys,
+  _TemplateVersionKeys,
+  _RenderedTemplateKeys,
   _DomainSearchKeys,
   _DomainVerificationKeys,
 ];
@@ -310,7 +334,12 @@ describe("SDK / MCP schema alignment", () => {
       true,
       true,
       true,
+      true,
+      true,
+      true,
+      true,
+      true,
     ];
-    if (checks.length !== 40) throw new Error("alignment matrix size changed");
+    if (checks.length !== 45) throw new Error("alignment matrix size changed");
   });
 });

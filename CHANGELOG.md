@@ -1,387 +1,393 @@
 # Changelog
 
-## [0.9.7](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.6...shipmail-mcp-v0.9.7) (2026-10-23)
+## 0.9.8 (2026-10-27)
 
 
 ### Features
 
-* add scoped agent mail review and reliable reply workflows ([#3532](https://github.com/shipmail-to/Shipmail/issues/3532)) ([5710425](https://github.com/shipmail-to/Shipmail/commit/5710425eab334b445f092ed44a6be845c62c2a88))
-* **api:** one-off booking links in the API, SDKs, CLI and MCP ([#3495](https://github.com/shipmail-to/Shipmail/issues/3495)) ([66dc16b](https://github.com/shipmail-to/Shipmail/commit/66dc16b2c837891d809e5a05ebab0063d4ddf342))
-* **billing:** let trials test every feature with clear limits ([#3503](https://github.com/shipmail-to/Shipmail/issues/3503)) ([fe7abb3](https://github.com/shipmail-to/Shipmail/commit/fe7abb3f22977799fd11a5c5e97fd42f7472df7e))
-* composer code formatting, paragraph spacing and the reply-draft lifecycle API ([#3362](https://github.com/shipmail-to/Shipmail/issues/3362)) ([b1a1760](https://github.com/shipmail-to/Shipmail/commit/b1a176046014024cc119013dd79e789fc31983ad))
-* domain health API, MCP tool and shareable health reports ([#3414](https://github.com/shipmail-to/Shipmail/issues/3414)) ([e7bef26](https://github.com/shipmail-to/Shipmail/commit/e7bef2636bd38e7cd24985e50df274f6550d8194))
-* hero best-for line, no "own domain" copy, new welcome email steps ([#3335](https://github.com/shipmail-to/Shipmail/issues/3335)) ([a695006](https://github.com/shipmail-to/Shipmail/commit/a695006e0548b55748836ecd6c7603d2e8d4a1dc))
-* **newsletters:** AI content check with human review, and subscriber domain re-check ([#3494](https://github.com/shipmail-to/Shipmail/issues/3494)) ([042cd04](https://github.com/shipmail-to/Shipmail/commit/042cd04ddda599c2efdde1b85233408c012130ff))
-* **newsletters:** reader engagement: tiers, engaged first, send to more, list cleanup, subject tests ([#3330](https://github.com/shipmail-to/Shipmail/issues/3330)) ([440efa8](https://github.com/shipmail-to/Shipmail/commit/440efa8d020993b467d8d1045845dccb0f2ff1c7))
-* **newsletters:** summary email, subscriber page, issue timing and where an issue goes ([#3492](https://github.com/shipmail-to/Shipmail/issues/3492)) ([a9d7055](https://github.com/shipmail-to/Shipmail/commit/a9d705590f8b4912e66ab68c6e81f9733dda6cbf))
-* **newsletters:** website settings polish, and call a send a newsletter in the app and a post on the website ([#3387](https://github.com/shipmail-to/Shipmail/issues/3387)) ([9a07ded](https://github.com/shipmail-to/Shipmail/commit/9a07deda279f785b326955941390b35461785f7a))
-* **newsletters:** welcome sequences, newsletter websites, webmail button and Markdown input ([#3326](https://github.com/shipmail-to/Shipmail/issues/3326)) ([2c64c64](https://github.com/shipmail-to/Shipmail/commit/2c64c64a5d41f16e95c7c18c1dbd6a3a7f8db070))
-* **webhooks:** authenticate mail a Shipmail mailbox sent, matched to its send record ([#3298](https://github.com/shipmail-to/Shipmail/issues/3298)) ([166dbc3](https://github.com/shipmail-to/Shipmail/commit/166dbc3c19b619f1a9cc30d9fa520a3d02078fb7))
+* act on AgentMail's Claude reply findings
+* **agents:** invite colleagues over the API and limit agent connections to mailboxes
+* **mcp:** ship a Gemini CLI extension manifest
+* **security:** publish security@shipmail.to as the security contact
 
-
-### Bug Fixes
-
-* analytics sync and attachment counts, MCP sender addresses, calendar import undo ([#3384](https://github.com/shipmail-to/Shipmail/issues/3384)) ([81a57a8](https://github.com/shipmail-to/Shipmail/commit/81a57a82212983d2749fb4bc578736e41ee23ea3))
-* **sending:** suppression scopes, expiring soft-bounce pauses, signup bot protection ([#3309](https://github.com/shipmail-to/Shipmail/issues/3309)) ([ebdec1a](https://github.com/shipmail-to/Shipmail/commit/ebdec1a3b39229f4ed0bba09763a9e1539095eb7))
-
-## [0.9.6](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.5...shipmail-mcp-v0.9.6) (2026-10-14)
+## 0.9.7 (2026-10-23)
 
 
 ### Features
 
-* act on AgentMail's agent eval findings ([#3272](https://github.com/shipmail-to/Shipmail/issues/3272)) ([4ae9ac9](https://github.com/shipmail-to/Shipmail/commit/4ae9ac9d0bab23c182f365e6e7800cc81524e440))
-* inbox search filters and webhook sender allowlist for agents ([#3286](https://github.com/shipmail-to/Shipmail/issues/3286)) ([66e5c15](https://github.com/shipmail-to/Shipmail/commit/66e5c15c2e0c515ebea9612c3dcb1b60b2722b32))
-* **newsletters:** link analytics for email and the Atom feed ([#3196](https://github.com/shipmail-to/Shipmail/issues/3196)) ([ef9e842](https://github.com/shipmail-to/Shipmail/commit/ef9e842b5ebbb919a0a4d5444b21eb12db5c2576))
-* reply_text and sender authentication for agents ([#3277](https://github.com/shipmail-to/Shipmail/issues/3277)) ([5369e81](https://github.com/shipmail-to/Shipmail/commit/5369e817866ae9ce10cd07ece80816ccbd35b793))
+* add scoped agent mail review and reliable reply workflows
+* **api:** one-off booking links in the API, SDKs, CLI and MCP
+* **billing:** let trials test every feature with clear limits
+* composer code formatting, paragraph spacing and the reply-draft lifecycle API
+* domain health API, MCP tool and shareable health reports
+* hero best-for line, no "own domain" copy, new welcome email steps
+* **newsletters:** AI content check with human review, and subscriber domain re-check
+* **newsletters:** reader engagement: tiers, engaged first, send to more, list cleanup, subject tests
+* **newsletters:** summary email, subscriber page, issue timing and where an issue goes
+* **newsletters:** website settings polish, and call a send a newsletter in the app and a post on the website
+* **newsletters:** welcome sequences, newsletter websites, webmail button and Markdown input
+* **webhooks:** authenticate mail a Shipmail mailbox sent, matched to its send record
 
 
 ### Bug Fixes
 
-* MCP connects from LangChain JS, and a wrong 2FA code says so ([#3293](https://github.com/shipmail-to/Shipmail/issues/3293)) ([f8fdf2f](https://github.com/shipmail-to/Shipmail/commit/f8fdf2f763f699cb0cb271b9f67a9d295f67836a))
+* analytics sync and attachment counts, MCP sender addresses, calendar import undo
+* **sending:** suppression scopes, expiring soft-bounce pauses, signup bot protection
 
-## [0.9.5](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.4...shipmail-mcp-v0.9.5) (2026-10-10)
+## 0.9.6 (2026-10-14)
 
 
 ### Features
 
-* **rules:** run rules on the inbox, Recipient contains, keep typed values ([#3079](https://github.com/shipmail-to/Shipmail/issues/3079)) ([660ff00](https://github.com/shipmail-to/Shipmail/commit/660ff0062ba51737b9af95b98c716c9cfd775b31))
-* **webhooks:** authenticate deliveries with an Authorization header or a Standard Webhooks secret ([#3092](https://github.com/shipmail-to/Shipmail/issues/3092)) ([27ba1dc](https://github.com/shipmail-to/Shipmail/commit/27ba1dc16838aee268989f7beb79148072d0e18a))
-
-## [0.9.4](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.3...shipmail-mcp-v0.9.4) (2026-10-07)
+* act on AgentMail's agent eval findings
+* inbox search filters and webhook sender allowlist for agents
+* **newsletters:** link analytics for email and the Atom feed
+* reply_text and sender authentication for agents
 
 
 ### Bug Fixes
 
-* **mcp:** describe Shipmail with the current hero copy in package listings ([#3033](https://github.com/shipmail-to/Shipmail/issues/3033)) ([87ec869](https://github.com/shipmail-to/Shipmail/commit/87ec8699191b554e3f07694d40f779e8fbe94117))
+* MCP connects from LangChain JS, and a wrong 2FA code says so
 
-## [0.9.3](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.2...shipmail-mcp-v0.9.3) (2026-10-06)
+## 0.9.5 (2026-10-10)
 
 
 ### Features
 
-* **agents:** hand Shipmail setup to an agent, owner pays ([#2978](https://github.com/shipmail-to/Shipmail/issues/2978)) ([2f7db58](https://github.com/shipmail-to/Shipmail/commit/2f7db58f5fd9f1c9865a82384cf42f32e7e9be5c))
-* forward mail for a selected alias ([#2968](https://github.com/shipmail-to/Shipmail/issues/2968)) ([6bc51ce](https://github.com/shipmail-to/Shipmail/commit/6bc51ce7f416436ff0755e6680e5c13780d5a045))
+* **rules:** run rules on the inbox, Recipient contains, keep typed values
+* **webhooks:** authenticate deliveries with an Authorization header or a Standard Webhooks secret
+
+## 0.9.4 (2026-10-07)
 
 
 ### Bug Fixes
 
-* **domains:** ask for the four DNS records a connected domain needs ([#2970](https://github.com/shipmail-to/Shipmail/issues/2970)) ([9630a1e](https://github.com/shipmail-to/Shipmail/commit/9630a1e9a33a3426d8ff28bb9da7d66957da908c))
+* **mcp:** describe Shipmail with the current hero copy in package listings
 
-## [0.9.2](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.1...shipmail-mcp-v0.9.2) (2026-10-03)
+## 0.9.3 (2026-10-06)
 
 
 ### Features
 
-* **api:** member roles and mailbox access in the API, SDKs, CLI and MCP (R3b-3) ([#2844](https://github.com/shipmail-to/Shipmail/issues/2844)) ([a181133](https://github.com/shipmail-to/Shipmail/commit/a181133adbe43c375a08f3de6b2be126a80203e0))
-* **calendar:** add reliable multi-calendar scheduling workspace ([#2864](https://github.com/shipmail-to/Shipmail/issues/2864)) ([41718d9](https://github.com/shipmail-to/Shipmail/commit/41718d9e0cf998265b640c17fda58314f92922e9))
-* complete newsletter workspace and audience tools ([#2843](https://github.com/shipmail-to/Shipmail/issues/2843)) ([728c4d5](https://github.com/shipmail-to/Shipmail/commit/728c4d5c7d6f02726ca73ba4605e038935c61a6b))
-* **newsletters:** optional open and click tracking, clearer import drop zone ([#2860](https://github.com/shipmail-to/Shipmail/issues/2860)) ([38c25fd](https://github.com/shipmail-to/Shipmail/commit/38c25fd929c0ba973a19c182aad4942a137325e5))
-* **roles:** selected-access Admins manage forwarding, passwords and aliases of their mailboxes ([#2878](https://github.com/shipmail-to/Shipmail/issues/2878)) ([6aef8c3](https://github.com/shipmail-to/Shipmail/commit/6aef8c3ee8d96c21eb5cda690540726ec04b4057))
+* **agents:** hand Shipmail setup to an agent, owner pays
+* forward mail for a selected alias
 
 
 ### Bug Fixes
 
-* preserve send and automation durability across retries ([#2839](https://github.com/shipmail-to/Shipmail/issues/2839)) ([38b0cb6](https://github.com/shipmail-to/Shipmail/commit/38b0cb68b780abd87e0b74dd2666638bb360d45f))
+* **domains:** ask for the four DNS records a connected domain needs
 
-## [0.9.1](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.9.0...shipmail-mcp-v0.9.1) (2026-10-01)
+## 0.9.2 (2026-10-03)
+
+
+### Features
+
+* **api:** member roles and mailbox access in the API, SDKs, CLI and MCP (R3b-3)
+* **calendar:** add reliable multi-calendar scheduling workspace
+* complete newsletter workspace and audience tools
+* **newsletters:** optional open and click tracking, clearer import drop zone
+* **roles:** selected-access Admins manage forwarding, passwords and aliases of their mailboxes
 
 
 ### Bug Fixes
 
-* **mcp:** open the plugin skill description with the homepage tagline ([#2816](https://github.com/shipmail-to/Shipmail/issues/2816)) ([f1d09ab](https://github.com/shipmail-to/Shipmail/commit/f1d09ab6a322bdd3be5b17841707d80b7b6a8fac))
+* preserve send and automation durability across retries
 
-## [0.9.0](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.9...shipmail-mcp-v0.9.0) (2026-10-01)
+## 0.9.1 (2026-10-01)
+
+
+### Bug Fixes
+
+* **mcp:** open the plugin skill description with the homepage tagline
+
+## 0.9.0 (2026-10-01)
 
 
 ### ⚠ BREAKING CHANGES
 
-* remove the partner program ([#2765](https://github.com/shipmail-to/Shipmail/issues/2765))
+* remove the partner program
 
 ### Features
 
-* **scheduled-send:** cutover tooling, legacy import, operator resolution and draft revisions (step 4b-2) ([#2781](https://github.com/shipmail-to/Shipmail/issues/2781)) ([2786dc5](https://github.com/shipmail-to/Shipmail/commit/2786dc5f9974fda1dc44f4ae6e5311bbdb29f9c6))
+* **scheduled-send:** cutover tooling, legacy import, operator resolution and draft revisions (step 4b-2)
 
 
 ### Bug Fixes
 
-* **mcp:** refresh the plugin listing copy and logo ([#2812](https://github.com/shipmail-to/Shipmail/issues/2812)) ([9ab7854](https://github.com/shipmail-to/Shipmail/commit/9ab7854120a1076e60e455b5e0681cd238b61682))
+* **mcp:** refresh the plugin listing copy and logo
 
 
 ### Code Refactoring
 
-* remove the partner program ([#2765](https://github.com/shipmail-to/Shipmail/issues/2765)) ([ce36318](https://github.com/shipmail-to/Shipmail/commit/ce3631868740020c7ff8460bea06d580577b23af))
+* remove the partner program
 
-## [0.8.9](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.8...shipmail-mcp-v0.8.9) (2026-09-28)
-
-
-### Features
-
-* **admin:** abuse cases with lock, clear and terminate ([#2619](https://github.com/shipmail-to/Shipmail/issues/2619)) ([d2a87a5](https://github.com/shipmail-to/Shipmail/commit/d2a87a50cf50ff67d8aa7a7e7d311409058e689c))
-* **webhooks:** limit a webhook to specific mailboxes or domains ([#2658](https://github.com/shipmail-to/Shipmail/issues/2658)) ([75d810e](https://github.com/shipmail-to/Shipmail/commit/75d810ea0434ea691140d83e791fa58f2ceea212))
-
-
-### Bug Fixes
-
-* harden SSRF and URL handling in discovery, redirects, S3 keys, import worker and MCP ([#2582](https://github.com/shipmail-to/Shipmail/issues/2582)) ([2bc08c4](https://github.com/shipmail-to/Shipmail/commit/2bc08c4c577eed2ce9942d787fba1a597464acb6))
-* MCP text attachments in structured output, public origin for client-facing URLs ([#2568](https://github.com/shipmail-to/Shipmail/issues/2568)) ([42cc998](https://github.com/shipmail-to/Shipmail/commit/42cc998776f3632f5f861532017a544e0aeeff0d))
-* package security and drift fixes from the audit ([#2595](https://github.com/shipmail-to/Shipmail/issues/2595)) ([0b629e4](https://github.com/shipmail-to/Shipmail/commit/0b629e444b4b0868a0b1d3ae305fe610917cdde3))
-
-## [0.8.8](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.7...shipmail-mcp-v0.8.8) (2026-09-26)
-
-### Bug Fixes
-
-* centralize MCP tool guidance ([#2520](https://github.com/shipmail-to/Shipmail/issues/2520)) ([3c60a5c](https://github.com/shipmail-to/Shipmail/commit/3c60a5cdacff84273cbca4f4b4b7d0ea6a2a6db3))
-
-## [0.8.7](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.6...shipmail-mcp-v0.8.7) (2026-09-24)
+## 0.8.9 (2026-09-28)
 
 
 ### Features
 
-* **api:** save new-message drafts from the API and MCP ([#2440](https://github.com/shipmail-to/Shipmail/issues/2440)) ([4d2ee44](https://github.com/shipmail-to/Shipmail/commit/4d2ee4448b762a29833b0a0c37ef82340f70c684))
-
-## [0.8.6](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.5...shipmail-mcp-v0.8.6) (2026-09-16)
-
-
-### Bug Fixes
-
-* **inbox:** keep a scheduled send's stored body when only its time changes ([#2190](https://github.com/shipmail-to/Shipmail/issues/2190)) ([32a4bb7](https://github.com/shipmail-to/Shipmail/commit/32a4bb70821e69b350b5d366d0a4f40bfe2f632a))
-
-## [0.8.5](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.4...shipmail-mcp-v0.8.5) (2026-09-12)
+* **admin:** abuse cases with lock, clear and terminate
+* **webhooks:** limit a webhook to specific mailboxes or domains
 
 
 ### Bug Fixes
 
-* **mcp:** let published output schemas accept enum values added later ([#2141](https://github.com/shipmail-to/Shipmail/issues/2141)) ([8e2633d](https://github.com/shipmail-to/Shipmail/commit/8e2633d4aada15cb2087b73991faceb491698ef4))
+* harden SSRF and URL handling in discovery, redirects, S3 keys, import worker and MCP
+* MCP text attachments in structured output, public origin for client-facing URLs
+* package security and drift fixes from the audit
 
-## [0.8.4](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.3...shipmail-mcp-v0.8.4) (2026-09-11)
-
-
-### Bug Fixes
-
-* **import:** skip a source folder the server refuses instead of failing the import ([#2133](https://github.com/shipmail-to/Shipmail/issues/2133)) ([4367422](https://github.com/shipmail-to/Shipmail/commit/4367422ed07209d2f44dfb905c9922ec47263063))
-
-## [0.8.3](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.2...shipmail-mcp-v0.8.3) (2026-09-11)
-
+## 0.8.8 (2026-09-26)
 
 ### Bug Fixes
 
-* **mcp:** let tool output schemas accept fields added later ([#2121](https://github.com/shipmail-to/Shipmail/issues/2121)) ([323ef4b](https://github.com/shipmail-to/Shipmail/commit/323ef4bcc62baddd79338df4b622569d77e1c931))
+* centralize MCP tool guidance
 
-## [0.8.2](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.1...shipmail-mcp-v0.8.2) (2026-09-11)
+## 0.8.7 (2026-09-24)
 
 
 ### Features
 
-* **api:** add conversation_id and deprecate thread_id ([#2111](https://github.com/shipmail-to/Shipmail/issues/2111)) ([1961326](https://github.com/shipmail-to/Shipmail/commit/19613264c5745decc0cc05cb186736c755df5053))
+* **api:** save new-message drafts from the API and MCP
 
-## [0.8.1](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.8.0...shipmail-mcp-v0.8.1) (2026-09-04)
+## 0.8.6 (2026-09-16)
+
+
+### Bug Fixes
+
+* **inbox:** keep a scheduled send's stored body when only its time changes
+
+## 0.8.5 (2026-09-12)
+
+
+### Bug Fixes
+
+* **mcp:** let published output schemas accept enum values added later
+
+## 0.8.4 (2026-09-11)
+
+
+### Bug Fixes
+
+* **import:** skip a source folder the server refuses instead of failing the import
+
+## 0.8.3 (2026-09-11)
+
+
+### Bug Fixes
+
+* **mcp:** let tool output schemas accept fields added later
+
+## 0.8.2 (2026-09-11)
 
 
 ### Features
 
-* **newsletters:** add self-service migration center ([#1922](https://github.com/shipmail-to/Shipmail/issues/1922)) ([3ac5fba](https://github.com/shipmail-to/Shipmail/commit/3ac5fbafe9a725d71596cb67392647aa9661c5c3))
+* **api:** add conversation_id and deprecate thread_id
 
-## [0.8.0](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.15...shipmail-mcp-v0.8.0) (2026-09-03)
+## 0.8.1 (2026-09-04)
+
+
+### Features
+
+* **newsletters:** add self-service migration center
+
+## 0.8.0 (2026-09-03)
+
+
+
+
+### Features
+
+* **dashboard:** polish UX and add developer workspace
+
+
+### Bug Fixes
+
+* **spam:** reserve X-Spam-Flag header
+
+## 0.7.15 (2026-08-31)
+
+
+### Features
+
+* **mailboxes:** add sender-filtered forwarding
+* **mcp:** support reading inbox attachments
+
+## 0.7.14 (2026-08-28)
+
+
+### Bug Fixes
+
+* **mcp:** restore public release sync
+
+## 0.7.13 (2026-08-21)
+
+
+### Features
+
+* **mailboxes:** allow cross-domain catch-all
+
+## 0.7.12 (2026-08-20)
+
+
+### Features
+
+* **mailboxes:** add mailbox delivery routing
+
+## 0.7.11 (2026-08-19)
+
+
+### Features
+
+* **inbox:** recover away conversations and expose members over the API
+* **webhooks:** emit member.away_updated
+
+## 0.7.10 (2026-08-17)
+
+
+### Bug Fixes
+
+* **newsletters:** allow deleting domains used by history
+
+## 0.7.9 (2026-08-15)
+
+
+### Features
+
+* retain and restore uploaded import sources
+
+
+### Bug Fixes
+
+* retain and resume uploaded imports
+
+## 0.7.8 (2026-08-10)
+
+
+### Bug Fixes
+
+* **newsletters:** restore production media uploads
+
+## 0.7.7 (2026-08-08)
+
+
+### Features
+
+* **newsletters:** accept inline HTML in block prose
+* **newsletters:** add secure MCP media uploads
+
+## 0.7.6 (2026-08-07)
+
+
+### Bug Fixes
+
+* **mcp:** let a multi-organization connection reach every organization
+
+## 0.7.5 (2026-08-03)
+
+
+### Features
+
+* **calendar:** localize invitation emails
+
+## 0.7.4 (2026-08-02)
+
+
+### Features
+
+* **mcp:** complete mailbox-rule management tools
+
+
+### Bug Fixes
+
+* **mcp:** advertise folder and inbox-rule management tools
+
+## 0.7.3 (2026-08-02)
+
+
+### Features
+
+* **api:** add public automations API
+
+## 0.7.2 (2026-07-30)
+
+
+### Features
+
+* **mcp:** add Cline and Smithery distributions
+* **status:** launch independent Cloudflare status platform
+
+
+### Bug Fixes
+
+* **mcp:** use white-background distribution logos
+
+## 0.7.1 (2026-07-30)
+
+
+### Features
+
+* **mcp:** add cross-platform plugin distribution
+
+
+### Bug Fixes
+
+* **mcp:** use Shipmail brand capitalization
+
+## 0.7.0 (2026-07-29)
 
 
 ### ⚠ BREAKING CHANGES
 
-* **spam:** make Stalwart placement authoritative ([#1783](https://github.com/shipmail-to/Shipmail/issues/1783))
+* **mcp:** serve legacy clients again over stdio
 
-### Features
+### Bug Fixes
 
-* **dashboard:** polish UX and add developer workspace ([#1838](https://github.com/shipmail-to/Shipmail/issues/1838)) ([9c123da](https://github.com/shipmail-to/Shipmail/commit/9c123da059512c5617a14d0e024fb0a34a92f48c))
-* **spam:** make Stalwart placement authoritative ([#1783](https://github.com/shipmail-to/Shipmail/issues/1783)) ([041bba0](https://github.com/shipmail-to/Shipmail/commit/041bba0129e89aec094db3b99f4eeca3eac4b238))
+* **mcp:** serve legacy clients again over stdio
+
+## 0.6.6 (2026-07-29)
 
 
 ### Bug Fixes
 
-* **api:** reserve Stalwart spam verdict headers ([#1840](https://github.com/shipmail-to/Shipmail/issues/1840)) ([b403847](https://github.com/shipmail-to/Shipmail/commit/b403847ea1f721ccc11757ebbd77cb035170ca05))
-* **spam:** reserve X-Spam-Flag header ([#1843](https://github.com/shipmail-to/Shipmail/issues/1843)) ([053ee5f](https://github.com/shipmail-to/Shipmail/commit/053ee5fe5191bb306394fa8fa91bc3ae3fc58465))
+* **mcp:** start the server when capabilities cannot be fetched
 
-## [0.7.15](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.14...shipmail-mcp-v0.7.15) (2026-08-31)
-
-
-### Features
-
-* **mailboxes:** add sender-filtered forwarding ([#1801](https://github.com/shipmail-to/Shipmail/issues/1801)) ([f2c4b06](https://github.com/shipmail-to/Shipmail/commit/f2c4b061129039e0e1fc8b1e360154148ee169df))
-* **mcp:** support reading inbox attachments ([#1797](https://github.com/shipmail-to/Shipmail/issues/1797)) ([6767366](https://github.com/shipmail-to/Shipmail/commit/676736645f471ec6142cc647022f92947d86f91a))
-
-## [0.7.14](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.13...shipmail-mcp-v0.7.14) (2026-08-28)
-
-
-### Bug Fixes
-
-* **mcp:** restore public release sync ([#1747](https://github.com/shipmail-to/Shipmail/issues/1747)) ([337f29b](https://github.com/shipmail-to/Shipmail/commit/337f29b85c832cd476d874aa0e55fe3c995313ea))
-
-## [0.7.13](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.12...shipmail-mcp-v0.7.13) (2026-08-21)
+## 0.6.5 (2026-07-29)
 
 
 ### Features
 
-* **mailboxes:** allow cross-domain catch-all ([#1587](https://github.com/shipmail-to/Shipmail/issues/1587)) ([7513e0c](https://github.com/shipmail-to/Shipmail/commit/7513e0c4141dd3b37de5d55a34e8771e28760bcb))
+* **api:** expose inbound authentication results to clients
 
-## [0.7.12](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.11...shipmail-mcp-v0.7.12) (2026-08-20)
-
-
-### Features
-
-* **mailboxes:** add mailbox delivery routing ([#1582](https://github.com/shipmail-to/Shipmail/issues/1582)) ([fe3bb53](https://github.com/shipmail-to/Shipmail/commit/fe3bb53e7aa2dcf52da1d2bdbe42cbdcf93a3943))
-
-## [0.7.11](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.10...shipmail-mcp-v0.7.11) (2026-08-19)
+## 0.6.4 (2026-07-29)
 
 
 ### Features
 
-* **inbox:** recover away conversations and expose members over the API ([#1546](https://github.com/shipmail-to/Shipmail/issues/1546)) ([f2a74e6](https://github.com/shipmail-to/Shipmail/commit/f2a74e66298ede77018edf67480caf68fbc70640))
-* **webhooks:** emit member.away_updated ([#1551](https://github.com/shipmail-to/Shipmail/issues/1551)) ([f75a2c3](https://github.com/shipmail-to/Shipmail/commit/f75a2c3da2454b92cc41fb8d74359aa78afa267f))
+* **api:** add message analytics sync endpoint
 
-## [0.7.10](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.9...shipmail-mcp-v0.7.10) (2026-08-17)
-
-
-### Bug Fixes
-
-* **newsletters:** allow deleting domains used by history ([#1520](https://github.com/shipmail-to/Shipmail/issues/1520)) ([0413628](https://github.com/shipmail-to/Shipmail/commit/0413628983ecaabcfeb8e0953f1f8f421bb2f317))
-
-## [0.7.9](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.8...shipmail-mcp-v0.7.9) (2026-08-15)
+## 0.6.3 (2026-07-29)
 
 
 ### Features
 
-* retain and restore uploaded import sources ([#1457](https://github.com/shipmail-to/Shipmail/issues/1457)) ([de82b59](https://github.com/shipmail-to/Shipmail/commit/de82b59c6d84c6246fca6cd4fd31b05c2c1910f6))
+* **sdk:** support multiple newsletter sender identities
 
-
-### Bug Fixes
-
-* retain and resume uploaded imports ([#1455](https://github.com/shipmail-to/Shipmail/issues/1455)) ([50df704](https://github.com/shipmail-to/Shipmail/commit/50df70454ffc0b57a57c27a330d01686aa21ced9))
-
-## [0.7.8](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.7...shipmail-mcp-v0.7.8) (2026-08-10)
-
-
-### Bug Fixes
-
-* **newsletters:** restore production media uploads ([#1359](https://github.com/shipmail-to/Shipmail/issues/1359)) ([9979155](https://github.com/shipmail-to/Shipmail/commit/99791559709bb914330a226f81ad43dd6a4dfc6b))
-
-## [0.7.7](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.6...shipmail-mcp-v0.7.7) (2026-08-08)
+## 0.6.2 (2026-07-29)
 
 
 ### Features
 
-* **newsletters:** accept inline HTML in block prose ([#1290](https://github.com/shipmail-to/Shipmail/issues/1290)) ([1714569](https://github.com/shipmail-to/Shipmail/commit/17145691a8f34b53370e83f0501c6eb8cd50061c))
-* **newsletters:** add secure MCP media uploads ([#1300](https://github.com/shipmail-to/Shipmail/issues/1300)) ([3f4d04b](https://github.com/shipmail-to/Shipmail/commit/3f4d04ba6f961ad9deb86ade3a86cfd189167971))
+* product-led distribution tools (calculator, migration planner, shareable health reports, agent starter kit)
 
-## [0.7.6](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.5...shipmail-mcp-v0.7.6) (2026-08-07)
-
-
-### Bug Fixes
-
-* **mcp:** let a multi-organization connection reach every organization ([#1282](https://github.com/shipmail-to/Shipmail/issues/1282)) ([7b452f1](https://github.com/shipmail-to/Shipmail/commit/7b452f1e64961eb2244f98b307496833cbde4e6e))
-
-## [0.7.5](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.4...shipmail-mcp-v0.7.5) (2026-08-03)
+## 0.6.1 (2026-07-29)
 
 
 ### Features
 
-* **calendar:** localize invitation emails ([#1194](https://github.com/shipmail-to/Shipmail/issues/1194)) ([aa73780](https://github.com/shipmail-to/Shipmail/commit/aa737801aeb142dec503c39da8e1da3478a1c010))
+* **api:** expose feed canonical URL and entry limit
 
-## [0.7.4](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.3...shipmail-mcp-v0.7.4) (2026-08-02)
-
-
-### Features
-
-* **mcp:** complete mailbox-rule management tools ([#1183](https://github.com/shipmail-to/Shipmail/issues/1183)) ([679a325](https://github.com/shipmail-to/Shipmail/commit/679a3257a4a00b2d17ee3490dba76fca50c56bbf))
-
-
-### Bug Fixes
-
-* **mcp:** advertise folder and inbox-rule management tools ([#1181](https://github.com/shipmail-to/Shipmail/issues/1181)) ([c14c919](https://github.com/shipmail-to/Shipmail/commit/c14c919ec10062bf9ad1ef16527e3e202cb710b1))
-
-## [0.7.3](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.2...shipmail-mcp-v0.7.3) (2026-08-02)
-
-
-### Features
-
-* **api:** add public automations API ([#1144](https://github.com/shipmail-to/Shipmail/issues/1144)) ([e1af38e](https://github.com/shipmail-to/Shipmail/commit/e1af38ef03132b7b108caa7a72cb129d9f8605aa))
-
-## [0.7.2](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.1...shipmail-mcp-v0.7.2) (2026-07-30)
-
-
-### Features
-
-* **mcp:** add Cline and Smithery distributions ([#1094](https://github.com/shipmail-to/Shipmail/issues/1094)) ([013df3b](https://github.com/shipmail-to/Shipmail/commit/013df3be62c728a8ef366e74d78a53370001b314))
-* **status:** launch independent Cloudflare status platform ([#1097](https://github.com/shipmail-to/Shipmail/issues/1097)) ([2875df4](https://github.com/shipmail-to/Shipmail/commit/2875df4cb3ef9f99f47bb7a29a0ee64f40f8ff07))
-
-
-### Bug Fixes
-
-* **mcp:** use white-background distribution logos ([#1096](https://github.com/shipmail-to/Shipmail/issues/1096)) ([bdecc6d](https://github.com/shipmail-to/Shipmail/commit/bdecc6dfa03e7843a96ab5d61fe61a9fc4495969))
-
-## [0.7.1](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.7.0...shipmail-mcp-v0.7.1) (2026-07-30)
-
-
-### Features
-
-* **mcp:** add cross-platform plugin distribution ([#1087](https://github.com/shipmail-to/Shipmail/issues/1087)) ([40de67e](https://github.com/shipmail-to/Shipmail/commit/40de67eefac308cacc1070dad2ee09b6edb6c9a7))
-
-
-### Bug Fixes
-
-* **mcp:** use Shipmail brand capitalization ([#1090](https://github.com/shipmail-to/Shipmail/issues/1090)) ([ed6e23e](https://github.com/shipmail-to/Shipmail/commit/ed6e23e0cecd9a3cb6116efc1cc43d9398f66d46))
-
-## [0.7.0](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.6.6...shipmail-mcp-v0.7.0) (2026-07-29)
-
-
-### ⚠ BREAKING CHANGES
-
-* **mcp:** serve legacy clients again over stdio ([#1065](https://github.com/shipmail-to/Shipmail/issues/1065))
-
-### Bug Fixes
-
-* **mcp:** serve legacy clients again over stdio ([#1065](https://github.com/shipmail-to/Shipmail/issues/1065)) ([f1962a5](https://github.com/shipmail-to/Shipmail/commit/f1962a59f366238b0babcc1a0c4039fe2a76e3e8))
-
-## [0.6.6](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.6.5...shipmail-mcp-v0.6.6) (2026-07-29)
-
-
-### Bug Fixes
-
-* **mcp:** start the server when capabilities cannot be fetched ([#1058](https://github.com/shipmail-to/Shipmail/issues/1058)) ([1e060c2](https://github.com/shipmail-to/Shipmail/commit/1e060c29b45c40fe7544298409a61e99a5be854c))
-
-## [0.6.5](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.6.4...shipmail-mcp-v0.6.5) (2026-07-29)
-
-
-### Features
-
-* **api:** expose inbound authentication results to clients ([#1053](https://github.com/shipmail-to/Shipmail/issues/1053)) ([a27e8d2](https://github.com/shipmail-to/Shipmail/commit/a27e8d21fa28e7df7942c7e099ff095f3550b6d7))
-
-## [0.6.4](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.6.3...shipmail-mcp-v0.6.4) (2026-07-29)
-
-
-### Features
-
-* **api:** add message analytics sync endpoint ([#1047](https://github.com/shipmail-to/Shipmail/issues/1047)) ([84d2047](https://github.com/shipmail-to/Shipmail/commit/84d20479ca9fbe69674e06234a9b003c4e6e1316))
-
-## [0.6.3](https://github.com/shipmail-to/Shipmail/compare/shipmail-mcp-v0.6.2...shipmail-mcp-v0.6.3) (2026-07-29)
-
-
-### Features
-
-* **sdk:** support multiple newsletter sender identities ([a87b176](https://github.com/shipmail-to/Shipmail/commit/a87b176934efbdb623a0c215d2f75a578cceac35))
-
-## [0.6.2](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.6.1...shipmail-mcp-v0.6.2) (2026-07-29)
-
-
-### Features
-
-* product-led distribution tools (calculator, migration planner, shareable health reports, agent starter kit) ([#1036](https://github.com/jcoulaud/Shipmail/issues/1036)) ([c7380fc](https://github.com/jcoulaud/Shipmail/commit/c7380fc2aeefb39b6daebfcae713f888803388fe))
-
-## [0.6.1](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.6.0...shipmail-mcp-v0.6.1) (2026-07-29)
-
-
-### Features
-
-* **api:** expose feed canonical URL and entry limit ([#1033](https://github.com/jcoulaud/Shipmail/issues/1033)) ([f425edd](https://github.com/jcoulaud/Shipmail/commit/f425edded1a638e0088d8e96d0a3ac9bc7756f2b))
-
-## [0.6.0](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.10...shipmail-mcp-v0.6.0) (2026-07-28)
+## 0.6.0 (2026-07-28)
 
 
 ### ⚠ BREAKING CHANGES
@@ -390,239 +396,236 @@
 
 ### Features
 
-* **mcp:** adopt protocol 2026-07-28 ([#1021](https://github.com/jcoulaud/Shipmail/issues/1021)) ([7e64035](https://github.com/jcoulaud/Shipmail/commit/7e64035808b89ffdb5a750e78de84a30c3d061d3))
-* **newsletters:** add safe feed token lifecycle ([#1017](https://github.com/jcoulaud/Shipmail/issues/1017)) ([59035bb](https://github.com/jcoulaud/Shipmail/commit/59035bb133c35b47383511cda8f87212cb90bd50))
+* **mcp:** adopt protocol 2026-07-28
+* **newsletters:** add safe feed token lifecycle
 
-## [0.5.10](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.9...shipmail-mcp-v0.5.10) (2026-07-28)
-
-
-### Bug Fixes
-
-* **seo:** align public facts and discovery surfaces ([#1012](https://github.com/jcoulaud/Shipmail/issues/1012)) ([c6956d1](https://github.com/jcoulaud/Shipmail/commit/c6956d1fc8a5913736dc7a97393da64fffe8e7f6))
-
-## [0.5.9](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.8...shipmail-mcp-v0.5.9) (2026-07-27)
-
-
-### Features
-
-* **newsletters:** publish an audience as an opt-in Atom feed ([#995](https://github.com/jcoulaud/Shipmail/issues/995)) ([67dcc6a](https://github.com/jcoulaud/Shipmail/commit/67dcc6acb42ac6cebc48cb276c0703c4a7e0f89d))
-
-## [0.5.8](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.7...shipmail-mcp-v0.5.8) (2026-07-27)
-
-
-### Features
-
-* **newsletters:** plain styling mode and code-view round-trip fixes ([#988](https://github.com/jcoulaud/Shipmail/issues/988)) ([4b62b27](https://github.com/jcoulaud/Shipmail/commit/4b62b2772e66cd1a785564cb60ad9d59b4159f0e))
-
-## [0.5.7](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.6...shipmail-mcp-v0.5.7) (2026-07-27)
-
-
-### Features
-
-* **assistant:** manage inbox rules by name and expose rule disposition in the API ([#982](https://github.com/jcoulaud/Shipmail/issues/982)) ([ba4046e](https://github.com/jcoulaud/Shipmail/commit/ba4046e043d2b5b46c4597fb2de04058977b215a))
-
-## [0.5.6](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.5...shipmail-mcp-v0.5.6) (2026-07-26)
-
-
-### Features
-
-* **mcp:** list resources across organizations ([#976](https://github.com/jcoulaud/Shipmail/issues/976)) ([6ec43e4](https://github.com/jcoulaud/Shipmail/commit/6ec43e4677131fecc91b9d1910690759c3505c93))
-
-## [0.5.5](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.4...shipmail-mcp-v0.5.5) (2026-07-26)
-
-
-### Features
-
-* **mcp:** let one connection reach several organizations ([#972](https://github.com/jcoulaud/Shipmail/issues/972)) ([3e89bb4](https://github.com/jcoulaud/Shipmail/commit/3e89bb4c5476927a6054e0219c017e058270b729))
-
-## [0.5.4](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.3...shipmail-mcp-v0.5.4) (2026-07-25)
+## 0.5.10 (2026-07-28)
 
 
 ### Bug Fixes
 
-* **mcp:** repair custom consent flow ([#962](https://github.com/jcoulaud/Shipmail/issues/962)) ([06c4189](https://github.com/jcoulaud/Shipmail/commit/06c4189eec8d6bac4ad3ca72d7f57039ffb51ee1))
+* **seo:** align public facts and discovery surfaces
 
-## [0.5.3](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.2...shipmail-mcp-v0.5.3) (2026-07-25)
+## 0.5.9 (2026-07-27)
+
+
+### Features
+
+* **newsletters:** publish an audience as an opt-in Atom feed
+
+## 0.5.8 (2026-07-27)
+
+
+### Features
+
+* **newsletters:** plain styling mode and code-view round-trip fixes
+
+## 0.5.7 (2026-07-27)
+
+
+### Features
+
+* **assistant:** manage inbox rules by name and expose rule disposition in the API
+
+## 0.5.6 (2026-07-26)
+
+
+### Features
+
+* **mcp:** list resources across organizations
+
+## 0.5.5 (2026-07-26)
+
+
+### Features
+
+* **mcp:** let one connection reach several organizations
+
+## 0.5.4 (2026-07-25)
 
 
 ### Bug Fixes
 
-* **mcp:** widen consent, redesign resource limits, drop recipient policy ([#956](https://github.com/jcoulaud/Shipmail/issues/956)) ([2a925bb](https://github.com/jcoulaud/Shipmail/commit/2a925bb2ab3159ea9f081c581421a915c1fd52a5))
+* **mcp:** repair custom consent flow
 
-## [0.5.2](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.1...shipmail-mcp-v0.5.2) (2026-07-25)
-
-
-### Bug Fixes
-
-* **mcp:** stop release PRs failing on server-card formatting ([#952](https://github.com/jcoulaud/Shipmail/issues/952)) ([1c0cacb](https://github.com/jcoulaud/Shipmail/commit/1c0cacb37005fd870dc0bb8d226f21618740aa89))
-
-## [0.5.1](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.5.0...shipmail-mcp-v0.5.1) (2026-07-25)
+## 0.5.3 (2026-07-25)
 
 
 ### Bug Fixes
 
-* **sdk:** drop bun export conditions that point at unpublished source ([#949](https://github.com/jcoulaud/Shipmail/issues/949)) ([7be09ae](https://github.com/jcoulaud/Shipmail/commit/7be09ae5db95b11063c22ce388b6a623a224803e))
+* **mcp:** widen consent, redesign resource limits, drop recipient policy
 
-## [0.5.0](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.4.0...shipmail-mcp-v0.5.0) (2026-07-25)
+## 0.5.2 (2026-07-25)
+
+
+### Bug Fixes
+
+* **mcp:** stop release PRs failing on server-card formatting
+
+## 0.5.1 (2026-07-25)
+
+
+### Bug Fixes
+
+* **sdk:** drop bun export conditions that point at unpublished source
+
+## 0.5.0 (2026-07-25)
 
 
 ### ⚠ BREAKING CHANGES
 
-* **mcp:** add capability-complete connector controls ([#944](https://github.com/jcoulaud/Shipmail/issues/944))
+* **mcp:** add capability-complete connector controls
 
 ### Features
 
-* **mcp:** add capability-complete connector controls ([#944](https://github.com/jcoulaud/Shipmail/issues/944)) ([015f010](https://github.com/jcoulaud/Shipmail/commit/015f010330ccbcd8c74b794c87f0d4aea430b1ec))
+* **mcp:** add capability-complete connector controls
 
-## [0.4.0](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.3.4...shipmail-mcp-v0.4.0) (2026-07-23)
+## 0.4.0 (2026-07-23)
 
 
 ### ⚠ BREAKING CHANGES
 
-* **assistant:** replace Agent OS with admin-only AI assistant ([#924](https://github.com/jcoulaud/Shipmail/issues/924))
+* **assistant:** replace Agent OS with admin-only AI assistant
 
 ### Features
 
-* **assistant:** replace Agent OS with admin-only AI assistant ([#924](https://github.com/jcoulaud/Shipmail/issues/924)) ([70b4c1e](https://github.com/jcoulaud/Shipmail/commit/70b4c1e824ea72587c7bb78c54c265993ddf8d49))
+* **assistant:** replace Agent OS with admin-only AI assistant
 
-## [0.3.4](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.3.3...shipmail-mcp-v0.3.4) (2026-07-21)
-
-
-### Features
-
-* **mcp:** OAuth sign-in for the hosted MCP endpoint ([#898](https://github.com/jcoulaud/Shipmail/issues/898)) ([c12e6f4](https://github.com/jcoulaud/Shipmail/commit/c12e6f47fe1b4c62a2a6608ce06d0f7719d5ae59))
-
-## [0.3.3](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.3.2...shipmail-mcp-v0.3.3) (2026-07-20)
+## 0.3.4 (2026-07-21)
 
 
 ### Features
 
-* **api:** add agent-safe reply queue workflows ([#890](https://github.com/jcoulaud/Shipmail/issues/890)) ([62dd211](https://github.com/jcoulaud/Shipmail/commit/62dd2118cd68b27dfb6481cb20cb35b98913ad97))
-* **mcp:** hosted remote MCP endpoint at /api/mcp ([#893](https://github.com/jcoulaud/Shipmail/issues/893)) ([1bf479f](https://github.com/jcoulaud/Shipmail/commit/1bf479f3a30eab6ea54960f9d8b175e8cf41b85c))
+* **mcp:** OAuth sign-in for the hosted MCP endpoint
+
+## 0.3.3 (2026-07-20)
+
+
+### Features
+
+* **api:** add agent-safe reply queue workflows
+* **mcp:** hosted remote MCP endpoint at /api/mcp
 
 
 ### Bug Fixes
 
-* **mcp:** return summaries from the inbox message list tool ([#895](https://github.com/jcoulaud/Shipmail/issues/895)) ([1f0ae4e](https://github.com/jcoulaud/Shipmail/commit/1f0ae4e25c64d5c087602347e2661c0c068d30a1))
+* **mcp:** return summaries from the inbox message list tool
 
-## [0.3.2](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.3.1...shipmail-mcp-v0.3.2) (2026-07-19)
-
-
-### Features
-
-* **newsletters:** add team collaboration ([#874](https://github.com/jcoulaud/Shipmail/issues/874)) ([9be0b22](https://github.com/jcoulaud/Shipmail/commit/9be0b2290c94f1afd84bf1fec1d2b351cfa07823))
-
-## [0.3.1](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.3.0...shipmail-mcp-v0.3.1) (2026-07-17)
+## 0.3.2 (2026-07-19)
 
 
 ### Features
 
-* **import:** add Infomaniak, OVHcloud, and Gandi migrations ([#825](https://github.com/jcoulaud/Shipmail/issues/825)) ([fd6a6bd](https://github.com/jcoulaud/Shipmail/commit/fd6a6bd86e7b1f59bab4bcfb745bc5581da7176c))
-* improve AI agent readiness ([#824](https://github.com/jcoulaud/Shipmail/issues/824)) ([f2d6763](https://github.com/jcoulaud/Shipmail/commit/f2d67636968f7f7d2373689a21b083d12818b939))
+* **newsletters:** add team collaboration
 
-## [0.3.0](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.10...shipmail-mcp-v0.3.0) (2026-07-16)
-
-
-### ⚠ BREAKING CHANGES
-
-* **stalwart:** prepare v0.16 hard cutover ([#791](https://github.com/jcoulaud/Shipmail/issues/791))
-
-### Features
-
-* **partner:** complete embedded mailbox credentials ([#799](https://github.com/jcoulaud/Shipmail/issues/799)) ([6675da4](https://github.com/jcoulaud/Shipmail/commit/6675da4641ff2c99189f49e3d3c99938c0cd26e1))
-* **stalwart:** prepare v0.16 hard cutover ([#791](https://github.com/jcoulaud/Shipmail/issues/791)) ([8063f21](https://github.com/jcoulaud/Shipmail/commit/8063f21fbb232dfa84555574fd9ae0dfcc93e081))
-
-## [0.2.10](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.9...shipmail-mcp-v0.2.10) (2026-07-14)
+## 0.3.1 (2026-07-17)
 
 
 ### Features
 
-* **api:** expose conferencing_provider on booking pages ([#772](https://github.com/jcoulaud/Shipmail/issues/772)) ([3fb48e5](https://github.com/jcoulaud/Shipmail/commit/3fb48e5a2159f9e30e301d5f7d6bcec56aeccf98))
-* **partner:** add invite-only reseller beta ([#786](https://github.com/jcoulaud/Shipmail/issues/786)) ([e2c98a4](https://github.com/jcoulaud/Shipmail/commit/e2c98a4d06121c82abe6238695f3dd4b3ffaf574))
+* **import:** add Infomaniak, OVHcloud, and Gandi migrations
+* improve AI agent readiness
 
-## [0.2.9](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.8...shipmail-mcp-v0.2.9) (2026-07-13)
+## 0.3.0 (2026-07-16)
 
 
-### Features
-
-* add api mailbox infrastructure foundations ([#746](https://github.com/jcoulaud/Shipmail/issues/746)) ([9f34742](https://github.com/jcoulaud/Shipmail/commit/9f34742281b0623310db731753cff6efcce7c82d))
-* **api:** automate domain and mailbox provisioning ([#760](https://github.com/jcoulaud/Shipmail/issues/760)) ([73385c9](https://github.com/jcoulaud/Shipmail/commit/73385c90090a3090c7506edf1854b22e79951bfa))
-* **mailboxes:** add verified forwarding and partner pilot ([#765](https://github.com/jcoulaud/Shipmail/issues/765)) ([8a8b73c](https://github.com/jcoulaud/Shipmail/commit/8a8b73cad217f1ae14eff54f83b397e9ae03b04e))
-
-## [0.2.8](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.7...shipmail-mcp-v0.2.8) (2026-07-12)
 
 
 ### Features
 
-* **calendar:** complete launch follow-ups ([#739](https://github.com/jcoulaud/Shipmail/issues/739)) ([7d2050a](https://github.com/jcoulaud/Shipmail/commit/7d2050abdba4c8ccaea94d9ab7b36270f9d7deb6))
+* **partner:** complete embedded mailbox credentials
+
+## 0.2.10 (2026-07-14)
+
+
+### Features
+
+* **api:** expose conferencing_provider on booking pages
+* **partner:** add invite-only reseller beta
+
+## 0.2.9 (2026-07-13)
+
+
+### Features
+
+* add api mailbox infrastructure foundations
+* **api:** automate domain and mailbox provisioning
+* **mailboxes:** add verified forwarding and partner pilot
+
+## 0.2.8 (2026-07-12)
+
+
+### Features
+
+* **calendar:** complete launch follow-ups
 * **webhooks:** add delivery detail and failed-delivery replay tools
 * **sandbox:** add synthetic send outcomes and fake inbound message tooling
 * **mailboxes:** add suspend and resume tools
 
-## [0.2.7](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.6...shipmail-mcp-v0.2.7) (2026-07-07)
+## 0.2.7 (2026-07-07)
 
 
 ### Features
 
-* calendar — events, invites, booking links, API, conferencing ([#676](https://github.com/jcoulaud/Shipmail/issues/676)) ([44f2695](https://github.com/jcoulaud/Shipmail/commit/44f2695c263c32d54305d58b2462f730cd8ebc2f))
+* calendar — events, invites, booking links, API, conferencing
 
-## [0.2.6](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.5...shipmail-mcp-v0.2.6) (2026-07-06)
-
-
-### Features
-
-* add newsletter audience resubscribe ([fc9e512](https://github.com/jcoulaud/Shipmail/commit/fc9e5128d0b762438f0d8962607f9947b9451c24))
-
-## [0.2.5](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.4...shipmail-mcp-v0.2.5) (2026-07-06)
+## 0.2.6 (2026-07-06)
 
 
 ### Features
 
-* edit future scheduled newsletters ([bc0bed7](https://github.com/jcoulaud/Shipmail/commit/bc0bed7b82dd9b41fc9a80ac1cb2734c13a41564))
+* add newsletter audience resubscribe
 
-## [0.2.4](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.3...shipmail-mcp-v0.2.4) (2026-07-05)
+## 0.2.5 (2026-07-06)
 
 
 ### Features
 
-* **newsletters:** block insert seams, hover-reachable rail, and button alignment ([#638](https://github.com/jcoulaud/Shipmail/issues/638)) ([dab6b38](https://github.com/jcoulaud/Shipmail/commit/dab6b384967975e15ef1cfa789763601f42192a2))
+* edit future scheduled newsletters
 
-## [0.2.3](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.2...shipmail-mcp-v0.2.3) (2026-07-05)
+## 0.2.4 (2026-07-05)
+
+
+### Features
+
+* **newsletters:** block insert seams, hover-reachable rail, and button alignment
+
+## 0.2.3 (2026-07-05)
 
 
 ### Bug Fixes
 
-* **newsletters:** address review findings ([#629](https://github.com/jcoulaud/Shipmail/issues/629)) ([a4c5fb8](https://github.com/jcoulaud/Shipmail/commit/a4c5fb8d6dea7ad46bb3ce3e7e3500fc5745a5d0))
+* **newsletters:** address review findings
 
-## [0.2.2](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.1...shipmail-mcp-v0.2.2) (2026-07-05)
-
-
-### Features
-
-* **newsletters:** full-page block editor with blocks-first API ([#621](https://github.com/jcoulaud/Shipmail/issues/621)) ([051d7e6](https://github.com/jcoulaud/Shipmail/commit/051d7e69dc83d99d6050e29f0c3b7e1f048943b5))
-
-## [0.2.1](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.2.0...shipmail-mcp-v0.2.1) (2026-07-03)
+## 0.2.2 (2026-07-05)
 
 
 ### Features
 
-* **newsletters:** add API and SDK support ([#611](https://github.com/jcoulaud/Shipmail/issues/611)) ([57279d4](https://github.com/jcoulaud/Shipmail/commit/57279d4c630738674a2fce7a2f1fcd26a67812ec))
+* **newsletters:** full-page block editor with blocks-first API
 
-## [0.2.0](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.1.7...shipmail-mcp-v0.2.0) (2026-07-02)
+## 0.2.1 (2026-07-03)
+
+
+### Features
+
+* **newsletters:** add API and SDK support
+
+## 0.2.0 (2026-07-02)
 
 
 ### ⚠ BREAKING CHANGES
 
-* **newsletters:** cut over broadcasts to newsletters ([#599](https://github.com/jcoulaud/Shipmail/issues/599))
+* **newsletters:** cut over broadcasts to newsletters
 
 ### Features
 
-* programmatic audience sync for broadcasts (API, SDK, MCP, CLI) ([#593](https://github.com/jcoulaud/Shipmail/issues/593)) ([700a321](https://github.com/jcoulaud/Shipmail/commit/700a32185bb639d81bef5465b1a056bd84e2830e))
+* programmatic audience sync for broadcasts (API, SDK, MCP, CLI)
 
 
 ### Code Refactoring
 
-* **newsletters:** cut over broadcasts to newsletters ([#599](https://github.com/jcoulaud/Shipmail/issues/599)) ([9cbf6f8](https://github.com/jcoulaud/Shipmail/commit/9cbf6f889d785bd9417da8ca6054accf62f2f13d))
+* **newsletters:** cut over broadcasts to newsletters
 
 ## 0.1.9 - 2026-06-20
 
@@ -630,27 +633,27 @@
 - Enrich public directory metadata for discovery.
 - Align the runtime, package, and directory versions.
 
-## [0.1.7](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.1.6...shipmail-mcp-v0.1.7) (2026-06-19)
+## 0.1.7 (2026-06-19)
 
 
 ### Bug Fixes
 
-* **seo:** improve MCP source discoverability ([b788b44](https://github.com/jcoulaud/Shipmail/commit/b788b449346f8cbb0526ffac694f152767dd219b))
-* **shipmail-mcp:** enable MCP registry publishing ([066bf28](https://github.com/jcoulaud/Shipmail/commit/066bf28b17809110d66282024f4df69934977785))
+* **seo:** improve MCP source discoverability
+* **shipmail-mcp:** enable MCP registry publishing
 
-## [0.1.6](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.1.5...shipmail-mcp-v0.1.6) (2026-06-19)
-
-
-### Bug Fixes
-
-* **shipmail-mcp:** keep server metadata version aligned ([714f9c8](https://github.com/jcoulaud/Shipmail/commit/714f9c8a48b431b050a0c7d30ce97777c9060ef1))
-
-## [0.1.5](https://github.com/jcoulaud/Shipmail/compare/shipmail-mcp-v0.1.4...shipmail-mcp-v0.1.5) (2026-06-19)
+## 0.1.6 (2026-06-19)
 
 
 ### Bug Fixes
 
-* **shipmail-mcp:** trigger public metadata release ([ec8ce25](https://github.com/jcoulaud/Shipmail/commit/ec8ce25cf07ef7b5d38f05ac9804d0fdb08022be))
+* **shipmail-mcp:** keep server metadata version aligned
+
+## 0.1.5 (2026-06-19)
+
+
+### Bug Fixes
+
+* **shipmail-mcp:** trigger public metadata release
 
 ## 0.1.4 - 2026-06-14
 

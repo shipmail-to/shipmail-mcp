@@ -45,6 +45,7 @@ const MAILBOX_RULE_MATCH_MODES = ["all", "any"] as const;
 const MAILBOX_RULE_SYSTEM_TARGET_ROLES = ["inbox", "archive", "junk", "trash"] as const;
 const MEMBER_ROLES = ["owner", "admin", "member"] as const;
 const MEMBER_MAILBOX_ACCESS_SCOPES = ["all", "selected"] as const;
+const INVITATION_ROLES = ["admin", "member"] as const;
 const JMAP_KEYWORDS = ["$flagged", "$seen", "$draft", "$answered", "$forwarded"] as const;
 const NEWSLETTER_STATUSES = [
   "draft",
@@ -1247,6 +1248,20 @@ export const memberSchema = z.object({
   created_at: z.string(),
 });
 
+export const invitationSchema = z.object({
+  object: z.literal("invitation"),
+  id: z.string(),
+  email: z.string(),
+  role: z.enum(INVITATION_ROLES),
+  mailbox_access: memberMailboxAccessSchema,
+  newsletter_role: z
+    .literal("editor")
+    .nullable()
+    .describe('"editor" lets the invitee edit newsletters. Only a member can carry it.'),
+  created_at: z.string(),
+  expires_at: z.string().nullable(),
+});
+
 export const webhookWithSecretSchema = webhookSchema.extend({
   secret: z.string(),
 });
@@ -1278,6 +1293,54 @@ export const suppressionSchema = z.object({
   scope: z.enum(SUPPRESSION_SCOPES),
   expires_at: z.string().nullable(),
   created_at: z.string(),
+});
+
+export const templateVariableSchema = z.object({
+  key: z.string(),
+  required: z.boolean(),
+  fallback: z.string().nullable(),
+});
+
+export const templateSchema = z.object({
+  object: z.literal("template"),
+  id: z.string(),
+  name: z.string(),
+  subject: z.string(),
+  html: z.string().nullable(),
+  text: z.string().nullable(),
+  fallbacks: z.record(z.string(), z.string()),
+  variables: z.array(templateVariableSchema),
+  published_version: z
+    .number()
+    .int()
+    .nullable()
+    .describe("The version a send uses. Null until the first publish."),
+  has_unpublished_changes: z
+    .boolean()
+    .describe("True when the draft differs from the published version, or nothing is published."),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const templateVersionSchema = z.object({
+  object: z.literal("template_version"),
+  template_id: z.string(),
+  version: z.number().int(),
+  subject: z.string(),
+  html: z.string().nullable(),
+  text: z.string().nullable(),
+  fallbacks: z.record(z.string(), z.string()),
+  variables: z.array(templateVariableSchema),
+  published_at: z.string(),
+});
+
+export const renderedTemplateSchema = z.object({
+  object: z.literal("rendered_template"),
+  template_id: z.string(),
+  version: z.number().int().nullable().describe("The rendered version, or null for the draft."),
+  subject: z.string(),
+  html: z.string().nullable(),
+  text: z.string().nullable(),
 });
 
 export const acknowledgmentSchema = z.object({
@@ -1414,6 +1477,8 @@ export const membersOutputSchema = z.object({
   pagination: paginationSchema,
 });
 export const memberOutputSchema = z.object({ member: memberSchema });
+export const invitationsOutputSchema = z.object({ data: z.array(invitationSchema) });
+export const invitationOutputSchema = z.object({ invitation: invitationSchema });
 export const webhookDeliveriesOutputSchema = z.object({
   data: z.array(webhookDeliverySchema),
   pagination: paginationSchema,
@@ -1425,6 +1490,19 @@ export const suppressionOutputSchema = z.object({ suppression: suppressionSchema
 export const suppressionsOutputSchema = z.object({
   data: z.array(suppressionSchema),
   pagination: paginationSchema,
+});
+export const templateOutputSchema = z.object({ template: templateSchema });
+export const templatesOutputSchema = z.object({
+  data: z.array(templateSchema),
+  pagination: paginationSchema,
+});
+export const templateVersionOutputSchema = z.object({ template_version: templateVersionSchema });
+export const templateVersionsOutputSchema = z.object({
+  data: z.array(templateVersionSchema),
+  pagination: paginationSchema,
+});
+export const renderedTemplateOutputSchema = z.object({
+  rendered_template: renderedTemplateSchema,
 });
 export const acknowledgmentOutputSchema = z.object({ result: acknowledgmentSchema });
 
@@ -1998,6 +2076,7 @@ export const listReplyScanResultsInputSchema = z.object({
 const inboxReplyFields = {
   to: z.array(recipientInputSchema).min(1).max(50),
   cc: z.array(recipientInputSchema).max(50).optional(),
+  bcc: z.array(recipientInputSchema).max(50).optional(),
   html: z.string().max(512_000).optional(),
   text: z.string().max(256_000).optional(),
   client_reference: noControlString(255, "client_reference").min(1).optional(),
@@ -2022,6 +2101,9 @@ export const replyToInboxMessageInputSchema = z
   })
   .refine((value) => Boolean(value.html || value.text), {
     message: "At least one of html or text is required.",
+  })
+  .refine((value) => value.to.length + (value.cc?.length ?? 0) + (value.bcc?.length ?? 0) <= 50, {
+    message: "Total recipients (to + cc + bcc) must not exceed 50.",
   });
 
 export const replyToInboxThreadInputSchema = z
@@ -2034,6 +2116,9 @@ export const replyToInboxThreadInputSchema = z
   })
   .refine((value) => Boolean(value.html || value.text), {
     message: "At least one of html or text is required.",
+  })
+  .refine((value) => value.to.length + (value.cc?.length ?? 0) + (value.bcc?.length ?? 0) <= 50, {
+    message: "Total recipients (to + cc + bcc) must not exceed 50.",
   });
 
 export const updateInboxMessageInputSchema = z
@@ -2168,6 +2253,124 @@ export const stagedAttachmentUploadPreparationOutputSchema = z.object({
     expires_at: z.string(),
   }),
 });
+// --- Templates ---------------------------------------------------------------
+
+const templateIdSchema = z
+  .string()
+  .regex(/^tpl_[A-Za-z0-9_-]{1,96}$/, "Template IDs start with tpl_.")
+  .describe("Template ID (tpl_...).");
+const templateVersionNumberSchema = z.number().int().min(1);
+const templateFallbacksSchema = z
+  .record(
+    z.string().regex(/^[a-zA-Z0-9_]+$/, "Variable keys use only letters, digits and underscores."),
+    z.string().max(10_000),
+  )
+  .refine((value) => Object.keys(value).length <= 200, {
+    message: "At most 200 fallbacks.",
+  })
+  .describe(
+    "Default value per variable key. A {{key}} without a fallback is required at send time. Every key must be used by the subject, html or text.",
+  );
+const templateVariableValuesSchema = z
+  .record(z.string().max(200), z.union([z.string().max(512_000), z.number(), z.boolean()]))
+  .refine((value) => Object.keys(value).length <= 200, {
+    message: "At most 200 variables.",
+  })
+  .describe(
+    "Value per {{key}}. Values are inserted as text: HTML-escaped in html, with line breaks removed in the subject.",
+  );
+
+export const listTemplatesInputSchema = paginationInputSchema;
+export const templateByIdInputSchema = z.object({ id: templateIdSchema });
+export const idempotentTemplateByIdInputSchema = z.object({
+  id: templateIdSchema,
+  idempotency_key: idempotencyKeySchema,
+});
+export const createTemplateInputSchema = z
+  .object({
+    name: noControlString(200, "name").trim().min(1),
+    subject: noControlString(998, "subject").min(1).describe("Subject. May use {{key}} variables."),
+    html: z.string().max(512_000).optional().describe("HTML body. May use {{key}} variables."),
+    text: z
+      .string()
+      .max(256_000)
+      .optional()
+      .describe("Plain-text body. May use {{key}} variables."),
+    fallbacks: templateFallbacksSchema.optional(),
+    publish: z
+      .boolean()
+      .optional()
+      .describe("Also publish the draft as version 1, so sends can use it at once."),
+    idempotency_key: idempotencyKeySchema,
+  })
+  .strict()
+  .refine((value) => Boolean(value.html || value.text), {
+    message: "At least one of html or text is required.",
+  });
+export const updateTemplateInputSchema = z
+  .object({
+    id: templateIdSchema,
+    name: noControlString(200, "name").trim().min(1).optional(),
+    subject: noControlString(998, "subject").min(1).optional(),
+    html: z
+      .string()
+      .max(512_000)
+      .nullable()
+      .optional()
+      .describe("Replace the HTML body. Null removes it; html or text must remain."),
+    text: z
+      .string()
+      .max(256_000)
+      .nullable()
+      .optional()
+      .describe("Replace the plain-text body. Null removes it; html or text must remain."),
+    fallbacks: templateFallbacksSchema
+      .optional()
+      .describe("Replace every fallback. Pass {} to remove them all."),
+    idempotency_key: idempotencyKeySchema,
+  })
+  .strict()
+  .refine(
+    (value) =>
+      value.name !== undefined ||
+      value.subject !== undefined ||
+      value.html !== undefined ||
+      value.text !== undefined ||
+      value.fallbacks !== undefined,
+    { message: "Provide at least one template field to update." },
+  );
+export const previewTemplateInputSchema = z
+  .object({
+    id: templateIdSchema,
+    variables: templateVariableValuesSchema.optional(),
+    version: templateVersionNumberSchema
+      .optional()
+      .describe("Render this published version. Omit to render the current draft."),
+  })
+  .strict();
+export const listTemplateVersionsInputSchema = paginationInputSchema.extend({
+  id: templateIdSchema,
+});
+export const templateVersionInputSchema = z.object({
+  id: templateIdSchema,
+  version: templateVersionNumberSchema.describe("Version number, starting at 1."),
+});
+export const restoreTemplateVersionInputSchema = templateVersionInputSchema.extend({
+  idempotency_key: idempotencyKeySchema,
+});
+const sendMessageTemplateInputSchema = z
+  .object({
+    id: templateIdSchema,
+    version: templateVersionNumberSchema
+      .optional()
+      .describe("Send this version. Omit to send the published version."),
+    variables: templateVariableValuesSchema.optional(),
+  })
+  .strict()
+  .describe(
+    "Send a stored template instead of subject, html and text. Every required variable must be given.",
+  );
+
 export const sendMessageInputSchema = z
   .object({
     mailbox_id: idSchema.describe("Mailbox ID to send from."),
@@ -2175,9 +2378,13 @@ export const sendMessageInputSchema = z
     cc: z.array(recipientInputSchema).max(50).optional(),
     bcc: z.array(recipientInputSchema).max(50).optional(),
     reply_to: recipientInputSchema.optional(),
-    subject: noControlString(998, "subject").min(1),
-    html: z.string().max(512_000).optional(),
-    text: z.string().max(256_000).optional(),
+    subject: noControlString(998, "subject")
+      .min(1)
+      .optional()
+      .describe("Required unless template is set."),
+    html: z.string().max(512_000).optional().describe("Omit when template is set."),
+    text: z.string().max(256_000).optional().describe("Omit when template is set."),
+    template: sendMessageTemplateInputSchema.optional(),
     in_reply_to: noControlString(998, "in_reply_to").optional(),
     references: z.array(noControlString(998, "references")).max(50).optional(),
     staged_attachment_ids: z
@@ -2202,7 +2409,16 @@ export const sendMessageInputSchema = z
     idempotency_key: idempotencyKeySchema,
   })
   .strict()
-  .refine((value) => Boolean(value.html || value.text), {
+  .refine(
+    (value) =>
+      value.template === undefined ||
+      (value.subject === undefined && value.html === undefined && value.text === undefined),
+    { message: "A send with a template must not include subject, html or text." },
+  )
+  .refine((value) => value.template !== undefined || value.subject !== undefined, {
+    message: "subject is required unless template is set.",
+  })
+  .refine((value) => value.template !== undefined || Boolean(value.html || value.text), {
     message: "At least one of html or text is required.",
   });
 export const listScheduledMessagesInputSchema = z.object({
@@ -2248,6 +2464,7 @@ export const replyToMessageInputSchema = z
     id: idSchema.describe("Message ID to reply to."),
     to: z.array(recipientInputSchema).min(1).max(50),
     cc: z.array(recipientInputSchema).max(50).optional(),
+    bcc: z.array(recipientInputSchema).max(50).optional(),
     html: z.string().max(512_000).optional(),
     text: z.string().max(256_000).optional(),
     client_reference: noControlString(255, "client_reference").min(1).optional(),
@@ -2266,6 +2483,9 @@ export const replyToMessageInputSchema = z
   })
   .refine((value) => Boolean(value.html || value.text), {
     message: "At least one of html or text is required.",
+  })
+  .refine((value) => value.to.length + (value.cc?.length ?? 0) + (value.bcc?.length ?? 0) <= 50, {
+    message: "Total recipients (to + cc + bcc) must not exceed 50.",
   });
 
 export const injectSandboxInboundInputSchema = z
@@ -2301,6 +2521,7 @@ export const replyToThreadInputSchema = z
     mailbox_id: idSchema.describe("Mailbox that owns the thread."),
     to: z.array(recipientInputSchema).min(1).max(50),
     cc: z.array(recipientInputSchema).max(50).optional(),
+    bcc: z.array(recipientInputSchema).max(50).optional(),
     html: z.string().max(512_000).optional(),
     text: z.string().max(256_000).optional(),
     scheduled_at: z.iso.datetime().optional(),
@@ -2315,12 +2536,45 @@ export const replyToThreadInputSchema = z
   })
   .refine((value) => Boolean(value.html || value.text), {
     message: "At least one of html or text is required.",
+  })
+  .refine((value) => value.to.length + (value.cc?.length ?? 0) + (value.bcc?.length ?? 0) <= 50, {
+    message: "Total recipients (to + cc + bcc) must not exceed 50.",
   });
 
 export const webhookEventSchema = z.enum(WEBHOOK_EVENT_TYPES);
 export const webhookDeliveryStatusSchema = z.enum(WEBHOOK_DELIVERY_STATUSES);
 export const listWebhooksInputSchema = paginationInputSchema;
 export const listMembersInputSchema = paginationInputSchema;
+export const inviteMemberInputSchema = z
+  .object({
+    email: emailSchema.describe("Address to invite. The person creates their own account."),
+    role: z.enum(INVITATION_ROLES),
+    mailbox_access: z
+      .enum(MEMBER_MAILBOX_ACCESS_SCOPES)
+      .optional()
+      .describe(
+        "`selected` (the default) shares only mailbox_ids. `all` shares every mailbox, now and later.",
+      ),
+    mailbox_ids: z
+      .array(idSchema)
+      .max(100)
+      .optional()
+      .describe('Mailboxes to share for "selected" access. Ignored for "all".'),
+    newsletter_role: z
+      .literal("editor")
+      .nullable()
+      .optional()
+      .describe("Set to editor to let a member edit newsletters. Only for the member role."),
+    idempotency_key: idempotencyKeySchema,
+  })
+  .refine((value) => value.newsletter_role !== "editor" || value.role === "member", {
+    message: "newsletter_role editor is only for the member role.",
+    path: ["newsletter_role"],
+  });
+export const memberMailboxAccessInputSchema = z.object({
+  id: idSchema.describe("Member ID."),
+  mailbox_id: idSchema.describe("Mailbox ID."),
+});
 const webhookScopeIdsInputSchema = z.array(idSchema).max(100).nullable();
 const webhookAuthorizationInputSchema = z
   .string()

@@ -12,9 +12,11 @@ import type {
 import { McpServer } from "@modelcontextprotocol/server";
 import {
   type CreateMailboxParams,
+  type InviteMemberParams,
   type ListMessagesParams,
   type MethodOptions,
   NotFoundError,
+  type SendMessageParams,
   type ShipmailClient,
   ShipmailError,
   ValidationError,
@@ -91,6 +93,7 @@ import {
   createNewsletterFromChangelogInputSchema,
   createNewsletterInputSchema,
   createReplyScanInputSchema,
+  createTemplateInputSchema,
   createWebhookInputSchema,
   createWelcomeStepInputSchema,
   deleteCalendarEventInputSchema,
@@ -119,6 +122,7 @@ import {
   getWebhookDeliveryInputSchema,
   getWelcomeSequenceInputSchema,
   idempotentByIdInputSchema,
+  idempotentTemplateByIdInputSchema,
   importOutputSchema,
   importScopedInputSchema,
   importsOutputSchema,
@@ -137,6 +141,9 @@ import {
   inboxThreadOutputSchema,
   inboxThreadsOutputSchema,
   injectSandboxInboundInputSchema,
+  invitationOutputSchema,
+  invitationsOutputSchema,
+  inviteMemberInputSchema,
   listAudiencesInputSchema,
   listBookingLinksInputSchema,
   listBookingPagesInputSchema,
@@ -155,6 +162,8 @@ import {
   listScheduledMessagesInputSchema,
   listSubscribersInputSchema,
   listSuppressionsInputSchema,
+  listTemplatesInputSchema,
+  listTemplateVersionsInputSchema,
   listThreadsInputSchema,
   listWebhookDeliveriesInputSchema,
   listWebhooksInputSchema,
@@ -171,6 +180,7 @@ import {
   mailboxOutputSchema,
   mailboxRuleOutputSchema,
   mailboxRulesOutputSchema,
+  memberMailboxAccessInputSchema,
   memberOutputSchema,
   membersOutputSchema,
   messageAnalyticsOutputSchema,
@@ -192,10 +202,12 @@ import {
   prepareNewsletterAssetUploadInputSchema,
   prepareStagedAttachmentUploadInputSchema,
   previewNewsletterInputSchema,
+  previewTemplateInputSchema,
   readMailboxInboxAttachmentInputSchema,
   registerNewsletterAssetInputSchema,
   releaseMailboxInboxMessageSecurityInputSchema,
   removeSuppressionInputSchema,
+  renderedTemplateOutputSchema,
   replayWebhookDeliveryInputSchema,
   replyScanOutputSchema,
   replyScanResultsOutputSchema,
@@ -205,6 +217,7 @@ import {
   replyToThreadInputSchema,
   resetPasswordInputSchema,
   restoreMailboxImportInputSchema,
+  restoreTemplateVersionInputSchema,
   resubscribeSubscriberInputSchema,
   revokeBookingLinkInputSchema,
   revokeMailboxAppPasswordInputSchema,
@@ -226,6 +239,12 @@ import {
   subscribersOutputSchema,
   suppressionOutputSchema,
   suppressionsOutputSchema,
+  templateByIdInputSchema,
+  templateOutputSchema,
+  templatesOutputSchema,
+  templateVersionInputSchema,
+  templateVersionOutputSchema,
+  templateVersionsOutputSchema,
   threadMessagesOutputSchema,
   threadsOutputSchema,
   updateAudienceFeedInputSchema,
@@ -245,6 +264,7 @@ import {
   updateNewsletterInputSchema,
   updateScheduledMessageInputSchema,
   updateSubscriberInputSchema,
+  updateTemplateInputSchema,
   updateWebhookInputSchema,
   updateWelcomeSequenceInputSchema,
   updateWelcomeStepInputSchema,
@@ -335,8 +355,17 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_update_inbox_message: 50,
   shipmail_move_inbox_message: 50,
   shipmail_delete_inbox_message: 10,
+  shipmail_invite_member: 10,
+  shipmail_cancel_member_invitation: 20,
+  shipmail_grant_member_mailbox_access: 20,
+  shipmail_revoke_member_mailbox_access: 20,
   shipmail_add_suppression: 50,
   shipmail_remove_suppression: 50,
+  shipmail_create_template: 20,
+  shipmail_update_template: 50,
+  shipmail_delete_template: 10,
+  shipmail_publish_template: 20,
+  shipmail_restore_template_version: 20,
   shipmail_verify_domain: 30,
   shipmail_search_domains: 20,
   shipmail_create_audience: 20,
@@ -395,6 +424,18 @@ type IdempotentArgs = {
 function stripIdempotencyKey<T extends IdempotentArgs>(args: T): Omit<T, "idempotency_key"> {
   const { idempotency_key: _ignored, ...rest } = args;
   return rest;
+}
+
+type SendMessageToolArgs = Omit<z.infer<typeof sendMessageInputSchema>, "idempotency_key">;
+
+// The input schema guarantees either a template or a subject; this narrows it to the SDK's union.
+function toSendMessageParams(args: SendMessageToolArgs): SendMessageParams {
+  const { template, subject, html, text, ...rest } = args;
+  if (template !== undefined) return { ...rest, template };
+  if (subject === undefined) {
+    throw new ValidationError("subject is required unless template is set.");
+  }
+  return { ...rest, subject, html, text };
 }
 
 function mutationOptions(args?: IdempotentArgs): MethodOptions {
@@ -2676,7 +2717,7 @@ export function registerTools(
       {
         title: "Send Message",
         description:
-          "Send an email from a mailbox ID, with optional durable client correlation, scalar metadata, and validated safe headers.",
+          "Send an email from a mailbox ID, with optional durable client correlation, scalar metadata, and validated safe headers. Give subject with html or text, or give template ({ id, version?, variables? }) to send a stored template; with template, omit subject, html and text.",
         inputSchema: sendMessageInputSchema,
         outputSchema: messageOutputSchema,
         annotations: {
@@ -2694,7 +2735,10 @@ export function registerTools(
       },
       async (args) =>
         runTool("shipmail_send_message", messageOutputSchema, async () => ({
-          message: await client.messages.send(stripIdempotencyKey(args), mutationOptions(args)),
+          message: await client.messages.send(
+            toSendMessageParams(stripIdempotencyKey(args)),
+            mutationOptions(args),
+          ),
         })),
     );
   });
@@ -2909,6 +2953,124 @@ export function registerTools(
       async ({ id }) =>
         runTool("shipmail_get_member", memberOutputSchema, async () => ({
           member: await client.members.get(id),
+        })),
+    );
+  });
+
+  const membersWriteNote =
+    "Needs the members:write permission, which is opt-in and never part of a default. It acts with the authority of the person who approved this connection or created the API key.";
+
+  registerIfAllowed("shipmail_list_member_invitations", () => {
+    server.registerTool(
+      "shipmail_list_member_invitations",
+      {
+        title: "List Member Invitations",
+        description:
+          "List pending, unexpired invitations to join the organization, newest first. Selected mailbox IDs are limited to mailboxes visible to this API credential and may be partial.",
+        outputSchema: invitationsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async () =>
+        runTool("shipmail_list_member_invitations", invitationsOutputSchema, async () =>
+          client.members.listInvitations(),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_invite_member", () => {
+    server.registerTool(
+      "shipmail_invite_member",
+      {
+        title: "Invite Member",
+        description: `Invite a person to the organization as an admin or member. The invitee receives an email and creates their own account; no credential is returned. Share only the mailboxes they need with mailbox_ids; "all" is allowed only when the person behind this credential reads every mailbox and the credential is not restricted. ${membersWriteNote}`,
+        inputSchema: inviteMemberInputSchema,
+        outputSchema: invitationOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_invite_member", invitationOutputSchema, async () => {
+          const params: InviteMemberParams = {
+            email: args.email,
+            role: args.role,
+            ...(args.mailbox_access === undefined ? {} : { mailbox_access: args.mailbox_access }),
+            ...(args.mailbox_ids === undefined ? {} : { mailbox_ids: args.mailbox_ids }),
+            ...(args.newsletter_role === undefined
+              ? {}
+              : { newsletter_role: args.newsletter_role }),
+          };
+          return { invitation: await client.members.invite(params, mutationOptions(args)) };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_cancel_member_invitation", () => {
+    server.registerTool(
+      "shipmail_cancel_member_invitation",
+      {
+        title: "Cancel Member Invitation",
+        description: `Cancel a pending invitation so its link stops working. ${membersWriteNote}`,
+        inputSchema: getByIdInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id }) =>
+        runTool("shipmail_cancel_member_invitation", acknowledgmentOutputSchema, async () => {
+          await client.members.cancelInvitation(id);
+          return { result: { ok: true, id } };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_grant_member_mailbox_access", () => {
+    server.registerTool(
+      "shipmail_grant_member_mailbox_access",
+      {
+        title: "Share Mailbox With Member",
+        description: `Share one mailbox with a member who has selected mailbox access. You can only share mailboxes the person behind this credential reads. Sharing an already shared mailbox changes nothing. ${membersWriteNote}`,
+        inputSchema: memberMailboxAccessInputSchema,
+        outputSchema: memberOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id, mailbox_id }) =>
+        runTool("shipmail_grant_member_mailbox_access", memberOutputSchema, async () => ({
+          member: await client.members.grantMailboxAccess(id, mailbox_id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_revoke_member_mailbox_access", () => {
+    server.registerTool(
+      "shipmail_revoke_member_mailbox_access",
+      {
+        title: "Unshare Mailbox From Member",
+        description: `Stop sharing one mailbox with a member. Their credentials that reached only through that mailbox are revoked. Removing a mailbox that is not shared changes nothing. ${membersWriteNote}`,
+        inputSchema: memberMailboxAccessInputSchema,
+        outputSchema: memberOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id, mailbox_id }) =>
+        runTool("shipmail_revoke_member_mailbox_access", memberOutputSchema, async () => ({
+          member: await client.members.revokeMailboxAccess(id, mailbox_id),
         })),
     );
   });
@@ -3234,6 +3396,227 @@ export function registerTools(
           await client.suppressions.remove(email);
           return { result: { ok: true, id: email } };
         }),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_templates", () => {
+    server.registerTool(
+      "shipmail_list_templates",
+      {
+        title: "List Templates",
+        description:
+          "List stored email templates. Each has a draft (subject, html, text, fallbacks), the {{key}} variables it uses, published_version (the version sends use, null until published) and has_unpublished_changes.",
+        inputSchema: listTemplatesInputSchema,
+        outputSchema: templatesOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async (args) =>
+        runTool("shipmail_list_templates", templatesOutputSchema, async () =>
+          client.templates.list(
+            args.cursor === undefined
+              ? { limit: args.limit }
+              : { limit: args.limit, cursor: args.cursor },
+          ),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_template", () => {
+    server.registerTool(
+      "shipmail_get_template",
+      {
+        title: "Get Template",
+        description:
+          "Get one template's draft, its variables (required ones have no fallback and must be passed on every send) and its published version.",
+        inputSchema: templateByIdInputSchema,
+        outputSchema: templateOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id }) =>
+        runTool("shipmail_get_template", templateOutputSchema, async () => ({
+          template: await client.templates.get(id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_template", () => {
+    server.registerTool(
+      "shipmail_create_template",
+      {
+        title: "Create Template",
+        description:
+          "Create an email template. subject, html and text may use {{key}} variables; fallbacks gives a default per key, and a key without one must be passed on every send. Values are inserted as text, never as HTML. The template is a draft until published: set publish to true, or publish it later, before sending it.",
+        inputSchema: createTemplateInputSchema,
+        outputSchema: templateOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_create_template", templateOutputSchema, async () => ({
+          template: await client.templates.create(stripIdempotencyKey(args), mutationOptions(args)),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_template", () => {
+    server.registerTool(
+      "shipmail_update_template",
+      {
+        title: "Update Template",
+        description:
+          "Change a template's draft: name, subject, html, text or fallbacks. Sends keep using the published version until the template is published again. Null removes html or text; at least one must remain.",
+        inputSchema: updateTemplateInputSchema,
+        outputSchema: templateOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_update_template", templateOutputSchema, async () => {
+          const { id, ...update } = stripIdempotencyKey(args);
+          return {
+            template: await client.templates.update(id, update, mutationOptions(args)),
+          };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_template", () => {
+    server.registerTool(
+      "shipmail_delete_template",
+      {
+        title: "Delete Template",
+        description:
+          "Delete a template and all its versions. Sends that name it fail afterwards. This is destructive.",
+        inputSchema: templateByIdInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id }) =>
+        runTool("shipmail_delete_template", acknowledgmentOutputSchema, async () => {
+          await client.templates.delete(id);
+          return { result: { ok: true, id } };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_publish_template", () => {
+    server.registerTool(
+      "shipmail_publish_template",
+      {
+        title: "Publish Template",
+        description:
+          "Publish a template's draft as its next version. Sends that do not pin a version use it from then on. Earlier versions stay available.",
+        inputSchema: idempotentTemplateByIdInputSchema,
+        outputSchema: templateOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_publish_template", templateOutputSchema, async () => ({
+          template: await client.templates.publish(args.id, mutationOptions(args)),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_preview_template", () => {
+    server.registerTool(
+      "shipmail_preview_template",
+      {
+        title: "Preview Template",
+        description:
+          "Render a template with variables and return the subject, html and text a send would use. Renders the draft unless version is given. Nothing is stored or sent. A missing required variable fails with the keys it needs.",
+        inputSchema: previewTemplateInputSchema,
+        outputSchema: renderedTemplateOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id, variables, version }) =>
+        runTool("shipmail_preview_template", renderedTemplateOutputSchema, async () => ({
+          rendered_template: await client.templates.render(id, { variables, version }),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_template_versions", () => {
+    server.registerTool(
+      "shipmail_list_template_versions",
+      {
+        title: "List Template Versions",
+        description:
+          "List a template's published versions, newest first. Each is an immutable snapshot of subject, html, text and fallbacks.",
+        inputSchema: listTemplateVersionsInputSchema,
+        outputSchema: templateVersionsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async (args) =>
+        runTool("shipmail_list_template_versions", templateVersionsOutputSchema, async () =>
+          client.templates.listVersions(
+            args.id,
+            args.cursor === undefined
+              ? { limit: args.limit }
+              : { limit: args.limit, cursor: args.cursor },
+          ),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_template_version", () => {
+    server.registerTool(
+      "shipmail_get_template_version",
+      {
+        title: "Get Template Version",
+        description: "Get one published version of a template.",
+        inputSchema: templateVersionInputSchema,
+        outputSchema: templateVersionOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id, version }) =>
+        runTool("shipmail_get_template_version", templateVersionOutputSchema, async () => ({
+          template_version: await client.templates.getVersion(id, version),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_restore_template_version", () => {
+    server.registerTool(
+      "shipmail_restore_template_version",
+      {
+        title: "Restore Template Version",
+        description:
+          "Copy a published version into the template's draft, replacing the current draft. It does not publish: publish the template to make sends use it.",
+        inputSchema: restoreTemplateVersionInputSchema,
+        outputSchema: templateOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_restore_template_version", templateOutputSchema, async () => ({
+          template: await client.templates.restoreVersion(
+            args.id,
+            args.version,
+            mutationOptions(args),
+          ),
+        })),
     );
   });
 

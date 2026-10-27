@@ -17,6 +17,7 @@ export const MCP_PERMISSION_GROUP_NAMES = [
   "forwarding",
   "mailbox_rules",
   "members",
+  "team_admin",
   "webhooks",
   "credentials",
   "mailbox_export",
@@ -25,6 +26,7 @@ export const MCP_PERMISSION_GROUP_NAMES = [
   "newsletters",
   "audiences",
   "suppressions",
+  "templates",
 ] as const;
 
 export type McpPermissionGroupName = (typeof MCP_PERMISSION_GROUP_NAMES)[number];
@@ -153,9 +155,16 @@ export const MCP_PERMISSION_GROUPS = [
   {
     name: "members",
     label: "Team members",
-    description: "Read organization members.",
+    description: "Read organization members and pending invitations.",
     scopes: ["members:read"],
     persistent: false,
+  },
+  {
+    name: "team_admin",
+    label: "Invite and share",
+    description: "Invite people, cancel invitations, and share or unshare mailboxes with members.",
+    scopes: ["members:read", "members:write"],
+    persistent: true,
   },
   {
     name: "webhooks",
@@ -211,6 +220,13 @@ export const MCP_PERMISSION_GROUPS = [
     label: "Suppressions",
     description: "Read and remove suppressed recipient addresses.",
     scopes: ["suppressions:read", "suppressions:write"],
+    persistent: false,
+  },
+  {
+    name: "templates",
+    label: "Email templates",
+    description: "Read, render, and manage transactional email templates.",
+    scopes: ["templates:read", "templates:write"],
     persistent: false,
   },
 ] as const satisfies readonly McpPermissionGroup[];
@@ -317,6 +333,11 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_reply_scan_results", "listReplyScanResults", "messages:read"],
   ["shipmail_list_members", "listMembers", "members:read"],
   ["shipmail_get_member", "getMember", "members:read"],
+  ["shipmail_list_member_invitations", "listMemberInvitations", "members:read"],
+  ["shipmail_invite_member", "createMemberInvitation", "members:write"],
+  ["shipmail_cancel_member_invitation", "cancelMemberInvitation", "members:write"],
+  ["shipmail_grant_member_mailbox_access", "grantMemberMailboxAccess", "members:write"],
+  ["shipmail_revoke_member_mailbox_access", "revokeMemberMailboxAccess", "members:write"],
   ["shipmail_create_webhook", "createWebhook", "webhooks:write"],
   ["shipmail_list_webhooks", "listWebhooks", "webhooks:read"],
   ["shipmail_get_webhook", "getWebhook", "webhooks:read"],
@@ -330,6 +351,16 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_suppressions", "listSuppressions", "suppressions:read"],
   ["shipmail_add_suppression", "createSuppression", "suppressions:write"],
   ["shipmail_remove_suppression", "removeSuppression", "suppressions:write"],
+  ["shipmail_list_templates", "listTemplates", "templates:read"],
+  ["shipmail_create_template", "createTemplate", "templates:write"],
+  ["shipmail_get_template", "getTemplate", "templates:read"],
+  ["shipmail_update_template", "updateTemplate", "templates:write"],
+  ["shipmail_delete_template", "deleteTemplate", "templates:write"],
+  ["shipmail_publish_template", "publishTemplate", "templates:write"],
+  ["shipmail_preview_template", "renderTemplate", "templates:read"],
+  ["shipmail_list_template_versions", "listTemplateVersions", "templates:read"],
+  ["shipmail_get_template_version", "getTemplateVersion", "templates:read"],
+  ["shipmail_restore_template_version", "restoreTemplateVersion", "templates:write"],
   ["shipmail_create_audience", "createAudience", "audiences:write"],
   ["shipmail_list_audiences", "listAudiences", "audiences:read"],
   ["shipmail_get_audience", "getAudience", "audiences:read"],
@@ -458,6 +489,7 @@ const EXTERNAL_WRITE_TOOLS: ReadonlySet<string> = new Set([
   "shipmail_test_webhook",
   "shipmail_replay_webhook_delivery",
   "shipmail_send_newsletter_test",
+  "shipmail_invite_member",
   "shipmail_schedule_newsletter",
   "shipmail_update_welcome_sequence",
   "shipmail_create_welcome_step",
@@ -483,6 +515,7 @@ const CALLER_SUPPLIED_RECIPIENT_TOOLS: ReadonlySet<string> = new Set([
   "shipmail_create_webhook",
   "shipmail_update_webhook",
   "shipmail_send_newsletter_test",
+  "shipmail_invite_member",
   "shipmail_create_calendar_event",
   "shipmail_update_calendar_event",
   "shipmail_update_scheduled_message",
@@ -514,11 +547,13 @@ function permissionGroupFor(
   if (requiredScope === "calendar:write") return "calendar_write";
   if (requiredScope.startsWith("booking_pages:")) return "booking_pages";
   if (requiredScope.startsWith("automations:")) return "automations";
+  if (requiredScope === "members:write") return "team_admin";
   if (requiredScope.startsWith("members:")) return "members";
   if (requiredScope.startsWith("webhooks:")) return "webhooks";
   if (requiredScope.startsWith("newsletters:")) return "newsletters";
   if (requiredScope.startsWith("audiences:")) return "audiences";
   if (requiredScope.startsWith("suppressions:")) return "suppressions";
+  if (requiredScope.startsWith("templates:")) return "templates";
   if (requiredScope === "mailboxes:read") {
     return toolName.includes("_import") ? "mailbox_admin" : "mail_read";
   }

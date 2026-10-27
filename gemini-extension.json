@@ -1,0 +1,10 @@
+{
+  "name": "shipmail",
+  "version": "0.9.8",
+  "description": "Modern email for your business. Inboxes, calendars, newsletters, bookings and an AI assistant, plus transactional email and an API for your agents, all in one subscription.",
+  "mcpServers": {
+    "shipmail": {
+      "httpUrl": "https://shipmail.to/api/mcp"
+    }
+  }
+}

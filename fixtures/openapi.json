@@ -3732,7 +3732,7 @@
       "post": {
         "operationId": "sendMessage",
         "summary": "Send a message",
-        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Attachments are base64-encoded, max 20 files, 3 MB per file, 3 MB total. To send from a transactional sender (https://shipmail.to/docs/features/transactional-email), set from to its bare address; mailbox_id is optional and, when set, must be the sender's mailbox. Shipmail adds the sender name and Reply-To. Transactional senders send immediately only and refuse scheduled_at, track_reply: true, staged_attachment_ids, a different reply_to and a different display name. A transactional email send that reaches a ceiling returns 429 with details[].code application_daily_limit (daily ceiling for transactional email, a share of the organization's daily sending limit), application_unique_recipients (hourly ceiling of different recipients) or application_storage_full (the sender's mailbox has no transactional email storage left).",
+        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Attachments are base64-encoded, max 20 files, 3 MB per file, 3 MB total. To send from a transactional sender (https://shipmail.to/docs/features/transactional-email), set from to its bare address; mailbox_id is optional and, when set, must be the sender's mailbox. Shipmail adds the sender name and Reply-To. Transactional senders send immediately only and refuse scheduled_at, track_reply: true, staged_attachment_ids, a different reply_to and a different display name. A transactional email send that reaches a ceiling returns 429 with details[].code application_daily_limit (daily ceiling for transactional email, a share of the organization's daily sending limit), application_unique_recipients (hourly ceiling of different recipients) or application_storage_full (the sender's mailbox has no transactional email storage left). To send a stored template, pass template: { id, version?, variables? } instead of subject, html and text; messages:send is enough. A template from another organization is a 404, a template with no published version and no pinned version is a 422 with details[].code template_not_published, and missing or unknown variables are a 422 with details[].code missing_variable or unknown_variable.",
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
@@ -4373,7 +4373,7 @@
       "post": {
         "operationId": "replyToThread",
         "summary": "Reply to a thread",
-        "description": "Send a reply within an existing stored thread. mailbox_id is required because thread IDs are only unique within a mailbox. At least one of html or text is required. Total recipients (to + cc) must not exceed 50.",
+        "description": "Send a reply within an existing stored thread. mailbox_id is required because thread IDs are only unique within a mailbox. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50.",
         "tags": ["Threads"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
@@ -4538,6 +4538,268 @@
             "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ]
+      }
+    },
+    "/members/invitations": {
+      "get": {
+        "operationId": "listMemberInvitations",
+        "summary": "List invitations",
+        "description": "List pending, unexpired invitations to join the organization, newest first. An organization has at most 100 pending invitations, so the list is not paginated. Selected mailbox IDs are limited to the calling credential's effective mailbox reach and resource constraints and may be incomplete.",
+        "tags": ["Members"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "members:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["members:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending invitations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Invitation"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createMemberInvitation",
+        "summary": "Invite a member",
+        "description": "Invite a person to the organization as an admin or member. The invitee receives the Shipmail invitation email and creates their own account; no credential is returned. The request acts for the person behind the credential: the person who approved the OAuth connection, or who created the API key. That person must be an Owner or Admin, and can only share mailboxes they read themselves. A key restricted to mailboxes or domains can only share mailboxes inside its restriction. Only a person who reads every mailbox can invite with `all`, and a restricted key never can. `members:write` is opt-in: it is never part of a scope preset, a template or the Full access profile.",
+        "tags": ["Members"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "members:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["members:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberInvitationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invitation created and sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/QuotaExceededError",
+            "description": "Insufficient permissions (`authorization_error`), or the team member limit is reached (`quota_exceeded`, with `limit`)."
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError",
+            "description": "The address already belongs to a member, already has a pending invitation, or belongs to a mailbox or alias."
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/members/invitations/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "delete": {
+        "operationId": "cancelMemberInvitation",
+        "summary": "Cancel an invitation",
+        "description": "Cancel a pending invitation so its link stops working. `members:write` is opt-in: it is never part of a scope preset, a template or the Full access profile.",
+        "tags": ["Members"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "members:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["members:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Invitation cancelled."
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError",
+            "description": "No pending invitation has this ID."
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/members/{id}/mailboxes/{mailbox_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        },
+        {
+          "name": "mailbox_id",
+          "in": "path",
+          "required": true,
+          "description": "Mailbox ID.",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "put": {
+        "operationId": "grantMemberMailboxAccess",
+        "summary": "Share a mailbox with a member",
+        "description": "Share one mailbox with a member who has `selected` mailbox access. Sharing a mailbox that is already shared returns the member unchanged. The request acts for the person behind the credential: the person who approved the OAuth connection, or who created the API key. That person must be an Owner or Admin, and can only share mailboxes they read themselves. A key restricted to mailboxes or domains can only share mailboxes inside its restriction. `members:write` is opt-in: it is never part of a scope preset, a template or the Full access profile.",
+        "tags": ["Members"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "members:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["members:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Member"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError",
+            "description": "The member has access to every mailbox, or the mailbox is outside the key restriction or outside the acting person's own access."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revokeMemberMailboxAccess",
+        "summary": "Unshare a mailbox from a member",
+        "description": "Stop sharing one mailbox with a member who has `selected` mailbox access. The member's credentials that reached only through that mailbox are revoked. Removing a mailbox that is not shared returns the member unchanged. The request acts for the person behind the credential: the person who approved the OAuth connection, or who created the API key. That person must be an Owner or Admin, and can only share mailboxes they read themselves. A key restricted to mailboxes or domains can only share mailboxes inside its restriction. `members:write` is opt-in: it is never part of a scope preset, a template or the Full access profile.",
+        "tags": ["Members"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "members:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["members:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Member"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError",
+            "description": "The member has access to every mailbox, or the mailbox is outside the key restriction or outside the acting person's own access."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
       }
     },
     "/webhooks": {
@@ -5261,6 +5523,515 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/templates": {
+      "get": {
+        "operationId": "listTemplates",
+        "summary": "List templates",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "templates:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of templates, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "pagination"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Template"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTemplate",
+        "summary": "Create a template",
+        "description": "Create a template draft. Variables use {{key}} with letters, digits and underscores. Pass publish: true to also publish version 1. A fallback for a key the content does not use is a 422 with details[].code unknown_variable. Maximum 1,000 templates per organization.",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "templates:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Template created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Template"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/QuotaExceededError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/templates/{id}": {
+      "get": {
+        "operationId": "getTemplate",
+        "summary": "Retrieve a template",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "templates:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The template.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Template"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateTemplate",
+        "summary": "Update a template",
+        "description": "Change the draft. Sends keep using the published version until you publish.",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "templates:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTemplateRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The updated template.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Template"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTemplate",
+        "summary": "Delete a template",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "templates:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Template and its versions deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/templates/{id}/publish": {
+      "post": {
+        "operationId": "publishTemplate",
+        "summary": "Publish a template",
+        "description": "Snapshot the draft into the next version (1, 2, 3...) and make it the version sends use.",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "templates:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The template with its new published_version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Template"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/templates/{id}/render": {
+      "post": {
+        "operationId": "renderTemplate",
+        "summary": "Render a template",
+        "description": "Render the draft, or a version, with the same rules and errors as a send. Nothing is stored or sent. Missing or unknown variables are a 422 with details[].code missing_variable or unknown_variable.",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "templates:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:read"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenderTemplateRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The rendered subject, html and text.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderedTemplate"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/templates/{id}/versions": {
+      "get": {
+        "operationId": "listTemplateVersions",
+        "summary": "List template versions",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "templates:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of published versions, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "pagination"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TemplateVersion"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/templates/{id}/versions/{version}": {
+      "get": {
+        "operationId": "getTemplateVersion",
+        "summary": "Retrieve a template version",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "templates:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/TemplateVersion"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateVersion"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/templates/{id}/versions/{version}/restore": {
+      "post": {
+        "operationId": "restoreTemplateVersion",
+        "summary": "Restore a template version",
+        "description": "Copy a version into the draft. It does not publish.",
+        "tags": ["Templates"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "templates:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["templates:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/TemplateVersion"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The template with the version copied into its draft.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Template"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           },
           "429": {
             "$ref": "#/components/responses/RateLimitError"
@@ -9910,6 +10681,7 @@
               "mailbox_rules:read": "List deterministic server-side rules for allowed mailboxes.",
               "mailbox_rules:write": "Create, replace, and remove deterministic rules for allowed mailboxes.",
               "members:read": "List and retrieve organization members.",
+              "members:write": "Invite people, cancel invitations, and share or unshare mailboxes with members.",
               "messages:read": "List and retrieve messages.",
               "messages:review": "Inspect and release messages held by API-agent security review.",
               "messages:write": "Update, move, delete, and inject sandbox messages.",
@@ -9922,7 +10694,9 @@
               "webhooks:read": "List webhooks, retrieve webhooks, and list deliveries.",
               "webhooks:write": "Create, update, delete, test, and rotate webhooks.",
               "suppressions:read": "List suppressed recipient addresses.",
-              "suppressions:write": "Remove addresses from the suppression list."
+              "suppressions:write": "Remove addresses from the suppression list.",
+              "templates:read": "List, retrieve, and render email templates and their versions.",
+              "templates:write": "Create, update, publish, restore, and delete email templates."
             }
           }
         }
@@ -10016,6 +10790,16 @@
         "description": "OAuth access tokens only. The organization ID this request acts on. Required when the OAuth connection was approved for several organizations (400 validation_error without it); optional with one. An organization the connection was not approved for returns 403 authorization_error. Ignored for API keys, which belong to one organization.",
         "schema": {
           "type": "string"
+        }
+      },
+      "TemplateVersion": {
+        "name": "version",
+        "in": "path",
+        "required": true,
+        "description": "Version number, starting at 1.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     },
@@ -13598,6 +14382,148 @@
           }
         }
       },
+      "Invitation": {
+        "type": "object",
+        "example": {
+          "object": "invitation",
+          "id": "inv_sam",
+          "email": "sam@acme.com",
+          "role": "member",
+          "mailbox_access": {
+            "scope": "selected",
+            "mailbox_ids": ["mbx_123"]
+          },
+          "newsletter_role": "editor",
+          "created_at": "2026-10-27T09:00:00Z",
+          "expires_at": "2026-10-29T09:00:00Z"
+        },
+        "required": [
+          "object",
+          "id",
+          "email",
+          "role",
+          "mailbox_access",
+          "newsletter_role",
+          "created_at",
+          "expires_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "invitation"
+          },
+          "id": {
+            "type": "string",
+            "description": "Invitation ID."
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "member"]
+          },
+          "mailbox_access": {
+            "type": "object",
+            "required": ["scope", "mailbox_ids"],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "enum": ["all", "selected"],
+                "description": "The person's mailbox access, independent of their organization role."
+              },
+              "mailbox_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Empty for all. For selected, includes only granted mailboxes visible within the calling credential's effective mailbox reach and resource constraints; this list may be incomplete. An empty selected list may mean no grants or no visible grants."
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "scope": {
+                      "const": "all"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "mailbox_ids": {
+                      "maxItems": 0
+                    }
+                  }
+                }
+              }
+            ],
+            "examples": [
+              {
+                "scope": "all",
+                "mailbox_ids": []
+              },
+              {
+                "scope": "selected",
+                "mailbox_ids": ["mbx_123"]
+              }
+            ]
+          },
+          "newsletter_role": {
+            "type": ["string", "null"],
+            "enum": ["editor", null],
+            "description": "`editor` lets the person edit newsletters once they join. Only a `member` can carry it."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expires_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "When the invitation link stops working."
+          }
+        }
+      },
+      "CreateMemberInvitationRequest": {
+        "type": "object",
+        "required": ["email", "role"],
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Address to invite. The person creates their own account."
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "member"]
+          },
+          "mailbox_access": {
+            "type": "string",
+            "enum": ["all", "selected"],
+            "default": "selected",
+            "description": "`selected` shares only `mailbox_ids`. `all` shares every mailbox, including mailboxes created later."
+          },
+          "mailbox_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 100,
+            "default": [],
+            "description": "Mailboxes to share for `selected` access. Ignored when `mailbox_access` is `all`."
+          },
+          "newsletter_role": {
+            "type": ["string", "null"],
+            "enum": ["editor", null],
+            "default": null,
+            "description": "Set to `editor` to let a member edit newsletters. Only for the `member` role."
+          }
+        }
+      },
       "Webhook": {
         "type": "object",
         "required": [
@@ -14249,8 +15175,8 @@
       },
       "SendMessageRequest": {
         "type": "object",
-        "required": ["to", "subject"],
-        "description": "Request body for sending a message. Provide either from or mailbox_id to identify the sending mailbox.",
+        "required": ["to"],
+        "description": "Request body for sending a message. Provide either from or mailbox_id to identify the sending mailbox. Provide subject with html or text, or template to send a stored template.",
         "properties": {
           "from": {
             "type": "string",
@@ -14289,7 +15215,7 @@
           },
           "subject": {
             "type": "string",
-            "description": "Email subject.",
+            "description": "Email subject. Required unless template is set.",
             "maxLength": 998
           },
           "html": {
@@ -14301,6 +15227,9 @@
             "type": "string",
             "description": "Plain text body. At least one of html or text is required.",
             "maxLength": 262144
+          },
+          "template": {
+            "$ref": "#/components/schemas/SendMessageTemplate"
           },
           "in_reply_to": {
             "type": "string",
@@ -14606,6 +15535,13 @@
               "$ref": "#/components/schemas/Recipient"
             },
             "description": "CC recipients."
+          },
+          "bcc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recipient"
+            },
+            "description": "BCC recipients. Total recipients (to + cc + bcc) must not exceed 50."
           },
           "html": {
             "type": "string",
@@ -19588,6 +20524,289 @@
             "description": "The next this many most engaged held subscribers. Omit it to send to all of them."
           }
         }
+      },
+      "TemplateVariable": {
+        "type": "object",
+        "required": ["key", "required", "fallback"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Variable key, as used in {{key}}."
+          },
+          "required": {
+            "type": "boolean",
+            "description": "True when the key has no fallback, so every send must pass it."
+          },
+          "fallback": {
+            "type": ["string", "null"],
+            "description": "Value used when a send omits the key."
+          }
+        }
+      },
+      "TemplateVariableValues": {
+        "type": "object",
+        "additionalProperties": {
+          "type": ["string", "number", "boolean"]
+        },
+        "maxProperties": 200,
+        "description": "Value per variable key. Values are inserted as text: HTML-escaped in html, with control characters removed in the subject, and as given in text."
+      },
+      "Template": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "name",
+          "subject",
+          "html",
+          "text",
+          "fallbacks",
+          "variables",
+          "published_version",
+          "has_unpublished_changes",
+          "created_at",
+          "updated_at"
+        ],
+        "description": "A stored email template. subject, html, text and fallbacks are the draft; a send uses the published version unless it pins another.",
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "template"
+          },
+          "id": {
+            "type": "string",
+            "description": "Template ID (tpl_...)."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 998,
+            "description": "Draft subject. May use {{key}} variables."
+          },
+          "html": {
+            "type": ["string", "null"],
+            "description": "Draft HTML body."
+          },
+          "text": {
+            "type": ["string", "null"],
+            "description": "Draft plain-text body."
+          },
+          "fallbacks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemplateVariable"
+            },
+            "description": "Every {{key}} the draft uses, in order of first appearance."
+          },
+          "published_version": {
+            "type": ["integer", "null"],
+            "description": "The version a send uses. Null until the first publish."
+          },
+          "has_unpublished_changes": {
+            "type": "boolean",
+            "description": "True when the draft differs from the published version, or nothing is published yet."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TemplateVersion": {
+        "type": "object",
+        "required": [
+          "object",
+          "template_id",
+          "version",
+          "subject",
+          "html",
+          "text",
+          "fallbacks",
+          "variables",
+          "published_at"
+        ],
+        "description": "An immutable snapshot written by publish.",
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "template_version"
+          },
+          "template_id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "subject": {
+            "type": "string"
+          },
+          "html": {
+            "type": ["string", "null"]
+          },
+          "text": {
+            "type": ["string", "null"]
+          },
+          "fallbacks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemplateVariable"
+            }
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateTemplateRequest": {
+        "type": "object",
+        "required": ["name", "subject"],
+        "description": "At least one of html or text is required.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 998,
+            "description": "Subject. May use {{key}} variables."
+          },
+          "html": {
+            "type": "string",
+            "maxLength": 512000
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 256000
+          },
+          "fallbacks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 10000
+            },
+            "maxProperties": 200,
+            "description": "Default value per variable key. A key used without a fallback is required at send time. Every key must be used by the subject, html or text."
+          },
+          "publish": {
+            "type": "boolean",
+            "description": "Also publish the draft as version 1."
+          }
+        }
+      },
+      "UpdateTemplateRequest": {
+        "type": "object",
+        "description": "Changes the draft only. Send at least one field. Set html or text to null to remove it; at least one must remain.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 998
+          },
+          "html": {
+            "type": ["string", "null"],
+            "maxLength": 512000
+          },
+          "text": {
+            "type": ["string", "null"],
+            "maxLength": 256000
+          },
+          "fallbacks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 10000
+            },
+            "maxProperties": 200,
+            "description": "Default value per variable key. A key used without a fallback is required at send time. Every key must be used by the subject, html or text."
+          }
+        }
+      },
+      "RenderTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "variables": {
+            "$ref": "#/components/schemas/TemplateVariableValues"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Render this version. Omit to render the draft."
+          }
+        }
+      },
+      "RenderedTemplate": {
+        "type": "object",
+        "required": ["object", "template_id", "version", "subject", "html", "text"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "rendered_template"
+          },
+          "template_id": {
+            "type": "string"
+          },
+          "version": {
+            "type": ["integer", "null"],
+            "description": "The rendered version, or null for the draft."
+          },
+          "subject": {
+            "type": "string"
+          },
+          "html": {
+            "type": ["string", "null"]
+          },
+          "text": {
+            "type": ["string", "null"]
+          }
+        }
+      },
+      "SendMessageTemplate": {
+        "type": "object",
+        "required": ["id"],
+        "description": "Send a stored template. The request must not include subject, html or text.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Template ID (tpl_...)."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Send this version. Omit to send the published version."
+          },
+          "variables": {
+            "$ref": "#/components/schemas/TemplateVariableValues"
+          }
+        }
       }
     },
     "responses": {
@@ -19745,6 +20964,10 @@
     {
       "name": "Newsletters",
       "description": "Create, test, and schedule newsletter campaigns."
+    },
+    {
+      "name": "Templates",
+      "description": "Stored transactional email templates with versions."
     }
   ]
 }
