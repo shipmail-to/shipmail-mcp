@@ -79,7 +79,7 @@ export function createShipmailMcpServer(
   const client = new ShipmailClient({
     apiKey: config.apiKey,
     ...(config.baseUrl ? { baseUrl: config.baseUrl } : {}),
-    defaultHeaders,
+    defaultHeaders: { ...defaultHeaders, ...config.requestHeaders },
   });
 
   const server = new McpServer(

@@ -19,6 +19,7 @@ import {
   type SendMessageParams,
   type ShipmailClient,
   ShipmailError,
+  type SuppressionScope,
   ValidationError,
 } from "shipmail";
 import { z } from "zod/v4";
@@ -39,7 +40,7 @@ import {
   withPositions,
 } from "./mailbox-rule-tools.js";
 import { NEWSLETTER_ASSET_UPLOADER_RESOURCE_URI } from "./newsletter-asset-component.js";
-import { openOutputSchema } from "./output-schema.js";
+import { openOutputSchema, withCachedJsonSchema } from "./output-schema.js";
 import {
   errorResult,
   jsonResult,
@@ -74,14 +75,18 @@ import {
   calendarEventMutationOutputSchema,
   calendarEventOutputSchema,
   calendarEventsOutputSchema,
+  calendarInvitationResponseOutputSchema,
   composeMessageWithFileInputSchema,
+  confirmationResendOutputSchema,
   createAudienceInputSchema,
   createAutomationInputSchema,
   createBookingLinkInputSchema,
   createBookingPageInputSchema,
   createCalendarEventInputSchema,
+  createCustomerInputSchema,
   createdMailboxAppPasswordOutputSchema,
   createDomainInputSchema,
+  createdSmtpCredentialOutputSchema,
   createInboxDraftInputSchema,
   createInboxReplyDraftInputSchema,
   createMailboxAppPasswordInputSchema,
@@ -93,15 +98,21 @@ import {
   createNewsletterFromChangelogInputSchema,
   createNewsletterInputSchema,
   createReplyScanInputSchema,
+  createSegmentInputSchema,
+  createSmtpCredentialInputSchema,
   createTemplateInputSchema,
   createWebhookInputSchema,
   createWelcomeStepInputSchema,
+  customerFieldsOutputSchema,
+  customerOutputSchema,
+  customersOutputSchema,
   deleteCalendarEventInputSchema,
   deleteInboxMessageInputSchema,
   deleteInboxReplyDraftInputSchema,
   deleteMailboxFolderInputSchema,
   deleteMailboxForwardingInputSchema,
   deleteMailboxRuleInputSchema,
+  deleteSegmentInputSchema,
   deleteWelcomeStepInputSchema,
   domainDnsRecordsOutputSchema,
   domainHealthOutputSchema,
@@ -116,6 +127,7 @@ import {
   getMailboxRuleInputSchema,
   getReplyScanInputSchema,
   getScheduledMessageInputSchema,
+  getSegmentInputSchema,
   getSubscriberByEmailInputSchema,
   getSubscriberInputSchema,
   getThreadInputSchema,
@@ -148,6 +160,7 @@ import {
   listBookingLinksInputSchema,
   listBookingPagesInputSchema,
   listCalendarEventsInputSchema,
+  listCustomersInputSchema,
   listDomainsInputSchema,
   listInboxReplyDraftsInputSchema,
   listMailboxesInputSchema,
@@ -160,6 +173,8 @@ import {
   listNewslettersInputSchema,
   listReplyScanResultsInputSchema,
   listScheduledMessagesInputSchema,
+  listSegmentsInputSchema,
+  listSmtpCredentialsInputSchema,
   listSubscribersInputSchema,
   listSuppressionsInputSchema,
   listTemplatesInputSchema,
@@ -215,21 +230,28 @@ import {
   replyToInboxThreadInputSchema,
   replyToMessageInputSchema,
   replyToThreadInputSchema,
+  resendSubscriberConfirmationInputSchema,
   resetPasswordInputSchema,
+  respondToInvitationInputSchema,
   restoreMailboxImportInputSchema,
   restoreTemplateVersionInputSchema,
   resubscribeSubscriberInputSchema,
   revokeBookingLinkInputSchema,
   revokeMailboxAppPasswordInputSchema,
+  revokeSmtpCredentialInputSchema,
   runAutomationInputSchema,
   scheduledMessageOutputSchema,
   scheduledMessagesOutputSchema,
   scheduleNewsletterInputSchema,
   searchDomainsInputSchema,
+  segmentOutputSchema,
+  segmentsOutputSchema,
   sendInboxReplyDraftInputSchema,
   sendMessageInputSchema,
   sendNewsletterTestInputSchema,
   sendNewsletterToMoreInputSchema,
+  serviceLevelsOutputSchema,
+  smtpCredentialsOutputSchema,
   stagedAttachmentUploadPreparationOutputSchema,
   statusOutputSchema,
   subscriberActionInputSchema,
@@ -253,6 +275,7 @@ import {
   updateBookingLinkInputSchema,
   updateBookingPageInputSchema,
   updateCalendarEventInputSchema,
+  updateCustomerInputSchema,
   updateDomainInputSchema,
   updateInboxMessageInputSchema,
   updateInboxReplyDraftInputSchema,
@@ -263,12 +286,14 @@ import {
   updateMailboxRuleInputSchema,
   updateNewsletterInputSchema,
   updateScheduledMessageInputSchema,
+  updateSegmentInputSchema,
   updateSubscriberInputSchema,
   updateTemplateInputSchema,
   updateWebhookInputSchema,
   updateWelcomeSequenceInputSchema,
   updateWelcomeStepInputSchema,
   uploadNewsletterAssetWithFileInputSchema,
+  upsertCustomerInputSchema,
   verificationOutputSchema,
   webhookDeliveriesOutputSchema,
   webhookDeliveryDetailOutputSchema,
@@ -309,6 +334,7 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_update_scheduled_message: 20,
   shipmail_cancel_scheduled_message: 20,
   shipmail_reply_to_message: 10,
+  shipmail_respond_to_invitation: 20,
   shipmail_reply_to_thread: 10,
   shipmail_reply_to_inbox_message: 10,
   shipmail_reply_to_inbox_thread: 10,
@@ -332,6 +358,8 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_create_mailbox_export: 5,
   shipmail_create_mailbox_app_password: 10,
   shipmail_revoke_mailbox_app_password: 20,
+  shipmail_create_smtp_credential: 10,
+  shipmail_revoke_smtp_credential: 20,
   shipmail_create_mailbox_import: 5,
   shipmail_cancel_mailbox_import: 10,
   shipmail_resume_mailbox_import: 10,
@@ -361,6 +389,10 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_revoke_member_mailbox_access: 20,
   shipmail_add_suppression: 50,
   shipmail_remove_suppression: 50,
+  shipmail_create_customer: 50,
+  shipmail_update_customer: 50,
+  shipmail_delete_customer: 10,
+  shipmail_upsert_customer_by_external_id: 100,
   shipmail_create_template: 20,
   shipmail_update_template: 50,
   shipmail_delete_template: 10,
@@ -374,11 +406,15 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_update_audience_feed: 20,
   shipmail_rotate_audience_feed: 20,
   shipmail_revoke_audience_feed: 20,
+  shipmail_create_audience_segment: 20,
+  shipmail_update_audience_segment: 50,
+  shipmail_delete_audience_segment: 20,
   shipmail_add_subscriber: 200,
   shipmail_add_subscribers_batch: 20,
   shipmail_update_subscriber: 100,
   shipmail_unsubscribe_subscriber: 100,
   shipmail_resubscribe_subscriber: 100,
+  shipmail_resend_subscriber_confirmation: 10,
   shipmail_remove_subscriber: 100,
   shipmail_create_newsletter_from_changelog: 20,
   shipmail_create_newsletter: 20,
@@ -606,7 +642,11 @@ export function registerTools(
           ...(config.description === undefined ? {} : { description: config.description }),
           ...(config.inputSchema === undefined
             ? {}
-            : { inputSchema: withOrganizationParam(config.inputSchema, organizationIds) }),
+            : {
+                inputSchema: withCachedJsonSchema(
+                  withOrganizationParam(config.inputSchema, organizationIds),
+                ),
+              }),
           // Every tool's published output schema is opened here rather than at each declaration, so
           // a field added to a response can never break a client holding an older schema.
           ...(config.outputSchema === undefined
@@ -1055,6 +1095,71 @@ export function registerTools(
         runTool("shipmail_revoke_mailbox_app_password", acknowledgmentOutputSchema, async () => {
           await client.mailboxes.revokeAppPassword(id, app_password_id);
           return { result: { ok: true, id: app_password_id } };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_smtp_credentials", () => {
+    server.registerTool(
+      "shipmail_list_smtp_credentials",
+      {
+        title: "List SMTP Credentials",
+        description:
+          "List the active SMTP credentials of the organization's transactional senders, newest first, or of one sender with from. Passwords are never returned.",
+        inputSchema: listSmtpCredentialsInputSchema,
+        outputSchema: smtpCredentialsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ from }) =>
+        runTool("shipmail_list_smtp_credentials", smtpCredentialsOutputSchema, async () => ({
+          smtp_credentials: await client.smtpCredentials.list(from ? { from } : undefined),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_smtp_credential", () => {
+    server.registerTool(
+      "shipmail_create_smtp_credential",
+      {
+        title: "Create SMTP Credential",
+        description:
+          "Create an SMTP credential that sends as one transactional sender's address, for an SMTP client such as Supabase Auth. Its messages count as transactional email from that sender, like an API send. A sender has at most 5. The password appears once in the tool result.",
+        inputSchema: createSmtpCredentialInputSchema,
+        outputSchema: createdSmtpCredentialOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      async ({ from, name }) =>
+        runTool("shipmail_create_smtp_credential", createdSmtpCredentialOutputSchema, async () => ({
+          smtp_credential: await client.smtpCredentials.create({ from, name }),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_revoke_smtp_credential", () => {
+    server.registerTool(
+      "shipmail_revoke_smtp_credential",
+      {
+        title: "Revoke SMTP Credential",
+        description:
+          "Permanently revoke one SMTP credential. SMTP clients that use it can no longer send.",
+        inputSchema: revokeSmtpCredentialInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id }) =>
+        runTool("shipmail_revoke_smtp_credential", acknowledgmentOutputSchema, async () => {
+          await client.smtpCredentials.revoke(id);
+          return { result: { ok: true, id } };
         }),
     );
   });
@@ -2856,6 +2961,35 @@ export function registerTools(
     );
   });
 
+  registerIfAllowed("shipmail_respond_to_invitation", () => {
+    server.registerTool(
+      "shipmail_respond_to_invitation",
+      {
+        title: "Respond To Invitation",
+        description:
+          "Accept, tentatively accept or decline the calendar invitation a received message carries, by its msg_ ID. Stores the answer on the mailbox calendar and replies to the organizer only when the organizer sent the message. The message.received webhook's invitation field says which messages carry one.",
+        inputSchema: respondToInvitationInputSchema,
+        outputSchema: calendarInvitationResponseOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      async (args) =>
+        runTool(
+          "shipmail_respond_to_invitation",
+          calendarInvitationResponseOutputSchema,
+          async () => ({
+            invitation: await client.messages.respondToInvitation(args.id, {
+              response: args.response,
+            }),
+          }),
+        ),
+    );
+  });
+
   registerIfAllowed("shipmail_list_threads", () => {
     server.registerTool(
       "shipmail_list_threads",
@@ -3334,14 +3468,14 @@ export function registerTools(
       {
         title: "List Suppressions",
         description:
-          "List suppressed recipients. Each entry has a reason (hard_bounce, complaint, soft_bounce or manual), a scope (all blocks every send; marketing blocks newsletter sends only) and expires_at (null when permanent; soft-bounce pauses last 30 days).",
+          "List suppressed recipients. Each entry has a reason (hard_bounce, complaint, soft_bounce or manual), a scope (all blocks every send; a complaint blocks only its own kind of email: marketing for newsletters, transactional for application senders, mailbox for mail sent from a mailbox) and expires_at (null when permanent; soft-bounce pauses last 30 days).",
         inputSchema: listSuppressionsInputSchema,
         outputSchema: suppressionsOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: false },
       },
       async (args) =>
         runTool("shipmail_list_suppressions", suppressionsOutputSchema, async () => {
-          const params: { limit: number; cursor?: string; scope?: "all" | "marketing" } = {
+          const params: { limit: number; cursor?: string; scope?: SuppressionScope } = {
             limit: args.limit,
           };
           if (args.cursor !== undefined) params.cursor = args.cursor;
@@ -3396,6 +3530,178 @@ export function registerTools(
           await client.suppressions.remove(email);
           return { result: { ok: true, id: email } };
         }),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_customers", () => {
+    server.registerTool(
+      "shipmail_list_customers",
+      {
+        title: "List Customers",
+        description:
+          "List customers. Filter by an exact email or domain identifier, by an external ID (external_source with external_id), by a tag, or search name, company and identifiers with q; filters combine. Each customer carries its reply time (service_level_id), tags, notes, fields, identifiers and external IDs.",
+        inputSchema: listCustomersInputSchema,
+        outputSchema: customersOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async (args) =>
+        runTool("shipmail_list_customers", customersOutputSchema, async () =>
+          client.customers.list(args),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_customer", () => {
+    server.registerTool(
+      "shipmail_get_customer",
+      {
+        title: "Get Customer",
+        description: "Fetch one customer by ID, such as the customer_id of an inbox conversation.",
+        inputSchema: getByIdInputSchema,
+        outputSchema: customerOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id }) =>
+        runTool("shipmail_get_customer", customerOutputSchema, async () => ({
+          customer: await client.customers.get(id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_customer", () => {
+    server.registerTool(
+      "shipmail_create_customer",
+      {
+        title: "Create Customer",
+        description:
+          "Create a customer with its email addresses or domains. Conversations from a matching, verified sender get the customer's reply time, notes and fields. An address or domain owned by another customer is refused with identifier_conflict.",
+        inputSchema: createCustomerInputSchema,
+        outputSchema: customerOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_create_customer", customerOutputSchema, async () => ({
+          customer: await client.customers.create(stripIdempotencyKey(args), mutationOptions(args)),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_customer", () => {
+    server.registerTool(
+      "shipmail_update_customer",
+      {
+        title: "Update Customer",
+        description:
+          "Change a customer. Only the properties you pass change; identifiers, external_ids, fields and tags replace the stored set when given. Changing service_level_id moves the reply clocks of the customer's open conversations.",
+        inputSchema: updateCustomerInputSchema,
+        outputSchema: customerOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_update_customer", customerOutputSchema, async () => {
+          const { id, ...params } = stripIdempotencyKey(args);
+          return {
+            customer: await client.customers.update(id, params, mutationOptions(args)),
+          };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_customer", () => {
+    server.registerTool(
+      "shipmail_delete_customer",
+      {
+        title: "Delete Customer",
+        description:
+          "Delete a customer with its identifiers and external IDs. Its conversations fall back to the mailbox default reply time. This is destructive.",
+        inputSchema: getByIdInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id }) =>
+        runTool("shipmail_delete_customer", acknowledgmentOutputSchema, async () => {
+          await client.customers.remove(id);
+          return { result: { ok: true, id } };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_upsert_customer_by_external_id", () => {
+    server.registerTool(
+      "shipmail_upsert_customer_by_external_id",
+      {
+        title: "Upsert Customer by External ID",
+        description:
+          "Create or update the customer a CRM or billing system knows by source and external_id. Calling it again with the same values changes nothing. An address or domain owned by another customer is refused with identifier_conflict and that customer's ID; it is never moved.",
+        inputSchema: upsertCustomerInputSchema,
+        outputSchema: customerOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_upsert_customer_by_external_id", customerOutputSchema, async () => {
+          const { source, external_id, ...params } = stripIdempotencyKey(args);
+          return {
+            customer: await client.customers.upsertByExternalId(
+              source,
+              external_id,
+              params,
+              mutationOptions(args),
+            ),
+          };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_service_levels", () => {
+    server.registerTool(
+      "shipmail_list_service_levels",
+      {
+        title: "List Reply Times",
+        description:
+          "List the reply times a customer can have: each promises a reply within reply_target_minutes, counted inside business_hours when set.",
+        outputSchema: serviceLevelsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async () =>
+        runTool("shipmail_list_service_levels", serviceLevelsOutputSchema, async () =>
+          client.customers.listServiceLevels(),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_customer_fields", () => {
+    server.registerTool(
+      "shipmail_list_customer_fields",
+      {
+        title: "List Customer Fields",
+        description: "List the custom fields a customer can carry, with their key, label and type.",
+        outputSchema: customerFieldsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async () =>
+        runTool("shipmail_list_customer_fields", customerFieldsOutputSchema, async () =>
+          client.customers.listFields(),
+        ),
     );
   });
 
@@ -4320,6 +4626,125 @@ export function registerTools(
     );
   });
 
+  registerIfAllowed("shipmail_list_audience_segments", () => {
+    server.registerTool(
+      "shipmail_list_audience_segments",
+      {
+        title: "List Audience Segments",
+        description:
+          "List an audience's saved segments with their rules and how many subscribed members each matches now. A segment's id is what segment_id takes in a block's visibility: show the block only to readers in it, or to everyone except them.",
+        inputSchema: listSegmentsInputSchema,
+        outputSchema: segmentsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ audience_id }) =>
+        runTool("shipmail_list_audience_segments", segmentsOutputSchema, async () => ({
+          data: (await client.audiences.segments.list(audience_id)).data,
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_audience_segment", () => {
+    server.registerTool(
+      "shipmail_get_audience_segment",
+      {
+        title: "Get Audience Segment",
+        description:
+          "Fetch one saved segment of an audience with its rules and how many subscribed members it matches now.",
+        inputSchema: getSegmentInputSchema,
+        outputSchema: segmentOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ audience_id, segment_id }) =>
+        runTool("shipmail_get_audience_segment", segmentOutputSchema, async () => ({
+          segment: await client.audiences.segments.get(audience_id, segment_id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_audience_segment", () => {
+    server.registerTool(
+      "shipmail_create_audience_segment",
+      {
+        title: "Create Audience Segment",
+        description:
+          "Save a segment of an audience: a name unique in the audience and 1 to 10 rules on merge fields, join date, engagement tier, last sign of life or issues received, matched all or any. Sends nothing. Use the returned id as segment_id in a block's visibility.",
+        inputSchema: createSegmentInputSchema,
+        outputSchema: segmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) => {
+        const { audience_id, ...rest } = stripIdempotencyKey(args);
+        return runTool("shipmail_create_audience_segment", segmentOutputSchema, async () => ({
+          segment: await client.audiences.segments.create(audience_id, rest, mutationOptions(args)),
+        }));
+      },
+    );
+  });
+
+  registerIfAllowed("shipmail_update_audience_segment", () => {
+    server.registerTool(
+      "shipmail_update_audience_segment",
+      {
+        title: "Update Audience Segment",
+        description:
+          "Rename a segment, replace its rules, or both. A newsletter not yet scheduled uses the new rules; a scheduled one keeps the readers fixed when it was scheduled.",
+        inputSchema: updateSegmentInputSchema,
+        outputSchema: segmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) => {
+        const { audience_id, segment_id, ...rest } = stripIdempotencyKey(args);
+        return runTool("shipmail_update_audience_segment", segmentOutputSchema, async () => ({
+          segment: await client.audiences.segments.update(
+            audience_id,
+            segment_id,
+            rest,
+            mutationOptions(args),
+          ),
+        }));
+      },
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_audience_segment", () => {
+    server.registerTool(
+      "shipmail_delete_audience_segment",
+      {
+        title: "Delete Audience Segment",
+        description:
+          "Delete a saved segment. Refused with a 409 conflict while any newsletter of the audience sends to it, which only the dashboard can set. A block limited to it does not stop the delete, but a draft with such a block then fails preflight until the block is changed.",
+        inputSchema: deleteSegmentInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_delete_audience_segment", acknowledgmentOutputSchema, async () => {
+          await client.audiences.segments.delete(
+            args.audience_id,
+            args.segment_id,
+            mutationOptions(args),
+          );
+          return { result: { ok: true, id: args.segment_id } };
+        }),
+    );
+  });
+
   registerIfAllowed("shipmail_get_welcome_sequence", () => {
     server.registerTool(
       "shipmail_get_welcome_sequence",
@@ -4639,6 +5064,37 @@ export function registerTools(
           ),
         }));
       },
+    );
+  });
+
+  registerIfAllowed("shipmail_resend_subscriber_confirmation", () => {
+    server.registerTool(
+      "shipmail_resend_subscriber_confirmation",
+      {
+        title: "Resend Subscriber Confirmation",
+        description:
+          "Send the double opt-in confirmation email again to pending subscribers of an audience. Each call emails real subscribers. Without subscriber_ids it emails every eligible pending subscriber, at most 500 per call; remaining says how many are left. A subscriber is emailed only when they signed up at most 30 days ago, had fewer than 3 resends, and got no confirmation email in the last 24 hours. Each email carries a new link valid 7 days, and the old link stops working.",
+        inputSchema: resendSubscriberConfirmationInputSchema,
+        outputSchema: confirmationResendOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      async (args) =>
+        runTool(
+          "shipmail_resend_subscriber_confirmation",
+          confirmationResendOutputSchema,
+          async () => ({
+            result: await client.audiences.subscribers.resendConfirmation(
+              args.audience_id,
+              args.subscriber_ids !== undefined ? { subscriber_ids: args.subscriber_ids } : {},
+              mutationOptions(args),
+            ),
+          }),
+        ),
     );
   });
 

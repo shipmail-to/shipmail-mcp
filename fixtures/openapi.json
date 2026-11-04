@@ -2438,6 +2438,254 @@
         ]
       }
     },
+    "/smtp-credentials": {
+      "get": {
+        "operationId": "listSmtpCredentials",
+        "summary": "List SMTP credentials",
+        "description": "List the active SMTP credentials of the organization's transactional senders, newest first. Pass from to list one sender's credentials. Passwords are never returned. A key limited to some mailboxes sees only the credentials of senders on those mailboxes. Guide: https://shipmail.to/docs/api/smtp-credentials",
+        "tags": ["SMTP Credentials"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "mailbox_credentials:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_credentials:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "A transactional sender's address. Returns only that sender's credentials.",
+            "schema": {
+              "type": "string",
+              "format": "email",
+              "maxLength": 320
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active SMTP credentials, newest first. The list is not paginated: a sender has at most 5.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["object", "data"],
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "const": "list"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SmtpCredential"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "Transactional sender not found: from is not a transactional sender of this organization, or this API key cannot reach its mailbox (details[].code transactional_sender_not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSmtpCredential",
+        "summary": "Create an SMTP credential",
+        "description": "Create an SMTP credential for one transactional sender, for an SMTP client such as Supabase Auth or a framework mailer. The credential sends only as the sender's address: the envelope MAIL FROM and the From header must both be that address. Recipients come from the SMTP envelope. Messages go through the same admission, limits, suppression list, storage and counting as POST /messages from that sender, and count as transactional email. The sender's display name and Reply-To are always its own, and a message with a different Reply-To is refused. A sender has at most 5 credentials. The first credential turns SMTP on for the sender. The password is returned once in the 201 response and Shipmail keeps no copy. Idempotency-Key is rejected because replaying a cached password would break the one-time guarantee. The key acts for an Owner or Admin who can read the sender's mailbox; another person gets 403. A credential acts for the person who created it: once they leave the organization or lose access to the sender's mailbox, its messages are refused with 550, and a new credential is needed.",
+        "tags": ["SMTP Credentials"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "mailbox_credentials:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_credentials:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSmtpCredentialRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SMTP credential created. Save the password now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedSmtpCredential"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "Transactional sender not found: from is not a transactional sender of this organization, or this API key cannot reach its mailbox (details[].code transactional_sender_not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The transactional sender is turned off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "description": "Rate limit exceeded, or the sender already has 5 SMTP credentials (type rate_limit_error; revoke one first).",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying."
+              },
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Maximum requests allowed in the window."
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in the current window."
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp (seconds) when the window resets."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/smtp-credentials/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "SMTP credential ID.",
+          "schema": {
+            "type": "string",
+            "pattern": "^smtpc_[0-9a-z]+$"
+          }
+        }
+      ],
+      "delete": {
+        "operationId": "revokeSmtpCredential",
+        "summary": "Revoke an SMTP credential",
+        "description": "Permanently revoke one SMTP credential. SMTP clients that use it can no longer sign in or send. The key acts for an Owner or Admin who can read the sender's mailbox; another person gets 403.",
+        "tags": ["SMTP Credentials"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "mailbox_credentials:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailbox_credentials:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "SMTP credential revoked."
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "SMTP credential not found, already revoked, or on a mailbox this API key cannot reach.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
     "/mailboxes/{id}/exports": {
       "parameters": [
         {
@@ -3732,7 +3980,7 @@
       "post": {
         "operationId": "sendMessage",
         "summary": "Send a message",
-        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Attachments are base64-encoded, max 20 files, 3 MB per file, 3 MB total. To send from a transactional sender (https://shipmail.to/docs/features/transactional-email), set from to its bare address; mailbox_id is optional and, when set, must be the sender's mailbox. Shipmail adds the sender name and Reply-To. Transactional senders send immediately only and refuse scheduled_at, track_reply: true, staged_attachment_ids, a different reply_to and a different display name. A transactional email send that reaches a ceiling returns 429 with details[].code application_daily_limit (daily ceiling for transactional email, a share of the organization's daily sending limit), application_unique_recipients (hourly ceiling of different recipients) or application_storage_full (the sender's mailbox has no transactional email storage left). To send a stored template, pass template: { id, version?, variables? } instead of subject, html and text; messages:send is enough. A template from another organization is a 404, a template with no published version and no pinned version is a 422 with details[].code template_not_published, and missing or unknown variables are a 422 with details[].code missing_variable or unknown_variable.",
+        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Base64 attachments: max 20 files, and the whole email can be up to 10 MB, attachments and encoding included (a larger one is a 422). staged_attachment_ids take up to 20 files of 25 MB each. To send from a transactional sender (https://shipmail.to/docs/features/transactional-email), set from to its bare address; mailbox_id is optional and, when set, must be the sender's mailbox. Shipmail adds the sender name and Reply-To. Transactional senders send immediately only and refuse scheduled_at, track_reply: true, staged_attachment_ids, a different reply_to and a different display name. A transactional email send that reaches a ceiling returns 429 with details[].code application_daily_limit (daily ceiling for transactional email, a share of the organization's daily sending limit), application_unique_recipients (hourly ceiling of different recipients) or application_storage_full (the sender's mailbox has no transactional email storage left). To send a stored template, pass template: { id, version?, variables? } instead of subject, html and text; messages:send is enough. A template from another organization is a 404, a template with no published version and no pinned version is a 422 with details[].code template_not_published, and missing or unknown variables are a 422 with details[].code missing_variable or unknown_variable.",
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
@@ -3787,7 +4035,7 @@
             "$ref": "#/components/responses/ConflictError"
           },
           "422": {
-            "description": "Validation failed. For a transactional sender, details[].code is transactional_sender_immediate_only (scheduled_at set), transactional_sender_no_reply_tracking (track_reply true), transactional_sender_reply_to (reply_to differs from the sender's Reply-To), transactional_sender_staged_attachments (staged_attachment_ids set) transactional_sender_display_name (from carries a different display name) or recipient_disposable (the sender refuses temporary email addresses and a recipient uses one).",
+            "description": "Validation failed. For a transactional sender, details[].code is transactional_sender_immediate_only (scheduled_at set), transactional_sender_no_reply_tracking (track_reply true), transactional_sender_no_signature (add_signature true), transactional_sender_reply_to (reply_to differs from the sender's Reply-To), transactional_sender_staged_attachments (staged_attachment_ids set) transactional_sender_display_name (from carries a different display name) or recipient_disposable (the sender refuses temporary email addresses and a recipient uses one).",
             "content": {
               "application/json": {
                 "schema": {
@@ -3994,6 +4242,68 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/messages/{id}/invitation": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "post": {
+        "operationId": "respondToMessageInvitation",
+        "summary": "Answer a calendar invitation",
+        "description": "Accept, tentatively accept or decline the calendar invitation a received message carries, by the message's msg_ ID. The answer is stored on the mailbox calendar, and a reply goes to the organizer only when the organizer is the message's sender. Replies, cancelled meetings, messages without an invitation and transactional email return 422. A newer version of the invitation already on the calendar also returns 422.",
+        "tags": ["Messages", "Calendar"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "calendar:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["calendar:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondToCalendarInvitationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invitation answered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarInvitationResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           },
           "429": {
             "$ref": "#/components/responses/RateLimitError"
@@ -5419,7 +5729,7 @@
       "get": {
         "operationId": "listSuppressions",
         "summary": "List suppressed email addresses",
-        "description": "Returns a paginated list of email addresses that have been suppressed for your organization. Addresses are suppressed automatically on hard bounces, complaints and repeated soft bounces, or by importing a suppression list into an audience. A complaint about a newsletter has scope `marketing` and blocks newsletter sends only; every other entry has scope `all` and blocks every send. A soft-bounce entry expires 30 days after it is created, unless the address had already been paused once.",
+        "description": "Returns a paginated list of email addresses that have been suppressed for your organization. Addresses are suppressed automatically on hard bounces, complaints and repeated soft bounces, or by importing a suppression list into an audience. A complaint blocks only the kind of email it was about: scope `marketing` for a newsletter, `transactional` for an application sender, `mailbox` for email sent from a mailbox. Hard bounces, repeated soft bounces and manual entries have scope `all` and block every send. A soft-bounce entry expires 30 days after it is created, unless the address had already been paused once.",
         "tags": ["Suppressions"],
         "x-rate-limit-tier": "read",
         "x-scope": "suppressions:read",
@@ -5445,7 +5755,7 @@
             "description": "Return only entries with this scope.",
             "schema": {
               "type": "string",
-              "enum": ["all", "marketing"]
+              "enum": ["all", "marketing", "transactional", "mailbox"]
             }
           },
           {
@@ -6332,7 +6642,7 @@
           {
             "name": "before",
             "in": "query",
-            "description": "Only messages received before this instant. Defaults to the first-page snapshot time.",
+            "description": "Only messages received before this instant.",
             "schema": {
               "type": "string",
               "format": "date-time"
@@ -9209,6 +9519,68 @@
         ]
       }
     },
+    "/audiences/{id}/subscribers/resend-confirmation": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "post": {
+        "operationId": "resendSubscriberConfirmation",
+        "summary": "Resend the confirmation email to pending subscribers",
+        "description": "Emails the double opt-in confirmation link again to pending subscribers of an audience. Without subscriber_ids it emails every eligible pending subscriber, at most 500 per call; remaining says how many eligible subscribers are left for another call. A subscriber is emailed only when all hold: status pending, signed up at most 30 days ago, fewer than 3 confirmation resends so far, and no confirmation email in the last 24 hours. Each resend issues a new confirmation link valid for 7 days, and the previous link stops working. When the email fails to send, the subscriber counts as failed and the previous link and counters are restored, unless the mail server may have accepted it, in which case the new link is kept. Skip reasons are exclusive, checked in the order not_pending, too_old, resend_limit, recently_sent. Answers 422 when the organization has no verified newsletter domain with a Reply-To address, and 403 when newsletter sending is restricted or the key is limited to specific recipients, recipient domains, domains or mailboxes. Without subscriber_ids, pending subscribers whose address is suppressed are left out; a suppressed subscriber named in subscriber_ids counts as failed.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "send",
+        "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendSubscriberConfirmationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "How many confirmation emails went out, failed, or were skipped.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmationResend"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
     "/newsletters": {
       "post": {
         "operationId": "createNewsletter",
@@ -10639,6 +11011,838 @@
           }
         }
       }
+    },
+    "/audiences/{id}/segments": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        }
+      ],
+      "get": {
+        "operationId": "listAudienceSegments",
+        "summary": "List an audience's segments",
+        "description": "List the saved segments (groups of subscribers) of an audience, sorted by name, each with how many subscribed members it matches now. Use a segment's id as segment_id in a block's visibility. The list is not paginated.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "audiences:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The audience's segments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Segment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAudienceSegment",
+        "summary": "Create a segment",
+        "description": "Save a group of an audience's subscribers, defined by rules on merge fields, join date, engagement tier, last sign of life and issues received. The name is unique within the audience.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The new segment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Segment"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSegmentRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audiences/{id}/segments/{segmentId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        },
+        {
+          "name": "segmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Segment ID (nwsseg_...)."
+        }
+      ],
+      "get": {
+        "operationId": "getAudienceSegment",
+        "summary": "Get a segment",
+        "description": "Fetch one segment of the audience with its definition and how many subscribed members it matches now.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "audiences:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The segment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Segment"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateAudienceSegment",
+        "summary": "Update a segment",
+        "description": "Rename a segment, replace its definition, or both. An omitted field keeps its value. A new definition applies to sends scheduled after the change; an issue already scheduled keeps the membership fixed when it was scheduled.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The updated segment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Segment"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSegmentRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteAudienceSegment",
+        "summary": "Delete a segment",
+        "description": "Delete a segment. A newsletter that sends to this segment, whatever its status (including sent issues), holds it: the delete answers 409 and nothing changes. A block limited to the segment does not hold it: the delete succeeds, an unsent draft then fails the Block segments preflight check and cannot be scheduled until the block is changed, and an issue already scheduled keeps the membership fixed when it was scheduled.",
+        "tags": ["Audiences"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Segment deleted."
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "operationId": "listCustomers",
+        "summary": "List customers",
+        "description": "Returns your customers in id order. Filter by an exact `email` or `domain` identifier, by an external id (`external_source` with `external_id`), by a `tag`, or search name, company and identifiers with `q`. Filters combine.",
+        "tags": ["Customers"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "customers:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["customers:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "description": "Customers with this email identifier.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "description": "Customers with this domain identifier.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "external_source",
+            "in": "query",
+            "required": false,
+            "description": "Give with external_id: the customer that system knows by that id.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "external_id",
+            "in": "query",
+            "required": false,
+            "description": "Give with external_source.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Search name, company and identifiers.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "description": "Customers with this tag. Matched exactly after the same normalization as on write, so `VIP` finds `vip`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of customers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "pagination"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Customer"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCustomer",
+        "summary": "Create a customer",
+        "description": "Creates a customer with its identifiers and external ids. Conversations from a matching sender get the customer's reply time, notes and fields.",
+        "tags": ["Customers"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "customers:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["customers:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Customer created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "409": {
+            "description": "An address, domain or external id belongs to another customer. `details[0].code` is `identifier_conflict` or `external_id_conflict`, and `details[0].params.customer_id` names the owner.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/customers/{id}": {
+      "get": {
+        "operationId": "getCustomer",
+        "summary": "Get a customer",
+        "description": "Returns one customer.",
+        "tags": ["Customers"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "customers:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["customers:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The customer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateCustomer",
+        "summary": "Update a customer",
+        "description": "Changes the properties you send. `identifiers`, `external_ids` and `fields` replace the stored set when given. Changing the reply time moves the open clocks of the customer's conversations.",
+        "tags": ["Customers"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "customers:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["customers:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The updated customer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "description": "An address, domain or external id belongs to another customer. `details[0].code` is `identifier_conflict` or `external_id_conflict`, and `details[0].params.customer_id` names the owner.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCustomer",
+        "summary": "Delete a customer",
+        "description": "Deletes the customer, its identifiers and external ids. Its conversations fall back to the mailbox default reply time.",
+        "tags": ["Customers"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "customers:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["customers:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Customer deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/customers/external/{source}/{external_id}": {
+      "put": {
+        "operationId": "upsertCustomerByExternalId",
+        "summary": "Create or update a customer by external id",
+        "description": "Idempotent sync from a CRM or billing system. Creates the customer that `source` knows by `external_id` (201), or updates it in place (200). Percent-encode `external_id`; it is decoded exactly once, so `contact%2F42` is the id `contact/42`. An address or domain that belongs to another customer is refused with 409 `identifier_conflict` and that customer's id; it is never moved.",
+        "tags": ["Customers"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "customers:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["customers:write"]
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCustomerRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "description": "Lowercase slug of the system, such as `hubspot` or `stripe`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "description": "The customer's id in that system, percent-encoded.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Customer created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "409": {
+            "description": "An address, domain or external id belongs to another customer. `details[0].code` is `identifier_conflict` or `external_id_conflict`, and `details[0].params.customer_id` names the owner.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/service-levels": {
+      "get": {
+        "operationId": "listServiceLevels",
+        "summary": "List reply times",
+        "description": "Returns the reply times you can give a customer, in display order. Reply times are managed in the app.",
+        "tags": ["Customers"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "customers:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["customers:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The reply times.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ServiceLevel"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/customer-fields": {
+      "get": {
+        "operationId": "listCustomerFields",
+        "summary": "List customer fields",
+        "description": "Returns the custom fields a customer can carry, in display order. Fields are managed in the app.",
+        "tags": ["Customers"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "customers:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["customers:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The customer fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CustomerField"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -10669,13 +11873,15 @@
               "booking_pages:write": "Create, update, and delete booking pages.",
               "calendar:read": "List and retrieve calendar events and open availability.",
               "calendar:write": "Create, update, and delete calendar events.",
+              "customers:read": "List and retrieve customers, reply times, and customer fields.",
+              "customers:write": "Create, update, sync, and delete customers.",
               "domains:read": "List, retrieve, and verify domains.",
               "domains:write": "Create, update, and delete domains.",
               "mailboxes:read": "List and retrieve mailboxes.",
               "mailboxes:export": "Create and download mailbox content exports.",
               "mailboxes:write": "Create, update, suspend, resume, and delete mailboxes. Does not include setting mailbox passwords.",
-              "mailbox_credentials:read": "List revocable app passwords for allowed mailboxes.",
-              "mailbox_credentials:write": "Set primary mailbox passwords and create and revoke app passwords for allowed mailboxes.",
+              "mailbox_credentials:read": "List revocable app passwords and transactional SMTP credentials for allowed mailboxes.",
+              "mailbox_credentials:write": "Set primary mailbox passwords, and create and revoke app passwords and transactional SMTP credentials for allowed mailboxes.",
               "mailbox_forwarding:read": "List forwarding destinations for allowed mailboxes.",
               "mailbox_forwarding:write": "Create and remove forwarding destinations for allowed mailboxes.",
               "mailbox_rules:read": "List deterministic server-side rules for allowed mailboxes.",
@@ -12393,8 +13599,8 @@
           },
           "scope": {
             "type": "string",
-            "enum": ["all", "marketing"],
-            "description": "Which sends the entry blocks. `all` blocks every send. `marketing` blocks newsletter sends only and is set by a complaint about a newsletter."
+            "enum": ["all", "marketing", "transactional", "mailbox"],
+            "description": "Which sends the entry blocks. `all` blocks every send. The others are set by a complaint and block one kind of email: `marketing` newsletters, `transactional` email from application senders, `mailbox` email sent from a mailbox. Complaints about two kinds widen the entry to `all`."
           },
           "expires_at": {
             "type": ["string", "null"],
@@ -13240,6 +14446,108 @@
               "type": "string",
               "description": "IPv4 or IPv6 CIDR range."
             }
+          }
+        }
+      },
+      "SmtpCredential": {
+        "type": "object",
+        "description": "A credential that sends as one transactional sender's address over SMTP.",
+        "required": [
+          "object",
+          "id",
+          "from",
+          "name",
+          "username",
+          "host",
+          "ports",
+          "last_used_at",
+          "created_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "smtp_credential"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^smtpc_[0-9a-z]+$"
+          },
+          "from": {
+            "type": "string",
+            "format": "email",
+            "description": "The transactional sender's address. The credential sends only as this address."
+          },
+          "name": {
+            "type": "string",
+            "description": "A label you choose, such as the app that uses it."
+          },
+          "username": {
+            "type": "string",
+            "description": "The SMTP username, for example smtp-smtpc_...@txsmtp.shipmail.to."
+          },
+          "host": {
+            "type": "string",
+            "description": "The SMTP server.",
+            "examples": ["mx1.shipmail.to"]
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["port", "security"],
+              "properties": {
+                "port": {
+                  "type": "integer"
+                },
+                "security": {
+                  "type": "string",
+                  "enum": ["tls", "starttls"],
+                  "description": "tls is implicit TLS from the first byte. starttls upgrades the connection with STARTTLS."
+                }
+              }
+            }
+          },
+          "last_used_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreatedSmtpCredential": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SmtpCredential"
+          },
+          {
+            "type": "object",
+            "required": ["password"],
+            "properties": {
+              "password": {
+                "type": "string",
+                "description": "One-time SMTP password. Shipmail does not store or return it again."
+              }
+            }
+          }
+        ]
+      },
+      "CreateSmtpCredentialRequest": {
+        "type": "object",
+        "required": ["from", "name"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320,
+            "description": "The address of one of the organization's transactional senders."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
           }
         }
       },
@@ -14725,7 +16033,15 @@
           "org.reputation_recovered",
           "reply.overdue",
           "conversation.needs_action",
+          "conversation.reply_target_at_risk",
+          "conversation.reply_target_missed",
           "calendar.event_starting",
+          "calendar.event_started",
+          "calendar.event_ended",
+          "calendar.event_created",
+          "calendar.event_updated",
+          "calendar.event_cancelled",
+          "calendar.rsvp_updated",
           "booking.created",
           "subscriber.added",
           "newsletter.sent"
@@ -14752,7 +16068,15 @@
           "org.reputation_recovered",
           "reply.overdue",
           "conversation.needs_action",
+          "conversation.reply_target_at_risk",
+          "conversation.reply_target_missed",
           "calendar.event_starting",
+          "calendar.event_started",
+          "calendar.event_ended",
+          "calendar.event_created",
+          "calendar.event_updated",
+          "calendar.event_cancelled",
+          "calendar.rsvp_updated",
           "booking.created",
           "subscriber.added",
           "newsletter.sent"
@@ -15249,7 +16573,7 @@
             },
             "maxItems": 20,
             "deprecated": true,
-            "description": "Deprecated base64 attachments. Max 20 attachments, 3 MB per file, 3 MB total. Prefer staged_attachment_ids."
+            "description": "Deprecated base64 attachments. Max 20 attachments; the whole email can be up to 10 MB, attachments and encoding included. Prefer staged_attachment_ids from a mailbox; a transactional sender takes only these."
           },
           "staged_attachment_ids": {
             "type": "array",
@@ -15281,6 +16605,10 @@
           "track_reply": {
             "type": "boolean",
             "description": "Track the conversation in the Waiting workflow. true tracks it, false explicitly untracks it, and omitting the field keeps the thread's current tracking: a reply sent on a tracked conversation stays tracked. A tracked conversation moves to Needs action when a human reply arrives; automated replies (out-of-office, auto-acknowledgements, delivery notifications) do not end the wait."
+          },
+          "add_signature": {
+            "type": "boolean",
+            "description": "Add the mailbox's shared signature after your text, as the web composer does. It goes at the end of text and before </body> in html, in each part you send. The sender's name field in the signature is filled with from.name or the mailbox display name. Nothing is added when the mailbox has no signature. Defaults to false."
           },
           "sandbox_outcome": {
             "$ref": "#/components/schemas/SandboxOutcome"
@@ -15573,6 +16901,10 @@
           "track_reply": {
             "type": "boolean",
             "description": "Track the conversation in the Waiting workflow. true tracks it, false explicitly untracks it, and omitting the field keeps the thread's current tracking: a reply sent on a tracked conversation stays tracked. A tracked conversation moves to Needs action when a human reply arrives; automated replies (out-of-office, auto-acknowledgements, delivery notifications) do not end the wait."
+          },
+          "add_signature": {
+            "type": "boolean",
+            "description": "Add the mailbox's shared signature after your text, as the web composer does. It goes at the end of text and before </body> in html, in each part you send. The sender's name field in the signature is filled with from.name or the mailbox display name. Nothing is added when the mailbox has no signature. Defaults to false."
           },
           "sandbox_outcome": {
             "$ref": "#/components/schemas/SandboxOutcome"
@@ -16668,7 +18000,9 @@
           "latest_inbound_at",
           "latest_outbound_message_id",
           "latest_outbound_email_id",
-          "latest_outbound_at"
+          "latest_outbound_at",
+          "customer_id",
+          "reply_target"
         ],
         "properties": {
           "object": {
@@ -16754,6 +18088,13 @@
           "latest_outbound_at": {
             "type": ["string", "null"],
             "format": "date-time"
+          },
+          "customer_id": {
+            "type": ["string", "null"],
+            "description": "The customer this conversation belongs to (cust_...), or null."
+          },
+          "reply_target": {
+            "$ref": "#/components/schemas/ReplyTarget"
           }
         }
       },
@@ -17271,6 +18612,8 @@
           "thread_id",
           "conversation_id",
           "version",
+          "customer_id",
+          "reply_target",
           "data"
         ],
         "properties": {
@@ -17297,6 +18640,13 @@
           "version": {
             "type": ["integer", "null"],
             "description": "Current conversation version. Pass it as expected_version when creating a reply draft. Null when the thread has no conversation."
+          },
+          "customer_id": {
+            "type": ["string", "null"],
+            "description": "The customer this conversation belongs to (cust_...), or null."
+          },
+          "reply_target": {
+            "$ref": "#/components/schemas/ReplyTarget"
           },
           "data": {
             "type": "array",
@@ -18271,6 +19621,84 @@
           }
         }
       },
+      "ResendSubscriberConfirmationRequest": {
+        "type": "object",
+        "properties": {
+          "subscriber_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "Pending subscribers to email. Omit to email every eligible pending subscriber of the audience, at most 500 per call."
+          }
+        }
+      },
+      "ConfirmationResendSkipped": {
+        "type": "object",
+        "required": ["not_found", "not_pending", "too_old", "resend_limit", "recently_sent"],
+        "properties": {
+          "not_found": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "subscriber_ids that are not in this audience. Always 0 without subscriber_ids."
+          },
+          "not_pending": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Subscribers that are not pending: named ones, or, without subscriber_ids, ones that confirmed or left while the call ran."
+          },
+          "too_old": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Pending subscribers who signed up more than 30 days ago."
+          },
+          "resend_limit": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Pending subscribers who already had 3 confirmation resends."
+          },
+          "recently_sent": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Pending subscribers who got a confirmation email in the last 24 hours."
+          }
+        }
+      },
+      "ConfirmationResend": {
+        "type": "object",
+        "required": ["object", "audience_id", "sent", "failed", "skipped", "remaining"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "confirmation_resend"
+          },
+          "audience_id": {
+            "type": "string"
+          },
+          "sent": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Confirmation emails sent."
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Confirmation emails that failed to send. Their previous link still works."
+          },
+          "skipped": {
+            "$ref": "#/components/schemas/ConfirmationResendSkipped"
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Eligible pending subscribers left for another call. Always 0 with subscriber_ids."
+          }
+        }
+      },
       "NewsletterDomain": {
         "type": "object",
         "required": [
@@ -18490,7 +19918,7 @@
           },
           "body_text": {
             "type": ["string", "null"],
-            "description": "Plain-text body, derived from blocks unless a manual override was set. Read-only."
+            "description": "Plain-text body, derived from blocks unless a manual override was set. When a block has a visibility, this is the website text, and the override is used only in the email. Read-only."
           },
           "status": {
             "type": "string",
@@ -18984,6 +20412,9 @@
                 "type": "integer",
                 "enum": [1, 2, 3],
                 "default": 2
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19001,6 +20432,9 @@
                 "minLength": 1,
                 "maxLength": 10000,
                 "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u. Use p or br for line breaks and HTML entities for literal tag-like text."
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19027,6 +20461,9 @@
                   "maxLength": 10000,
                   "description": "Bare text or sanitized inline HTML. Allowed tags: a, b, br, code, em, i, p, s, span, strong, and u."
                 }
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19054,6 +20491,9 @@
                 "type": "string",
                 "enum": ["accent", "info", "warning", "success"],
                 "default": "accent"
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19082,6 +20522,9 @@
                 "enum": ["left", "center", "right"],
                 "default": "left",
                 "description": "Horizontal alignment of the button."
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19126,6 +20569,9 @@
                 "type": ["string", "null"],
                 "maxLength": 2048,
                 "description": "Optional absolute http, https, or mailto caption link."
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19154,6 +20600,9 @@
                 "minLength": 1,
                 "maxLength": 160,
                 "description": "Video link label."
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19432,6 +20881,9 @@
                     "description": "Optional http, https, or mailto call-to-action URL."
                   }
                 }
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19476,6 +20928,9 @@
                     }
                   }
                 }
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19498,6 +20953,9 @@
                 "type": ["string", "null"],
                 "maxLength": 10000,
                 "description": "Optional quote citation."
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19509,6 +20967,9 @@
               "type": {
                 "type": "string",
                 "const": "divider"
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19526,6 +20987,9 @@
                 "minimum": 8,
                 "maximum": 80,
                 "default": 24
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19543,6 +21007,9 @@
                 "minLength": 1,
                 "maxLength": 10000,
                 "description": "Code text."
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           },
@@ -19560,6 +21027,9 @@
                 "minLength": 1,
                 "maxLength": 250000,
                 "description": "Custom email-safe HTML fragment."
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
               }
             }
           }
@@ -19567,7 +21037,33 @@
         "discriminator": {
           "propertyName": "type"
         },
-        "description": "Structured newsletter block. paragraph.body, quote.body, callout.body, list items, and column bodies accept bare text or restricted inline HTML. Shipmail sanitizes these values when it stores the blocks and renders email-safe HTML and text."
+        "description": "Structured newsletter block. paragraph.body, quote.body, callout.body, list items, and column bodies accept bare text or restricted inline HTML. Shipmail sanitizes these values when it stores the blocks and renders email-safe HTML and text. Any block may carry a visibility that limits it to email or the website, or to readers in (or not in) one saved segment of the issue's audience."
+      },
+      "NewsletterBlockVisibility": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Where the block shows and to which readers. Omit it to show the block everywhere. A visibility that limits nothing is dropped when the blocks are stored. The website, archive and feed show a block as a reader in no segment sees it. Segment membership is fixed when the send is scheduled. Welcome emails accept channel only. A web block cannot use segment_rule in, because website visitors are in no segment; web with not_in is stored as web alone.",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": ["all", "email", "web"],
+            "default": "all",
+            "description": "all shows the block in the email and on the website; email hides it on the website; web hides it in the email."
+          },
+          "segment_id": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 64,
+            "default": null,
+            "description": "A newsletter segment (nwsseg_) of the issue's audience. Null shows the block to every reader."
+          },
+          "segment_rule": {
+            "type": "string",
+            "enum": ["in", "not_in"],
+            "default": "in",
+            "description": "in shows the block only to readers in the segment; not_in shows it to everyone else. Ignored without segment_id."
+          }
+        }
       },
       "NewsletterCountedUrl": {
         "type": "object",
@@ -20807,6 +22303,750 @@
             "$ref": "#/components/schemas/TemplateVariableValues"
           }
         }
+      },
+      "RespondToCalendarInvitationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["response"],
+        "properties": {
+          "response": {
+            "type": "string",
+            "enum": ["accepted", "tentative", "declined"]
+          }
+        }
+      },
+      "CalendarInvitationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["object", "message_id", "response", "replied", "calendar_event_id"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "invitation_response"
+          },
+          "message_id": {
+            "type": "string",
+            "description": "The msg_ ID of the message that carried the invitation."
+          },
+          "response": {
+            "type": "string",
+            "enum": ["accepted", "tentative", "declined"]
+          },
+          "replied": {
+            "type": "boolean",
+            "description": "Whether a reply reached the organizer. It is sent only when the organizer is the message's sender, so false can be expected."
+          },
+          "calendar_event_id": {
+            "type": ["string", "null"],
+            "description": "The event on the mailbox calendar that holds the answer."
+          }
+        }
+      },
+      "CustomerIdentifier": {
+        "type": "object",
+        "required": ["kind", "value"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["email", "domain"],
+            "description": "`email` matches one address. `domain` matches every address at that domain."
+          },
+          "value": {
+            "type": "string",
+            "description": "Lowercased address or domain. Free email domains (gmail.com), disposable domains and your own domains are refused."
+          }
+        }
+      },
+      "CustomerExternalId": {
+        "type": "object",
+        "required": ["source", "external_id", "url"],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Lowercase slug of the system that knows the customer, such as `hubspot` or `stripe`. A customer has at most one id per source."
+          },
+          "external_id": {
+            "type": "string",
+            "description": "The customer's id in that system."
+          },
+          "url": {
+            "type": ["string", "null"],
+            "description": "Link to the record in that system."
+          }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "name",
+          "company",
+          "notes",
+          "service_level_id",
+          "fields",
+          "tags",
+          "identifiers",
+          "external_ids",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "enum": ["customer"]
+          },
+          "id": {
+            "type": "string",
+            "description": "Customer ID (cust_...)."
+          },
+          "name": {
+            "type": ["string", "null"]
+          },
+          "company": {
+            "type": ["string", "null"]
+          },
+          "notes": {
+            "type": ["string", "null"],
+            "description": "Private notes your team sees next to the customer's conversations."
+          },
+          "service_level_id": {
+            "type": ["string", "null"],
+            "description": "The reply time this customer gets (svl_...). Null means the mailbox default."
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "description": "Values of your customer fields, keyed by field key. See `GET /customer-fields`."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Free-form labels such as `vip` or `churn risk`, stored lowercase. Empty when the customer has none."
+          },
+          "identifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerIdentifier"
+            },
+            "description": "The addresses and domains that identify the customer's mail. A sender is matched only when Shipmail can verify their address."
+          },
+          "external_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerExternalId"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateCustomerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": ["string", "null"],
+            "maxLength": 200
+          },
+          "company": {
+            "type": ["string", "null"],
+            "maxLength": 200
+          },
+          "notes": {
+            "type": ["string", "null"],
+            "maxLength": 10000
+          },
+          "service_level_id": {
+            "type": ["string", "null"],
+            "description": "A reply time from `GET /service-levels`, or null for the mailbox default."
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "description": "Values keyed by customer field key. Replaces the stored values when given. An unknown key is refused."
+          },
+          "tags": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string"
+            },
+            "description": "Free-form labels. Defaults to no tags. Each tag is trimmed, its spaces collapsed and lowercased; empty and duplicate tags are dropped. A tag is 1 to 32 characters without commas or control characters, and a customer has at most 20: otherwise 422 with `details[0].code` `invalid_tag` (and `details[0].params.tag`) or `too_many_tags`."
+          },
+          "identifiers": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/CustomerIdentifier"
+            },
+            "description": "Replaces the whole set when given. An address or domain that belongs to another customer is refused with 409 `identifier_conflict`; it is never moved."
+          },
+          "external_ids": {
+            "type": "array",
+            "maxItems": 20,
+            "description": "Replaces the whole set when given.",
+            "items": {
+              "type": "object",
+              "required": ["source", "external_id"],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "external_id": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "url": {
+                  "type": ["string", "null"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateCustomerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Only the properties you send change.",
+        "properties": {
+          "name": {
+            "type": ["string", "null"],
+            "maxLength": 200
+          },
+          "company": {
+            "type": ["string", "null"],
+            "maxLength": 200
+          },
+          "notes": {
+            "type": ["string", "null"],
+            "maxLength": 10000
+          },
+          "service_level_id": {
+            "type": ["string", "null"],
+            "description": "A reply time from `GET /service-levels`, or null for the mailbox default."
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "description": "Values keyed by customer field key. Replaces the stored values when given. An unknown key is refused."
+          },
+          "tags": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string"
+            },
+            "description": "Free-form labels. Replaces the whole list when given. Each tag is trimmed, its spaces collapsed and lowercased; empty and duplicate tags are dropped. A tag is 1 to 32 characters without commas or control characters, and a customer has at most 20: otherwise 422 with `details[0].code` `invalid_tag` (and `details[0].params.tag`) or `too_many_tags`."
+          },
+          "identifiers": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/CustomerIdentifier"
+            },
+            "description": "Replaces the whole set when given. An address or domain that belongs to another customer is refused with 409 `identifier_conflict`; it is never moved."
+          },
+          "external_ids": {
+            "type": "array",
+            "maxItems": 20,
+            "description": "Replaces the whole set when given.",
+            "items": {
+              "type": "object",
+              "required": ["source", "external_id"],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "external_id": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "url": {
+                  "type": ["string", "null"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpsertCustomerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Only the properties you send change when the customer exists.",
+        "properties": {
+          "name": {
+            "type": ["string", "null"],
+            "maxLength": 200
+          },
+          "company": {
+            "type": ["string", "null"],
+            "maxLength": 200
+          },
+          "notes": {
+            "type": ["string", "null"],
+            "maxLength": 10000
+          },
+          "service_level_id": {
+            "type": ["string", "null"],
+            "description": "A reply time from `GET /service-levels`, or null for the mailbox default."
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "description": "Values keyed by customer field key. Replaces the stored values when given. An unknown key is refused."
+          },
+          "tags": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string"
+            },
+            "description": "Free-form labels. Replaces the whole list when given. Each tag is trimmed, its spaces collapsed and lowercased; empty and duplicate tags are dropped. A tag is 1 to 32 characters without commas or control characters, and a customer has at most 20: otherwise 422 with `details[0].code` `invalid_tag` (and `details[0].params.tag`) or `too_many_tags`."
+          },
+          "identifiers": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/CustomerIdentifier"
+            },
+            "description": "Replaces the whole set when given. An address or domain that belongs to another customer is refused with 409 `identifier_conflict`; it is never moved."
+          },
+          "url": {
+            "type": ["string", "null"],
+            "description": "Link to the record in the external system."
+          }
+        }
+      },
+      "ServiceLevel": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "name",
+          "reply_target_minutes",
+          "business_hours",
+          "position",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "enum": ["service_level"]
+          },
+          "id": {
+            "type": "string",
+            "description": "Reply time ID (svl_...)."
+          },
+          "name": {
+            "type": "string"
+          },
+          "reply_target_minutes": {
+            "type": "integer",
+            "description": "Minutes within which a reply is promised."
+          },
+          "business_hours": {
+            "type": ["object", "null"],
+            "description": "When set, the clock runs only inside these hours. Null means the clock always runs.",
+            "required": ["time_zone", "days"],
+            "properties": {
+              "time_zone": {
+                "type": "string",
+                "description": "IANA time zone, such as Europe/Paris."
+              },
+              "days": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["day", "start", "end"],
+                  "properties": {
+                    "day": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 6,
+                      "description": "0 is Sunday."
+                    },
+                    "start": {
+                      "type": "string",
+                      "description": "HH:MM."
+                    },
+                    "end": {
+                      "type": "string",
+                      "description": "HH:MM. An end not after the start runs overnight."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CustomerField": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "key",
+          "label",
+          "type",
+          "position",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "enum": ["customer_field"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string",
+            "description": "The key used in a customer's `fields`."
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["text", "number", "date", "url", "boolean"]
+          },
+          "position": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReplyTarget": {
+        "type": ["object", "null"],
+        "description": "The open reply clock of the conversation, or null when no reply is owed or reply times are off for the mailbox.",
+        "required": ["state", "service_level_id", "started_at", "warn_at", "due_at"],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["on_track", "at_risk", "missed"],
+            "description": "Computed when the response is made: `at_risk` from `warn_at`, `missed` from `due_at`."
+          },
+          "service_level_id": {
+            "type": ["string", "null"],
+            "description": "The reply time that set the clock."
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the customer's message that is waiting for a reply arrived."
+          },
+          "warn_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When a quarter of the reply time is left."
+          },
+          "due_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the reply is due."
+          }
+        }
+      },
+      "SegmentDefinition": {
+        "type": "object",
+        "required": ["match", "rules"],
+        "additionalProperties": false,
+        "description": "Which subscribers the segment holds. Only subscribed members are counted and sent to.",
+        "properties": {
+          "match": {
+            "type": "string",
+            "enum": ["all", "any"],
+            "description": "all requires every rule to match; any requires at least one."
+          },
+          "rules": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "title": "Merge field comparison",
+                  "required": ["kind", "field", "operator", "value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "merge_field"
+                    },
+                    "field": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9_]{1,80}$",
+                      "description": "Merge field key: lowercase letters, digits and underscores."
+                    },
+                    "operator": {
+                      "enum": ["equals", "not_equals", "contains", "not_contains"]
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "description": "Compared case-insensitively. not_equals and not_contains never match a missing or blank field."
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "title": "Merge field presence",
+                  "required": ["kind", "field", "operator"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "merge_field"
+                    },
+                    "field": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9_]{1,80}$",
+                      "description": "Merge field key: lowercase letters, digits and underscores."
+                    },
+                    "operator": {
+                      "enum": ["is_set", "is_not_set"]
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 0
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "title": "Join date",
+                  "required": ["kind", "operator", "value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "join_date"
+                    },
+                    "operator": {
+                      "enum": ["before", "after", "on_or_before", "on_or_after"]
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date",
+                      "description": "A YYYY-MM-DD day, compared in UTC."
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "title": "Engagement tier",
+                  "required": ["kind", "operator", "value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "engagement_tier"
+                    },
+                    "operator": {
+                      "enum": ["is", "is_not"]
+                    },
+                    "value": {
+                      "enum": ["engaged", "cooling", "cold", "dormant", "not_enough_data"]
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "title": "Last sign of life",
+                  "required": ["kind", "operator", "value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "last_sign_of_life"
+                    },
+                    "operator": {
+                      "enum": ["within_days", "not_within_days"]
+                    },
+                    "value": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3650,
+                      "description": "Days. not_within_days also matches a subscriber with no sign of life ever."
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "title": "Issues received",
+                  "required": ["kind", "operator", "value"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "issues_received"
+                    },
+                    "operator": {
+                      "enum": ["at_least", "at_most"]
+                    },
+                    "value": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100000
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Segment": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "audience_id",
+          "name",
+          "definition",
+          "matching_count",
+          "created_at",
+          "updated_at"
+        ],
+        "description": "A saved group of an audience's subscribers. Its id is what segment_id takes in a block's visibility.",
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "segment"
+          },
+          "id": {
+            "type": "string",
+            "description": "Segment ID (nwsseg_...)."
+          },
+          "audience_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "definition": {
+            "$ref": "#/components/schemas/SegmentDefinition"
+          },
+          "matching_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Subscribed members the definition matches now."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateSegmentRequest": {
+        "type": "object",
+        "required": ["name", "definition"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Unique within the audience."
+          },
+          "definition": {
+            "$ref": "#/components/schemas/SegmentDefinition"
+          }
+        }
+      },
+      "UpdateSegmentRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "description": "Send name, definition, or both.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Unique within the audience."
+          },
+          "definition": {
+            "$ref": "#/components/schemas/SegmentDefinition"
+          }
+        }
       }
     },
     "responses": {
@@ -20946,6 +23186,10 @@
       "description": "Send email and retrieve messages."
     },
     {
+      "name": "SMTP Credentials",
+      "description": "SMTP sign-ins that send as one transactional sender."
+    },
+    {
       "name": "Threads",
       "description": "View and reply to email threads."
     },
@@ -20968,6 +23212,10 @@
     {
       "name": "Templates",
       "description": "Stored transactional email templates with versions."
+    },
+    {
+      "name": "Customers",
+      "description": "Customers, their reply times, notes and fields."
     }
   ]
 }

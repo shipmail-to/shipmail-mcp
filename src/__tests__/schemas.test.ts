@@ -1238,6 +1238,38 @@ describe("newsletter schemas", () => {
     ).toThrow();
   });
 
+  test("blocks accept a visibility for a channel or a segment", () => {
+    const base = {
+      audience_id: "aud_123",
+      sender_identity_id: "nwsid_123",
+      name: "July Update",
+      subject: "What shipped in July",
+    };
+    const out = createNewsletterInputSchema.parse({
+      ...base,
+      blocks: [
+        { type: "paragraph", body: "Reply to this email", visibility: { channel: "email" } },
+        {
+          type: "button",
+          label: "Members area",
+          url: "https://example.com/members",
+          visibility: { segment_id: "nwsseg_123", segment_rule: "not_in" },
+        },
+      ],
+    });
+    expect(out.blocks?.[0]?.visibility).toEqual({ channel: "email" });
+    expect(out.blocks?.[1]?.visibility).toEqual({
+      segment_id: "nwsseg_123",
+      segment_rule: "not_in",
+    });
+    expect(
+      createNewsletterInputSchema.safeParse({
+        ...base,
+        blocks: [{ type: "divider", visibility: { channel: "sms" } }],
+      }).success,
+    ).toBe(false);
+  });
+
   test("create from changelog accepts entries and media", () => {
     const out = createNewsletterFromChangelogInputSchema.parse({
       audience_id: "aud_123",
@@ -1574,7 +1606,7 @@ describe("suppressionSchema", () => {
         object: "suppression",
         email_address: "u@example.com",
         reason: "complaint",
-        scope: "transactional",
+        scope: "everything",
         expires_at: null,
         created_at: "2026-01-01T00:00:00Z",
       }),

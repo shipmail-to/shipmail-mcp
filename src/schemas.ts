@@ -31,7 +31,8 @@ const CURSOR_REGEX = /^[A-Za-z0-9_\-=.+/]+$/;
 // SUPPRESSION_REASONS and SUPPRESSION_SCOPES are not exported by the SDK; mirror the OpenAPI
 // enums here.
 const SUPPRESSION_REASONS = ["hard_bounce", "complaint", "manual", "soft_bounce"] as const;
-const SUPPRESSION_SCOPES = ["all", "marketing"] as const;
+const SUPPRESSION_SCOPES = ["all", "marketing", "transactional", "mailbox"] as const;
+const CREATE_SUPPRESSION_SCOPES = ["all", "marketing"] as const;
 const SYSTEM_FOLDER_NAMES = [
   "inbox",
   "starred",
@@ -363,6 +364,22 @@ export const createdMailboxAppPasswordSchema = mailboxAppPasswordSchema.extend({
   secret: z.string(),
 });
 
+export const smtpCredentialSchema = z.object({
+  object: z.literal("smtp_credential"),
+  id: z.string(),
+  from: z.string(),
+  name: z.string(),
+  username: z.string(),
+  host: z.string(),
+  ports: z.array(z.object({ port: z.number(), security: z.enum(["tls", "starttls"] as const) })),
+  last_used_at: z.string().nullable(),
+  created_at: z.string(),
+});
+
+export const createdSmtpCredentialSchema = smtpCredentialSchema.extend({
+  password: z.string(),
+});
+
 export const mailboxFolderSchema = z.object({
   object: z.literal("mailbox_folder"),
   id: z.string(),
@@ -653,6 +670,23 @@ const inboxThreadAttentionStateSchema = z.enum([
   "no_action",
 ] as const);
 
+export const replyTargetSchema = z.object({
+  state: z
+    .enum(["on_track", "at_risk", "missed"])
+    .describe("at_risk once warn_at has passed, missed once due_at has passed."),
+  service_level_id: z.string().nullable(),
+  started_at: z.string(),
+  warn_at: z.string(),
+  due_at: z.string(),
+});
+
+const conversationCustomerShape = {
+  customer_id: z.string().nullable().describe("The customer this conversation belongs to."),
+  reply_target: replyTargetSchema
+    .nullable()
+    .describe("The open reply clock, or null when no reply is owed or reply times are off."),
+};
+
 export const inboxThreadSummarySchema = z.object({
   object: z.literal("inbox_thread_summary"),
   id: z.string(),
@@ -681,6 +715,7 @@ export const inboxThreadSummarySchema = z.object({
   latest_outbound_message_id: z.string().nullable(),
   latest_outbound_email_id: z.string().nullable(),
   latest_outbound_at: z.string().nullable(),
+  ...conversationCustomerShape,
 });
 
 export const inboxThreadsSchema = z.object({
@@ -857,6 +892,7 @@ export const inboxThreadSchema = z.object({
     .describe(
       "Current conversation version. Pass it as expected_version when creating a reply draft. Null when the thread has no conversation.",
     ),
+  ...conversationCustomerShape,
   data: z.array(inboxFullMessageSchema),
 });
 
@@ -1295,6 +1331,62 @@ export const suppressionSchema = z.object({
   created_at: z.string(),
 });
 
+const customerFieldValueSchema = z.union([z.string(), z.number(), z.boolean()]);
+
+const customerIdentifierSchema = z.object({
+  kind: z.enum(["email", "domain"]),
+  value: z.string(),
+});
+
+export const customerSchema = z.object({
+  object: z.literal("customer"),
+  id: z.string(),
+  name: z.string().nullable(),
+  company: z.string().nullable(),
+  notes: z.string().nullable(),
+  service_level_id: z
+    .string()
+    .nullable()
+    .describe("The reply time this customer gets. Null means the mailbox default."),
+  fields: z.record(z.string(), customerFieldValueSchema),
+  tags: z
+    .array(z.string())
+    .describe("Free-form labels such as vip, stored lowercase. Empty when the customer has none."),
+  identifiers: z.array(customerIdentifierSchema),
+  external_ids: z.array(
+    z.object({ source: z.string(), external_id: z.string(), url: z.string().nullable() }),
+  ),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const serviceLevelSchema = z.object({
+  object: z.literal("service_level"),
+  id: z.string(),
+  name: z.string(),
+  reply_target_minutes: z.number().int(),
+  business_hours: z
+    .object({
+      time_zone: z.string(),
+      days: z.array(z.object({ day: z.number().int(), start: z.string(), end: z.string() })),
+    })
+    .nullable(),
+  position: z.number().int(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const customerFieldSchema = z.object({
+  object: z.literal("customer_field"),
+  id: z.string(),
+  key: z.string(),
+  label: z.string(),
+  type: z.enum(["text", "number", "date", "url", "boolean"]),
+  position: z.number().int(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
 export const templateVariableSchema = z.object({
   key: z.string(),
   required: z.boolean(),
@@ -1375,6 +1467,15 @@ export const mailboxAppPasswordsOutputSchema = z.object({
     data: z.array(mailboxAppPasswordSchema),
   }),
 });
+export const createdSmtpCredentialOutputSchema = z.object({
+  smtp_credential: createdSmtpCredentialSchema,
+});
+export const smtpCredentialsOutputSchema = z.object({
+  smtp_credentials: z.object({
+    object: z.literal("list"),
+    data: z.array(smtpCredentialSchema),
+  }),
+});
 export const mailboxFolderOutputSchema = z.object({ folder: mailboxFolderSchema });
 export const mailboxFoldersOutputSchema = z.object({ folders: mailboxFoldersSchema });
 export const mailboxRulesOutputSchema = z.object({ rules: mailboxRulesSchema });
@@ -1424,6 +1525,29 @@ export const mailboxForwardingListOutputSchema = z.object({
   forwarding: mailboxForwardingListSchema,
 });
 export const messageOutputSchema = z.object({ message: messageSchema });
+
+const calendarInvitationResponseValues = ["accepted", "tentative", "declined"] as const;
+
+export const calendarInvitationResponseSchema = z.object({
+  object: z.literal("invitation_response"),
+  message_id: z.string(),
+  response: z.enum(calendarInvitationResponseValues),
+  replied: z
+    .boolean()
+    .describe(
+      "Whether a reply reached the organizer. It is sent only when the organizer is the message's sender.",
+    ),
+  calendar_event_id: z.string().nullable(),
+});
+
+export const calendarInvitationResponseOutputSchema = z.object({
+  invitation: calendarInvitationResponseSchema,
+});
+
+export const respondToInvitationInputSchema = z.object({
+  id: idSchema.describe("msg_ ID of a received message that carries a calendar invitation."),
+  response: z.enum(calendarInvitationResponseValues),
+});
 export const webhookOutputSchema = z.object({ webhook: webhookSchema });
 export const webhookWithSecretOutputSchema = z.object({ webhook: webhookWithSecretSchema });
 export const webhookSecretOutputSchema = z.object({
@@ -1491,6 +1615,13 @@ export const suppressionsOutputSchema = z.object({
   data: z.array(suppressionSchema),
   pagination: paginationSchema,
 });
+export const customerOutputSchema = z.object({ customer: customerSchema });
+export const customersOutputSchema = z.object({
+  data: z.array(customerSchema),
+  pagination: paginationSchema,
+});
+export const serviceLevelsOutputSchema = z.object({ data: z.array(serviceLevelSchema) });
+export const customerFieldsOutputSchema = z.object({ data: z.array(customerFieldSchema) });
 export const templateOutputSchema = z.object({ template: templateSchema });
 export const templatesOutputSchema = z.object({
   data: z.array(templateSchema),
@@ -1734,6 +1865,21 @@ export const createMailboxAppPasswordInputSchema = z.object({
 export const revokeMailboxAppPasswordInputSchema = z.object({
   id: idSchema.describe("Mailbox ID."),
   app_password_id: idSchema.describe("App password ID."),
+});
+export const listSmtpCredentialsInputSchema = z.object({
+  from: emailSchema
+    .optional()
+    .describe("A transactional sender's address. Lists only its credentials."),
+});
+export const createSmtpCredentialInputSchema = z.object({
+  from: emailSchema.describe("The address of one of the organization's transactional senders."),
+  name: noControlString(64, "name")
+    .trim()
+    .min(1)
+    .describe("A label, such as the app that uses it."),
+});
+export const revokeSmtpCredentialInputSchema = z.object({
+  id: idSchema.describe("SMTP credential ID (smtpc_...)."),
 });
 export const createMailboxFolderInputSchema = z.object({
   id: idSchema,
@@ -2073,6 +2219,13 @@ export const listReplyScanResultsInputSchema = z.object({
   limit: z.number().int().min(1).max(100).default(50),
 });
 
+const addSignatureSchema = z
+  .boolean()
+  .optional()
+  .describe(
+    "true adds the mailbox's shared signature after the text, at the end of text and before </body> in html. Nothing is added when the mailbox has no signature.",
+  );
+
 const inboxReplyFields = {
   to: z.array(recipientInputSchema).min(1).max(50),
   cc: z.array(recipientInputSchema).max(50).optional(),
@@ -2090,6 +2243,7 @@ const inboxReplyFields = {
     .describe(
       "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
     ),
+  add_signature: addSignatureSchema,
   idempotency_key: idempotencyKeySchema,
 } as const;
 
@@ -2217,6 +2371,7 @@ export const composeMessageWithFileInputSchema = z
       .describe(
         "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
       ),
+    add_signature: addSignatureSchema,
     file: openAiFileInputSchema,
   })
   .strict()
@@ -2405,6 +2560,7 @@ export const sendMessageInputSchema = z
       .describe(
         "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
       ),
+    add_signature: addSignatureSchema,
     sandbox_outcome: z.enum(["delivered", "bounced", "complained"] as const).optional(),
     idempotency_key: idempotencyKeySchema,
   })
@@ -2478,6 +2634,7 @@ export const replyToMessageInputSchema = z
       .describe(
         "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
       ),
+    add_signature: addSignatureSchema,
     sandbox_outcome: z.enum(["delivered", "bounced", "complained"] as const).optional(),
     idempotency_key: idempotencyKeySchema,
   })
@@ -2531,6 +2688,7 @@ export const replyToThreadInputSchema = z
       .describe(
         "true adds the conversation to the Waiting workflow; false explicitly untracks it; omitted keeps the thread's current tracking (a reply on a tracked conversation stays tracked).",
       ),
+    add_signature: addSignatureSchema,
     sandbox_outcome: z.enum(["delivered", "bounced", "complained"] as const).optional(),
     idempotency_key: idempotencyKeySchema,
   })
@@ -2714,18 +2872,96 @@ export const listSuppressionsInputSchema = paginationInputSchema.extend({
     .enum(SUPPRESSION_SCOPES)
     .optional()
     .describe(
-      "Only entries with this scope. `all` entries block every send; `marketing` entries come from newsletter complaints and block newsletter sends only.",
+      "Only entries with this scope. `all` entries block every send. A complaint blocks only its own kind of email: `marketing` newsletters, `transactional` application senders, `mailbox` mail sent from a mailbox.",
     ),
 });
 export const addSuppressionInputSchema = z.object({
   email: emailSchema,
   scope: z
-    .enum(SUPPRESSION_SCOPES)
+    .enum(CREATE_SUPPRESSION_SCOPES)
     .optional()
     .describe("`all` (the default) blocks every send. `marketing` blocks newsletter sends only."),
 });
 export const removeSuppressionInputSchema = z.object({
   email: emailSchema,
+});
+
+// --- Customers -----------------------------------------------------------------
+
+const customerSourceSchema = z
+  .string()
+  .regex(/^[a-z0-9][a-z0-9_-]{0,31}$/, "source must be a lowercase slug such as hubspot.")
+  .describe("Lowercase slug of the external system, such as hubspot or stripe.");
+
+const customerProfileInputShape = {
+  name: noControlString(200, "name").nullable().optional(),
+  company: noControlString(200, "company").nullable().optional(),
+  notes: z.string().max(10_000).nullable().optional(),
+  service_level_id: idSchema
+    .nullable()
+    .optional()
+    .describe("A reply time from shipmail_list_service_levels, or null for the mailbox default."),
+  fields: z
+    .record(z.string().max(64), customerFieldValueSchema)
+    .optional()
+    .describe("Values keyed by customer field key. Replaces the stored values when given."),
+  tags: z
+    .array(z.string().max(200))
+    .max(100)
+    .optional()
+    .describe(
+      "Free-form labels such as vip or churn risk. Replaces the whole list when given; trimmed, lowercased and deduplicated. At most 20 tags of 1 to 32 characters, without commas.",
+    ),
+  identifiers: z
+    .array(
+      z.object({
+        kind: z.enum(["email", "domain"]),
+        value: noControlString(254, "value").min(1),
+      }),
+    )
+    .max(50)
+    .optional()
+    .describe(
+      "Email addresses and domains of the customer. Replaces the whole set when given. One owned by another customer is refused, never moved.",
+    ),
+};
+
+const customerExternalIdsInputSchema = z
+  .array(
+    z.object({
+      source: customerSourceSchema,
+      external_id: noControlString(255, "external_id").min(1),
+      url: z.string().max(2048).nullable().optional(),
+    }),
+  )
+  .max(20)
+  .optional()
+  .describe("IDs of the customer in other systems. Replaces the whole set when given.");
+
+export const listCustomersInputSchema = paginationInputSchema.extend({
+  email: noControlString(254, "email").optional().describe("Exact email identifier."),
+  domain: noControlString(253, "domain").optional().describe("Exact domain identifier."),
+  external_source: customerSourceSchema.optional().describe("Give with external_id."),
+  external_id: noControlString(255, "external_id").optional(),
+  q: noControlString(200, "q").optional().describe("Search name, company and identifiers."),
+  tag: noControlString(200, "tag")
+    .optional()
+    .describe("Customers with this tag, matched after normalization, so VIP finds vip."),
+});
+export const createCustomerInputSchema = z.object({
+  ...customerProfileInputShape,
+  external_ids: customerExternalIdsInputSchema,
+  idempotency_key: idempotencyKeySchema,
+});
+export const updateCustomerInputSchema = createCustomerInputSchema.extend({ id: idSchema });
+export const upsertCustomerInputSchema = z.object({
+  source: customerSourceSchema,
+  external_id: noControlString(255, "external_id")
+    .min(1)
+    .describe("The customer's ID in that system, unencoded."),
+  ...customerProfileInputShape,
+  url: z.string().max(2048).nullable().optional().describe("Link to the record in that system."),
+  idempotency_key: idempotencyKeySchema,
 });
 
 // --- Audiences / subscribers -------------------------------------------------
@@ -2832,6 +3068,21 @@ export const subscriberResultOutputSchema = subscriberResultSchema;
 export const subscribersBatchOutputSchema = z.object({
   results: z.array(subscriberResultSchema),
 });
+export const confirmationResendSchema = z.object({
+  object: z.literal("confirmation_resend"),
+  audience_id: z.string(),
+  sent: z.number(),
+  failed: z.number(),
+  skipped: z.object({
+    not_found: z.number(),
+    not_pending: z.number(),
+    too_old: z.number(),
+    resend_limit: z.number(),
+    recently_sent: z.number(),
+  }),
+  remaining: z.number(),
+});
+export const confirmationResendOutputSchema = z.object({ result: confirmationResendSchema });
 
 export const listAudiencesInputSchema = paginationInputSchema;
 
@@ -2976,6 +3227,124 @@ export const resubscribeSubscriberInputSchema = subscriberActionInputSchema.exte
   consent_source: noControlString(500, "consent_source")
     .min(1)
     .describe("Where and how this subscriber opted in again."),
+});
+
+export const resendSubscriberConfirmationInputSchema = z.object({
+  audience_id: idSchema.describe("Audience ID."),
+  subscriber_ids: z
+    .array(idSchema)
+    .min(1)
+    .max(100)
+    .optional()
+    .describe(
+      "Pending subscribers to email. Omit to email every eligible pending subscriber, at most 500 per call.",
+    ),
+  idempotency_key: idempotencyKeySchema,
+});
+
+// Mirrors newsletterSegmentDefinitionSchema in the app's newsletter audience tools.
+const segmentMergeFieldKeySchema = z
+  .string()
+  .trim()
+  .regex(/^[a-z0-9_]{1,80}$/, "field must be 1-80 lowercase letters, digits or underscores.")
+  .describe("Merge field key.");
+
+const segmentRuleSchema = z.union([
+  z.discriminatedUnion("operator", [
+    z.object({
+      kind: z.literal("merge_field"),
+      field: segmentMergeFieldKeySchema,
+      operator: z.enum(["equals", "not_equals", "contains", "not_contains"]),
+      value: z.string().trim().max(500).describe("Compared case-insensitively."),
+    }),
+    z.object({
+      kind: z.literal("merge_field"),
+      field: segmentMergeFieldKeySchema,
+      operator: z.enum(["is_set", "is_not_set"]),
+      value: z.literal("").optional().describe("Omit: these operators take no value."),
+    }),
+  ]),
+  z.object({
+    kind: z.literal("join_date"),
+    operator: z.enum(["before", "after", "on_or_before", "on_or_after"]),
+    value: z.iso.date().describe("YYYY-MM-DD, compared in UTC."),
+  }),
+  z.object({
+    kind: z.literal("engagement_tier"),
+    operator: z.enum(["is", "is_not"]),
+    value: z.enum(["engaged", "cooling", "cold", "dormant", "not_enough_data"]),
+  }),
+  z.object({
+    kind: z.literal("last_sign_of_life"),
+    operator: z.enum(["within_days", "not_within_days"]),
+    value: z.number().int().min(1).max(3650).describe("Days."),
+  }),
+  z.object({
+    kind: z.literal("issues_received"),
+    operator: z.enum(["at_least", "at_most"]),
+    value: z.number().int().min(0).max(100_000),
+  }),
+]);
+
+export const segmentDefinitionSchema = z
+  .object({
+    match: z.enum(["all", "any"]).describe("all: every rule matches; any: at least one."),
+    rules: z.array(segmentRuleSchema).min(1).max(10),
+  })
+  .describe("Which subscribed members of the audience belong to the segment.");
+
+export const segmentSchema = z.object({
+  object: z.literal("segment"),
+  id: z.string(),
+  audience_id: z.string(),
+  name: z.string(),
+  definition: segmentDefinitionSchema,
+  matching_count: z.number().int().describe("Subscribed members the definition matches now."),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const segmentOutputSchema = z.object({ segment: segmentSchema });
+export const segmentsOutputSchema = z.object({ data: z.array(segmentSchema) });
+
+const segmentIdInputSchema = z
+  .string()
+  .trim()
+  .max(80)
+  .regex(/^nwsseg_[A-Za-z0-9_-]+$/, "Segment ID must start with nwsseg_.")
+  .describe("Segment ID (nwsseg_...).");
+
+const segmentNameInputSchema = noControlString(120, "name")
+  .trim()
+  .min(1)
+  .describe("Unique within the audience.");
+
+export const listSegmentsInputSchema = z.object({
+  audience_id: idSchema.describe("Audience ID."),
+});
+
+export const getSegmentInputSchema = listSegmentsInputSchema.extend({
+  segment_id: segmentIdInputSchema,
+});
+
+export const createSegmentInputSchema = listSegmentsInputSchema.extend({
+  name: segmentNameInputSchema,
+  definition: segmentDefinitionSchema,
+  idempotency_key: idempotencyKeySchema,
+});
+
+export const updateSegmentInputSchema = getSegmentInputSchema
+  .extend({
+    name: segmentNameInputSchema.optional(),
+    definition: segmentDefinitionSchema.optional(),
+    idempotency_key: idempotencyKeySchema,
+  })
+  .refine((value) => value.name !== undefined || value.definition !== undefined, {
+    message: "Provide name, definition, or both.",
+  });
+
+export const deleteSegmentInputSchema = getSegmentInputSchema.extend({
+  idempotency_key: idempotencyKeySchema,
 });
 
 // --- Newsletters -------------------------------------------------------------
@@ -3308,35 +3677,52 @@ function newsletterBlockSchema({
       }
     });
 
+  const visibility = z
+    .object({
+      channel: z.enum(["all", "email", "web"]).optional(),
+      segment_id: text(64, "newsletter block segment_id").min(1).nullish(),
+      segment_rule: z.enum(["in", "not_in"]).optional(),
+    })
+    .optional()
+    .describe(
+      "Where the block shows and to which readers. channel: all, email (hidden on the website) or web (hidden in the email). segment_id: a segment of the issue's audience, with segment_rule in (only its readers) or not_in (everyone else). The website shows a block as a reader in no segment sees it. Membership is fixed when the send is scheduled. Welcome emails accept channel only.",
+    );
+
   return z.discriminatedUnion("type", [
     z.object({
       type: z.literal("heading"),
+      visibility,
       text: blockText,
       level: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
     }),
     z.object({
       type: z.literal("paragraph"),
+      visibility,
       body: richProse,
     }),
     z.object({
       type: z.literal("list"),
+      visibility,
       ordered: z.boolean().optional(),
       items: z.array(richProse).min(1).max(50),
     }),
     z.object({
       type: z.literal("callout"),
+      visibility,
       title: optionalText,
       body: richProse,
       variant: newsletterCalloutVariantSchema.optional(),
     }),
     z.object({
       type: z.literal("button"),
+      visibility,
       label: blockText.max(120),
       url: linkUrl,
       align: newsletterButtonAlignSchema.optional(),
     }),
     z.object({
       type: z.literal("image"),
+      visibility,
       url: imageUrl,
       alt: blockText.max(300),
       align: newsletterButtonAlignSchema.optional(),
@@ -3346,18 +3732,21 @@ function newsletterBlockSchema({
     }),
     z.object({
       type: z.literal("video"),
+      visibility,
       video_url: videoUrl,
       thumbnail_url: imageUrl,
       label: blockText.max(160),
     }),
     z.object({
       type: z.literal("columns"),
+      visibility,
       ratio: newsletterColumnRatioSchema.optional(),
       left: columnContent,
       right: columnContent,
     }),
     z.object({
       type: z.literal("link_list"),
+      visibility,
       title: optionalText,
       items: z
         .array(
@@ -3372,22 +3761,27 @@ function newsletterBlockSchema({
     }),
     z.object({
       type: z.literal("quote"),
+      visibility,
       body: richProse,
       cite: optionalText,
     }),
     z.object({
       type: z.literal("divider"),
+      visibility,
     }),
     z.object({
       type: z.literal("spacer"),
+      visibility,
       height: z.number().int().min(8).max(80).optional(),
     }),
     z.object({
       type: z.literal("code"),
+      visibility,
       code: multiline(10_000, "newsletter code block").min(1),
     }),
     z.object({
       type: z.literal("custom_html"),
+      visibility,
       html: z.string().trim().min(1).max(250_000),
     }),
   ]);

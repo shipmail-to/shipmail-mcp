@@ -137,6 +137,44 @@ describe("calendar + booking MCP tools", () => {
     captured = [];
   });
 
+  test("respond_to_invitation POSTs the answer to /messages/{id}/invitation", async () => {
+    const client = await buildPair(() => ({
+      object: "invitation_response",
+      message_id: "msg_invite",
+      response: "accepted",
+      replied: true,
+      calendar_event_id: "evt_1",
+    }));
+    const result = await client.callTool({
+      name: "shipmail_respond_to_invitation",
+      arguments: { id: "msg_invite", response: "accepted" },
+    });
+    expect(result.isError).toBeFalsy();
+    const req = captured[0];
+    expect(req?.method).toBe("POST");
+    expect(new URL(req?.url ?? "").pathname).toBe("/api/v1/messages/msg_invite/invitation");
+    expect(req?.body).toEqual({ response: "accepted" });
+    expect(result.structuredContent).toEqual({
+      invitation: {
+        object: "invitation_response",
+        message_id: "msg_invite",
+        response: "accepted",
+        replied: true,
+        calendar_event_id: "evt_1",
+      },
+    });
+  });
+
+  test("respond_to_invitation refuses an answer it does not know", async () => {
+    const client = await buildPair(() => ({}));
+    const result = await client.callTool({
+      name: "shipmail_respond_to_invitation",
+      arguments: { id: "msg_invite", response: "maybe" },
+    });
+    expect(result.isError).toBe(true);
+    expect(captured).toHaveLength(0);
+  });
+
   test("create_calendar_event POSTs to /calendar/events with the event body", async () => {
     const client = await buildPair(() => mutationEventPayload());
     const result = await client.callTool({

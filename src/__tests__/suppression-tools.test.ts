@@ -3,7 +3,11 @@ import { InMemoryTransport, McpServer } from "@modelcontextprotocol/server";
 import { describe, expect, test } from "bun:test";
 import { ShipmailClient } from "shipmail";
 
-import { addSuppressionInputSchema, suppressionOutputSchema } from "../schemas.js";
+import {
+  addSuppressionInputSchema,
+  listSuppressionsInputSchema,
+  suppressionOutputSchema,
+} from "../schemas.js";
 import { registerTools } from "../tools.js";
 
 const SUPPRESSION = {
@@ -63,6 +67,21 @@ describe("addSuppressionInputSchema", () => {
     });
     expect(addSuppressionInputSchema.parse({ email: "a@b.com", scope: "all" }).scope).toBe("all");
     expect(() => addSuppressionInputSchema.parse({ email: "a@b.com", scope: "other" })).toThrow();
+    // A stream scope comes only from a complaint.
+    expect(() =>
+      addSuppressionInputSchema.parse({ email: "a@b.com", scope: "transactional" }),
+    ).toThrow();
+  });
+});
+
+describe("stream scopes", () => {
+  test("lists and returns entries of every scope", () => {
+    for (const scope of ["all", "marketing", "transactional", "mailbox"] as const) {
+      expect(listSuppressionsInputSchema.parse({ scope }).scope).toBe(scope);
+      expect(
+        suppressionOutputSchema.parse({ suppression: { ...SUPPRESSION, scope } }).suppression.scope,
+      ).toBe(scope);
+    }
   });
 });
 

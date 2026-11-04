@@ -20,6 +20,7 @@ import type {
   CreateMailboxParams,
   CreateNewsletterFromChangelogParams,
   CreateNewsletterParams,
+  CreateSmtpCredentialParams,
   CreateTemplateParams,
   CreateWebhookParams,
   InjectSandboxInboundParams,
@@ -61,6 +62,7 @@ import type {
   createMailboxInputSchema,
   createNewsletterFromChangelogInputSchema,
   createNewsletterInputSchema,
+  createSmtpCredentialInputSchema,
   createTemplateInputSchema,
   createWebhookInputSchema,
   injectSandboxInboundInputSchema,
@@ -156,6 +158,12 @@ type _CreateMailboxAppPassword = AssertTrue<
   KeysMatch<
     CreateMailboxAppPasswordParams,
     StripMcpOnly<z.infer<typeof createMailboxAppPasswordInputSchema>>
+  >
+>;
+type _CreateSmtpCredential = AssertTrue<
+  KeysMatch<
+    CreateSmtpCredentialParams,
+    StripMcpOnly<z.infer<typeof createSmtpCredentialInputSchema>>
   >
 >;
 type _CreateMailboxForwarding = AssertTrue<
@@ -266,6 +274,7 @@ type _AllChecks = [
   _CreateMailbox,
   _CreateMailboxAppPassword,
   _CreateMailboxForwarding,
+  _CreateSmtpCredential,
   _UpdateMailbox,
   _InjectSandboxInbound,
   _CreateMailboxFolder,
@@ -330,7 +339,8 @@ describe("SDK request params / MCP input schema alignment", () => {
       true,
       true,
       true,
+      true,
     ];
-    if (checks.length !== 36) throw new Error("alignment matrix size changed");
+    if (checks.length !== 37) throw new Error("alignment matrix size changed");
   });
 });

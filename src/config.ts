@@ -6,6 +6,8 @@ const DEFAULT_BASE_URL = "https://shipmail.to/api/v1";
 export type McpConfig = {
   readonly apiKey: string;
   readonly baseUrl: string | undefined;
+  // Extra headers on every API request of the primary key. The hosted endpoint uses them.
+  readonly requestHeaders?: Readonly<Record<string, string>> | undefined;
 };
 
 export const HELP_TEXT = `shipmail-mcp

@@ -124,13 +124,54 @@ export function openJsonSchemaObjects(schema: Record<string, unknown>): Record<s
   return openSchemaNode(schema);
 }
 
+type JsonSchemaOptions = Parameters<StandardSchemaWithJSON["~standard"]["jsonSchema"]["input"]>[0];
+
+const cachedSchemas = new WeakMap<StandardSchemaWithJSON, StandardSchemaWithJSON>();
+
+/**
+ * Returns the schema with its JSON Schema conversion computed once per process. The hosted server
+ * is rebuilt for every request, and converting all tool schemas again each time blocked the event
+ * loop for about 45 ms per `tools/list`. A schema's JSON Schema never changes, so the result is
+ * shared; callers must not mutate it.
+ *
+ * The result keeps the type of its argument so a tool callback still infers its arguments, but it
+ * is only a Standard Schema: pass it to the MCP SDK, which reads `~standard` alone.
+ */
+export function withCachedJsonSchema<S extends StandardSchemaWithJSON>(schema: S): S;
+export function withCachedJsonSchema(schema: StandardSchemaWithJSON): StandardSchemaWithJSON {
+  const existing = cachedSchemas.get(schema);
+  if (existing) return existing;
+  const standard = schema["~standard"];
+  const results = new Map<string, Record<string, unknown>>();
+  const cached =
+    (io: "input" | "output") =>
+    (options: JsonSchemaOptions): Record<string, unknown> => {
+      if (options.libraryOptions) return standard.jsonSchema[io](options);
+      const key = `${io}:${options.target}`;
+      const hit = results.get(key);
+      if (hit) return hit;
+      const result = standard.jsonSchema[io](options);
+      results.set(key, result);
+      return result;
+    };
+  const wrapped: StandardSchemaWithJSON = {
+    "~standard": { ...standard, jsonSchema: { input: cached("input"), output: cached("output") } },
+  };
+  cachedSchemas.set(schema, wrapped);
+  return wrapped;
+}
+
+const openedSchemas = new WeakMap<StandardSchemaWithJSON, StandardSchemaWithJSON>();
+
 /**
  * Wraps an output schema so the JSON Schema it publishes accepts fields and string values added
  * later, while runtime validation keeps using the original schema unchanged.
  */
 export function openOutputSchema(schema: StandardSchemaWithJSON): StandardSchemaWithJSON {
+  const existing = openedSchemas.get(schema);
+  if (existing) return existing;
   const standard = schema["~standard"];
-  return {
+  const opened = withCachedJsonSchema({
     "~standard": {
       ...standard,
       jsonSchema: {
@@ -138,5 +179,7 @@ export function openOutputSchema(schema: StandardSchemaWithJSON): StandardSchema
         output: (options) => openJsonSchemaObjects(standard.jsonSchema.output(options)),
       },
     },
-  };
+  });
+  openedSchemas.set(schema, opened);
+  return opened;
 }

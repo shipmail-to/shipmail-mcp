@@ -11,10 +11,13 @@ import { z } from "zod/v4";
 import { MCP_CAPABILITIES, MCP_PERMISSION_GROUPS, MCP_TOOL_NAMES } from "../capabilities.js";
 import {
   audienceFeedSchema,
+  createCustomerInputSchema,
   createMailboxForwardingInputSchema,
   createNewsletterInputSchema,
+  createSmtpCredentialInputSchema,
   createTemplateInputSchema,
   createWebhookInputSchema,
+  customerSchema,
   inboxDraftSchema,
   inboxFullMessageSchema,
   inboxMessageSchema,
@@ -34,14 +37,17 @@ import {
   replyScanCandidateSchema,
   sendInboxReplyDraftInputSchema,
   sendMessageInputSchema,
+  smtpCredentialSchema,
   templateSchema,
   templateVersionSchema,
   threadSchema,
   updateAudienceFeedInputSchema,
+  updateCustomerInputSchema,
   updateInboxReplyDraftInputSchema,
   updateNewsletterInputSchema,
   updateTemplateInputSchema,
   updateWebhookInputSchema,
+  upsertCustomerInputSchema,
   webhookSchema,
 } from "../schemas.js";
 import { registerTools } from "../tools.js";
@@ -223,6 +229,32 @@ const OPENAPI_SCHEMA_COVERAGE = [
     componentName: "SendMessageTemplate",
     mcpKeys: sendMessageInputSchema.shape.template.unwrap().keyof().options,
     mcpOnlyKeys: [],
+  },
+  {
+    componentName: "SmtpCredential",
+    mcpKeys: smtpCredentialSchema.keyof().options,
+    mcpOnlyKeys: [],
+  },
+  {
+    componentName: "CreateSmtpCredentialRequest",
+    mcpKeys: createSmtpCredentialInputSchema.keyof().options,
+    mcpOnlyKeys: [],
+  },
+  { componentName: "Customer", mcpKeys: customerSchema.keyof().options, mcpOnlyKeys: [] },
+  {
+    componentName: "CreateCustomerRequest",
+    mcpKeys: createCustomerInputSchema.keyof().options,
+    mcpOnlyKeys: ["idempotency_key"],
+  },
+  {
+    componentName: "UpdateCustomerRequest",
+    mcpKeys: updateCustomerInputSchema.keyof().options,
+    mcpOnlyKeys: ["id", "idempotency_key"],
+  },
+  {
+    componentName: "UpsertCustomerRequest",
+    mcpKeys: upsertCustomerInputSchema.keyof().options,
+    mcpOnlyKeys: ["source", "external_id", "idempotency_key"],
   },
   {
     componentName: "ReplyScanCandidate",

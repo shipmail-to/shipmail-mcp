@@ -113,6 +113,16 @@ async function buildPair(captured: CapturedRequest[]): Promise<Client> {
         method: init?.method ?? "GET",
         body: typeof init?.body === "string" ? init.body : undefined,
       });
+      if (url.pathname.endsWith("/subscribers/resend-confirmation")) {
+        return Response.json({
+          object: "confirmation_resend",
+          audience_id: "aud_123",
+          sent: 2,
+          failed: 0,
+          skipped: { not_found: 0, not_pending: 1, too_old: 0, resend_limit: 0, recently_sent: 0 },
+          remaining: 0,
+        });
+      }
       if (url.pathname.endsWith("/welcome-sequence/steps")) {
         return Response.json(welcomeStepPayload(), { status: 201 });
       }
@@ -203,6 +213,42 @@ describe("newsletter MCP tools", () => {
     expect(
       tools.find((tool) => tool.name === "shipmail_send_newsletter_to_more")?.annotations,
     ).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true,
+    });
+  });
+
+  test("resends the confirmation email to pending subscribers", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const chosen = await client.callTool({
+      name: "shipmail_resend_subscriber_confirmation",
+      arguments: { audience_id: "aud_123", subscriber_ids: ["audmem_1", "audmem_2", "audmem_3"] },
+    });
+    expect(chosen.isError).toBeFalsy();
+    expect(chosen.structuredContent).toMatchObject({ result: { sent: 2, remaining: 0 } });
+    const all = await client.callTool({
+      name: "shipmail_resend_subscriber_confirmation",
+      arguments: { audience_id: "aud_123" },
+    });
+    expect(all.isError).toBeFalsy();
+
+    expect(captured.map((request) => request.url.pathname)).toEqual([
+      "/api/v1/audiences/aud_123/subscribers/resend-confirmation",
+      "/api/v1/audiences/aud_123/subscribers/resend-confirmation",
+    ]);
+    expect(captured.map((request) => JSON.parse(request.body ?? "null"))).toEqual([
+      { subscriber_ids: ["audmem_1", "audmem_2", "audmem_3"] },
+      {},
+    ]);
+
+    const { tools } = await client.listTools();
+    const tool = tools.find((entry) => entry.name === "shipmail_resend_subscriber_confirmation");
+    expect(tool?.description).toContain("emails real subscribers");
+    expect(tool?.annotations).toMatchObject({
       readOnlyHint: false,
       destructiveHint: true,
       idempotentHint: false,

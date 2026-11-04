@@ -21,7 +21,11 @@ import type {
   BookingPage,
   CalendarEvent,
   CalendarEventMutationResult,
+  ConfirmationResend,
   CreatedMailboxAppPassword,
+  CreatedSmtpCredential,
+  Customer,
+  CustomerField,
   Domain,
   DomainSearchResult,
   DomainVerificationResult,
@@ -55,6 +59,8 @@ import type {
   NewsletterPreview,
   NewsletterTestSend,
   RenderedTemplate,
+  ServiceLevel,
+  SmtpCredential,
   Suppression,
   Template,
   TemplateVersion,
@@ -72,7 +78,11 @@ import {
   bookingPageSchema,
   calendarEventMutationSchema,
   calendarEventSchema,
+  confirmationResendSchema,
   createdMailboxAppPasswordSchema,
+  createdSmtpCredentialSchema,
+  customerFieldSchema,
+  customerSchema,
   domainSchema,
   domainSearchResultSchema,
   domainVerificationSchema,
@@ -105,6 +115,8 @@ import {
   newsletterSchema,
   newsletterTestSendSchema,
   renderedTemplateSchema,
+  serviceLevelSchema,
+  smtpCredentialSchema,
   suppressionSchema,
   templateSchema,
   templateVersionSchema,
@@ -135,6 +147,9 @@ type AssertTrue<T extends true> = T;
 type _DomainKeys = AssertTrue<KeysMatch<Domain, z.infer<typeof domainSchema>>>;
 type _AudienceKeys = AssertTrue<KeysMatch<Audience, z.infer<typeof audienceSchema>>>;
 type _AudienceFeedKeys = AssertTrue<KeysMatch<AudienceFeed, z.infer<typeof audienceFeedSchema>>>;
+type _ConfirmationResendKeys = AssertTrue<
+  KeysMatch<ConfirmationResend, z.infer<typeof confirmationResendSchema>>
+>;
 type _AutomationKeys = AssertTrue<KeysMatch<Automation, z.infer<typeof automationSchema>>>;
 type _BookingLinkKeys = AssertTrue<KeysMatch<BookingLink, z.infer<typeof bookingLinkSchema>>>;
 type _BookingPageKeys = AssertTrue<KeysMatch<BookingPage, z.infer<typeof bookingPageSchema>>>;
@@ -148,6 +163,12 @@ type _MailboxAppPasswordKeys = AssertTrue<
 >;
 type _CreatedMailboxAppPasswordKeys = AssertTrue<
   KeysMatch<CreatedMailboxAppPassword, z.infer<typeof createdMailboxAppPasswordSchema>>
+>;
+type _SmtpCredentialKeys = AssertTrue<
+  KeysMatch<SmtpCredential, z.infer<typeof smtpCredentialSchema>>
+>;
+type _CreatedSmtpCredentialKeys = AssertTrue<
+  KeysMatch<CreatedSmtpCredential, z.infer<typeof createdSmtpCredentialSchema>>
 >;
 type _MailboxExportKeys = AssertTrue<KeysMatch<MailboxExport, z.infer<typeof mailboxExportSchema>>>;
 type _MailboxFolderKeys = AssertTrue<KeysMatch<MailboxFolder, z.infer<typeof mailboxFolderSchema>>>;
@@ -224,6 +245,9 @@ type _WebhookDeliveryKeys = AssertTrue<
 type _WebhookDeliveryDetailKeys = AssertTrue<
   KeysMatch<WebhookDeliveryDetail, z.infer<typeof webhookDeliveryDetailSchema>>
 >;
+type _CustomerKeys = AssertTrue<KeysMatch<Customer, z.infer<typeof customerSchema>>>;
+type _ServiceLevelKeys = AssertTrue<KeysMatch<ServiceLevel, z.infer<typeof serviceLevelSchema>>>;
+type _CustomerFieldKeys = AssertTrue<KeysMatch<CustomerField, z.infer<typeof customerFieldSchema>>>;
 type _SuppressionKeys = AssertTrue<KeysMatch<Suppression, z.infer<typeof suppressionSchema>>>;
 type _TemplateKeys = AssertTrue<KeysMatch<Template, z.infer<typeof templateSchema>>>;
 type _TemplateVersionKeys = AssertTrue<
@@ -249,9 +273,12 @@ type _AllChecks = [
   _BookingPageKeys,
   _CalendarEventKeys,
   _CalendarEventMutationKeys,
+  _ConfirmationResendKeys,
   _MailboxKeys,
   _MailboxAppPasswordKeys,
   _CreatedMailboxAppPasswordKeys,
+  _SmtpCredentialKeys,
+  _CreatedSmtpCredentialKeys,
   _MailboxExportKeys,
   _MailboxFolderKeys,
   _MailboxFoldersKeys,
@@ -281,6 +308,9 @@ type _AllChecks = [
   _WebhookKeys,
   _WebhookDeliveryKeys,
   _WebhookDeliveryDetailKeys,
+  _CustomerKeys,
+  _ServiceLevelKeys,
+  _CustomerFieldKeys,
   _SuppressionKeys,
   _TemplateKeys,
   _TemplateVersionKeys,
@@ -339,7 +369,13 @@ describe("SDK / MCP schema alignment", () => {
       true,
       true,
       true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
     ];
-    if (checks.length !== 45) throw new Error("alignment matrix size changed");
+    if (checks.length !== 51) throw new Error("alignment matrix size changed");
   });
 });

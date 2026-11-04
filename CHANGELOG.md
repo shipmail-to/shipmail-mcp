@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.9.10 (2026-11-03)
+
+
+### Features
+
+* API key IP allowlist, out-of-office follow-ups and a startup discount page
+* **api:** let API and MCP sends add the mailbox's shared signature
+* **api:** manage saved groups from the API, SDKs, CLI and MCP, and fix subscriber paging
+* **calendar:** agents answer and send calendar invitations through the API
+* **customers:** tag customers and filter the list by tag
+* **newsletters:** resend the confirmation email to pending subscribers
+* **newsletters:** show a block only to some readers, or only in email or on the website
+* reply times and customers
+* **seo:** settings, registrar, pricing and integration pages, plus refreshes of high-impression pages
+* **ses:** three SES tenants per organization, so a complaint stops only its own kind of email
+* **transactional:** SMTP credentials for transactional senders
+
+
+### Bug Fixes
+
+* suspended-mailbox thread read answers 403, MCP stops reconverting tool schemas per request
+
 ## 0.9.9 (2026-10-27)
 
 
