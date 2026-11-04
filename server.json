@@ -7,7 +7,7 @@
     "url": "https://github.com/shipmail-to/shipmail-mcp",
     "source": "github"
   },
-  "version": "0.9.11",
+  "version": "0.9.12",
   "websiteUrl": "https://shipmail.to/docs/mcp",
   "icons": [
     {
@@ -37,7 +37,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "shipmail-mcp",
-      "version": "0.9.11",
+      "version": "0.9.12",
       "transport": {
         "type": "stdio"
       },

@@ -170,7 +170,7 @@ export const MCP_PERMISSION_GROUPS = [
   {
     name: "webhooks",
     label: "Webhooks",
-    description: "Read and manage persistent webhook destinations and deliveries.",
+    description: "Read and manage persistent webhook destinations, deliveries and event queues.",
     scopes: ["webhooks:read", "webhooks:write"],
     persistent: true,
   },
@@ -360,6 +360,12 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_webhook_deliveries", "listWebhookDeliveries", "webhooks:read"],
   ["shipmail_get_webhook_delivery", "getWebhookDelivery", "webhooks:read"],
   ["shipmail_replay_webhook_delivery", "replayWebhookDelivery", "webhooks:write"],
+  ["shipmail_create_event_queue", "createEventQueue", "webhooks:write"],
+  ["shipmail_list_event_queues", "listEventQueues", "webhooks:read"],
+  ["shipmail_get_event_queue", "getEventQueue", "webhooks:read"],
+  ["shipmail_delete_event_queue", "deleteEventQueue", "webhooks:write"],
+  ["shipmail_list_event_queue_events", "listEventQueueEvents", "webhooks:read"],
+  ["shipmail_ack_event_queue_events", "ackEventQueueEvents", "webhooks:write"],
   ["shipmail_list_suppressions", "listSuppressions", "suppressions:read"],
   ["shipmail_add_suppression", "createSuppression", "suppressions:write"],
   ["shipmail_remove_suppression", "removeSuppression", "suppressions:write"],
@@ -464,6 +470,10 @@ export type McpCapability = {
   readonly toolName: McpToolName;
   readonly operationId: string;
   readonly requiredScope: ApiKeyScope | "public";
+  // Any of these also admits the tool, as `alternativeScopes` does on its REST route.
+  readonly alternativeScopes: readonly ApiKeyScope[];
+  // Any of these also admits the tool on a connection whose person chose permission groups.
+  readonly alternativePermissionGroups: readonly McpPermissionGroupName[];
   readonly permissionGroup: McpPermissionGroupName;
   readonly allowedRoles: readonly McpRole[];
   readonly effect: McpCapabilityEffect;
@@ -499,6 +509,7 @@ const DESTRUCTIVE_TOOLS: ReadonlySet<string> = new Set([
   "shipmail_create_smtp_credential",
   "shipmail_create_mailbox_export",
   "shipmail_rotate_webhook_secret",
+  "shipmail_ack_event_queue_events",
   "shipmail_rotate_audience_feed",
   "shipmail_revoke_audience_feed",
 ]);
@@ -629,6 +640,7 @@ function durationFor(toolName: McpToolName): McpCapabilityDuration {
     toolName.includes("forwarding") ||
     toolName.includes("mailbox_rule") ||
     toolName.includes("webhook") ||
+    toolName.includes("event_queue") ||
     toolName.includes("booking_page") ||
     toolName.includes("booking_link") ||
     toolName.includes("automation")
@@ -660,6 +672,7 @@ function idempotencyFor(
   }
   if (
     DESTRUCTIVE_PREFIXES.some((prefix) => toolName.startsWith(prefix)) ||
+    toolName === "shipmail_ack_event_queue_events" ||
     toolName.startsWith("shipmail_suspend_") ||
     toolName.startsWith("shipmail_resume_")
   ) {
@@ -667,6 +680,17 @@ function idempotencyFor(
   }
   return "api_header";
 }
+
+const ALTERNATIVE_SCOPES: Readonly<Partial<Record<McpToolName, readonly ApiKeyScope[]>>> = {
+  shipmail_send_inbox_reply_draft: ["drafts:send"],
+  shipmail_prepare_staged_attachment_upload: ["drafts:write", "drafts:compose"],
+};
+
+const ALTERNATIVE_PERMISSION_GROUPS: Readonly<
+  Partial<Record<McpToolName, readonly McpPermissionGroupName[]>>
+> = {
+  shipmail_prepare_staged_attachment_upload: ["drafts", "compose_drafts"],
+};
 
 function defineCapability(row: (typeof CAPABILITY_ROWS)[number]): McpCapability {
   const [toolName, operationId, requiredScope] = row;
@@ -682,6 +706,8 @@ function defineCapability(row: (typeof CAPABILITY_ROWS)[number]): McpCapability 
     toolName,
     operationId,
     requiredScope,
+    alternativeScopes: ALTERNATIVE_SCOPES[toolName] ?? [],
+    alternativePermissionGroups: ALTERNATIVE_PERMISSION_GROUPS[toolName] ?? [],
     permissionGroup,
     allowedRoles: MEMBER_GROUPS.has(permissionGroup) ? ["owner", "member"] : ["owner"],
     effect,
@@ -728,7 +754,8 @@ export function getAllowedMcpToolNames(
     MCP_CAPABILITIES.filter(
       (capability) =>
         capability.transports[transport] &&
-        apiKeyScopesGrant(grantedScopes, capability.requiredScope),
+        (apiKeyScopesGrant(grantedScopes, capability.requiredScope) ||
+          capability.alternativeScopes.some((scope) => apiKeyScopesGrant(grantedScopes, scope))),
     ).map((capability) => capability.toolName),
   );
 }

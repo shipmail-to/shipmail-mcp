@@ -14,6 +14,7 @@ import type {
   CreateBookingPageParams,
   CreateCalendarEventParams,
   CreateDomainParams,
+  CreateEventQueueParams,
   CreateMailboxAppPasswordParams,
   CreateMailboxFolderParams,
   CreateMailboxForwardingParams,
@@ -56,6 +57,7 @@ import type {
   createBookingPageInputSchema,
   createCalendarEventInputSchema,
   createDomainInputSchema,
+  createEventQueueInputSchema,
   createMailboxAppPasswordInputSchema,
   createMailboxFolderInputSchema,
   createMailboxForwardingInputSchema,
@@ -258,9 +260,14 @@ type _RenderTemplate = AssertTrue<
   KeysMatch<RenderTemplateParams, StripMcpOnly<z.infer<typeof previewTemplateInputSchema>>>
 >;
 
+type _CreateEventQueue = AssertTrue<
+  KeysMatch<CreateEventQueueParams, StripMcpOnly<z.infer<typeof createEventQueueInputSchema>>>
+>;
+
 // Suppress unused-type warnings; the type aliases above are what enforce the
 // assertion at compile time.
 type _AllChecks = [
+  _CreateEventQueue,
   _CreateAutomation,
   _UpdateAutomation,
   _UpdateAudienceFeed,
@@ -340,7 +347,8 @@ describe("SDK request params / MCP input schema alignment", () => {
       true,
       true,
       true,
+      true,
     ];
-    if (checks.length !== 37) throw new Error("alignment matrix size changed");
+    if (checks.length !== 38) throw new Error("alignment matrix size changed");
   });
 });

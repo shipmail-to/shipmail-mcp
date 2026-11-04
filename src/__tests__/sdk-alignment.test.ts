@@ -29,6 +29,7 @@ import type {
   Domain,
   DomainSearchResult,
   DomainVerificationResult,
+  EventQueue,
   InboxDraft,
   InboxFullMessage,
   InboxMessage,
@@ -86,6 +87,7 @@ import {
   domainSchema,
   domainSearchResultSchema,
   domainVerificationSchema,
+  eventQueueSchema,
   inboxDraftSchema,
   inboxFullMessageSchema,
   inboxMessageActionSchema,
@@ -263,9 +265,12 @@ type _DomainVerificationKeys = AssertTrue<
   KeysMatch<DomainVerificationResult, z.infer<typeof domainVerificationSchema>>
 >;
 
+type _EventQueueKeys = AssertTrue<KeysMatch<EventQueue, z.infer<typeof eventQueueSchema>>>;
+
 // Suppress unused-type warnings; the existence of the type aliases above is
 // what enforces the assertion at compile time.
 type _AllChecks = [
+  _EventQueueKeys,
   _AudienceKeys,
   _AudienceFeedKeys,
   _AutomationKeys,
@@ -375,7 +380,8 @@ describe("SDK / MCP schema alignment", () => {
       true,
       true,
       true,
+      true,
     ];
-    if (checks.length !== 51) throw new Error("alignment matrix size changed");
+    if (checks.length !== 52) throw new Error("alignment matrix size changed");
   });
 });

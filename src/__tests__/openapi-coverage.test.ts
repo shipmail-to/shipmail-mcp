@@ -12,12 +12,14 @@ import { MCP_CAPABILITIES, MCP_PERMISSION_GROUPS, MCP_TOOL_NAMES } from "../capa
 import {
   audienceFeedSchema,
   createCustomerInputSchema,
+  createEventQueueInputSchema,
   createMailboxForwardingInputSchema,
   createNewsletterInputSchema,
   createSmtpCredentialInputSchema,
   createTemplateInputSchema,
   createWebhookInputSchema,
   customerSchema,
+  eventQueueSchema,
   inboxDraftSchema,
   inboxFullMessageSchema,
   inboxMessageSchema,
@@ -199,6 +201,12 @@ const OPENAPI_SCHEMA_COVERAGE = [
     mcpKeys: updateWebhookInputSchema.keyof().options,
     mcpOnlyKeys: ["id", "idempotency_key"],
   },
+  { componentName: "EventQueue", mcpKeys: eventQueueSchema.keyof().options, mcpOnlyKeys: [] },
+  {
+    componentName: "CreateEventQueueRequest",
+    mcpKeys: createEventQueueInputSchema.keyof().options,
+    mcpOnlyKeys: ["idempotency_key"],
+  },
   { componentName: "Template", mcpKeys: templateSchema.keyof().options, mcpOnlyKeys: [] },
   {
     componentName: "TemplateVersion",
@@ -378,7 +386,10 @@ describe("OpenAPI, capability registry, and MCP registration", () => {
       if (capability.requiredScope === "*") {
         throw new Error(`${capability.toolName} must declare a granular required scope`);
       }
-      expect(groups.get(capability.permissionGroup)?.scopes).toContain(capability.requiredScope);
+      const groupScopes: readonly string[] | undefined = groups.get(
+        capability.permissionGroup,
+      )?.scopes;
+      expect(groupScopes).toContain(capability.requiredScope);
     }
   });
 

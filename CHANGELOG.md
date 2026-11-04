@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.12 (2026-11-04)
+
+
+### Features
+
+* **api:** add a signed-in review link to approve and send one draft
+* **api:** let agents without a public URL fetch webhook events from a queue
+
 ## 0.9.11 (2026-11-04)
 
 

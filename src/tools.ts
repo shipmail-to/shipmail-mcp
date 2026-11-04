@@ -49,6 +49,7 @@ import {
 } from "./result.js";
 import type { LongStringField } from "./sanitize.js";
 import {
+  ackEventQueueEventsInputSchema,
   acknowledgmentOutputSchema,
   addSubscriberInputSchema,
   addSubscribersBatchInputSchema,
@@ -87,6 +88,7 @@ import {
   createdMailboxAppPasswordOutputSchema,
   createDomainInputSchema,
   createdSmtpCredentialOutputSchema,
+  createEventQueueInputSchema,
   createInboxDraftInputSchema,
   createInboxReplyDraftInputSchema,
   createMailboxAppPasswordInputSchema,
@@ -119,6 +121,10 @@ import {
   domainOutputSchema,
   domainSearchOutputSchema,
   domainsOutputSchema,
+  eventQueueAckOutputSchema,
+  eventQueueEventsOutputSchema,
+  eventQueueOutputSchema,
+  eventQueuesOutputSchema,
   getByIdInputSchema,
   getCalendarEventInputSchema,
   getInboxReplyDraftInputSchema,
@@ -162,6 +168,8 @@ import {
   listCalendarEventsInputSchema,
   listCustomersInputSchema,
   listDomainsInputSchema,
+  listEventQueueEventsInputSchema,
+  listEventQueuesInputSchema,
   listInboxReplyDraftsInputSchema,
   listMailboxesInputSchema,
   listMailboxInboxMessagesInputSchema,
@@ -350,6 +358,7 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_suspend_mailbox: 20,
   shipmail_resume_mailbox: 20,
   shipmail_delete_webhook: 5,
+  shipmail_delete_event_queue: 5,
   shipmail_rotate_webhook_secret: 5,
   shipmail_test_webhook: 10,
   shipmail_replay_webhook_delivery: 20,
@@ -367,6 +376,7 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_undo_mailbox_import: 10,
   shipmail_create_mailbox_folder: 20,
   shipmail_create_webhook: 10,
+  shipmail_create_event_queue: 10,
   shipmail_update_domain: 20,
   shipmail_update_mailbox: 20,
   shipmail_update_mailbox_folder: 20,
@@ -3458,6 +3468,134 @@ export function registerTools(
               mutationOptions(args),
             ),
           }),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_event_queues", () => {
+    server.registerTool(
+      "shipmail_list_event_queues",
+      {
+        title: "List Event Queues",
+        description:
+          "List event queues configured for the organization. An event queue stores the same events a webhook would deliver, for an agent to read with its API key instead of receiving them at a public URL.",
+        inputSchema: listEventQueuesInputSchema,
+        outputSchema: eventQueuesOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: true },
+      },
+      async (args) =>
+        runTool("shipmail_list_event_queues", eventQueuesOutputSchema, async () =>
+          client.eventQueues.list(args),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_event_queue", () => {
+    server.registerTool(
+      "shipmail_get_event_queue",
+      {
+        title: "Get Event Queue",
+        description: "Fetch an event queue's configuration by its evq_ ID.",
+        inputSchema: getByIdInputSchema,
+        outputSchema: eventQueueOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: true },
+      },
+      async ({ id }) =>
+        runTool("shipmail_get_event_queue", eventQueueOutputSchema, async () => ({
+          event_queue: await client.eventQueues.get(id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_event_queue", () => {
+    server.registerTool(
+      "shipmail_create_event_queue",
+      {
+        title: "Create Event Queue",
+        description:
+          "Create an event queue: it stores the chosen events (message.received, message.bounced, booking events, reply.overdue and the rest of the webhook events) for you to read with your API key, so no public URL is needed. It only gets events that happen after it is created. Up to 10 per organization. There is no update: delete and recreate to change a filter.",
+        inputSchema: createEventQueueInputSchema,
+        outputSchema: eventQueueOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_create_event_queue", eventQueueOutputSchema, async () => ({
+          event_queue: await client.eventQueues.create(
+            stripIdempotencyKey(args),
+            mutationOptions(args),
+          ),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_event_queue", () => {
+    server.registerTool(
+      "shipmail_delete_event_queue",
+      {
+        title: "Delete Event Queue",
+        description: "Delete an event queue and every event it still holds. This is destructive.",
+        inputSchema: getByIdInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id }) =>
+        runTool("shipmail_delete_event_queue", acknowledgmentOutputSchema, async () => {
+          await client.eventQueues.delete(id);
+          return { result: { ok: true, id } };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_event_queue_events", () => {
+    server.registerTool(
+      "shipmail_list_event_queue_events",
+      {
+        title: "List Event Queue Events",
+        description:
+          "Read the oldest unacknowledged events of an event queue, oldest first. Each event is the same envelope a webhook delivery carries (version, event_id, event_type, created_at, test, data). Reading changes nothing: handle the events, then acknowledge their event_id values, and read again while has_more is true. Delivery is at least once, so skip event_id values already handled. Events not acknowledged within 30 days are deleted.",
+        inputSchema: listEventQueueEventsInputSchema,
+        outputSchema: eventQueueEventsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: true },
+      },
+      async (args) =>
+        runTool("shipmail_list_event_queue_events", eventQueueEventsOutputSchema, async () =>
+          client.eventQueues.listEvents(
+            args.id,
+            args.limit !== undefined ? { limit: args.limit } : undefined,
+          ),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_ack_event_queue_events", () => {
+    server.registerTool(
+      "shipmail_ack_event_queue_events",
+      {
+        title: "Acknowledge Event Queue Events",
+        description:
+          "Acknowledge handled events by their event_id, which deletes them from the event queue. Idempotent: unknown or already acknowledged IDs are ignored. Returns how many events were deleted.",
+        inputSchema: ackEventQueueEventsInputSchema,
+        outputSchema: eventQueueAckOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_ack_event_queue_events", eventQueueAckOutputSchema, async () =>
+          client.eventQueues.ack(args.id, args.event_ids),
         ),
     );
   });

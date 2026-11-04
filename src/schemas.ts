@@ -791,6 +791,16 @@ export const inboxReplyDraftSchema = z.object({
   created_at: z.string(),
   updated_at: z.string(),
   sent_at: z.string().nullable(),
+  attachments: z
+    .array(z.object({ name: z.string().nullable(), type: z.string(), size: z.number() }))
+    .optional(),
+  review_url: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Link for a person to review this one draft and send it, or null when the draft is not in draft status or the key is in test mode. The person must be signed in with access to the mailbox. Opening it sends nothing, and it stops working after the send.",
+    ),
 });
 
 const removedFormattingSchema = z
@@ -819,6 +829,16 @@ export const inboxDraftSchema = z.object({
   subject: z.string(),
   removed_formatting: removedFormattingSchema,
   created_at: z.string(),
+  attachments: z
+    .array(z.object({ name: z.string().nullable(), type: z.string(), size: z.number() }))
+    .optional(),
+  review_url: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      "Link for a person to review this one draft and send it, or null for a test-mode key. The person must be signed in with access to the mailbox. Opening it sends nothing, and it stops working once the draft is sent, deleted or replaced.",
+    ),
 });
 
 export const inboxReplyDraftSendSchema = z.object({
@@ -1302,6 +1322,35 @@ export const webhookWithSecretSchema = webhookSchema.extend({
   secret: z.string(),
 });
 
+export const eventQueueSchema = z.object({
+  object: z.literal("event_queue"),
+  id: z.string(),
+  events: z.array(z.enum(WEBHOOK_EVENT_TYPES)),
+  description: z.string().nullable(),
+  mailbox_ids: z.array(z.string()).nullable(),
+  domain_ids: z.array(z.string()).nullable(),
+  include_reply_text: z.boolean().describe("True when message.received events carry reply_text."),
+  authenticated_senders_only: z
+    .boolean()
+    .describe("True when message.received is skipped when sender_authenticated is false."),
+  allowed_senders: z
+    .array(z.string())
+    .nullable()
+    .describe(
+      "Addresses and domains message.received is limited to. Null when every sender is kept.",
+    ),
+  created_at: z.string(),
+});
+
+export const webhookEventEnvelopeSchema = z.object({
+  version: z.string(),
+  event_id: z.string().describe("Unique per event. Dedupe on it and pass it to ack."),
+  event_type: z.string(),
+  created_at: z.string(),
+  test: z.boolean(),
+  data: z.unknown(),
+});
+
 export const webhookDeliverySchema = z.object({
   object: z.literal("webhook_delivery"),
   id: z.string(),
@@ -1596,6 +1645,16 @@ export const webhooksOutputSchema = z.object({
   data: z.array(webhookSchema),
   pagination: paginationSchema,
 });
+export const eventQueueOutputSchema = z.object({ event_queue: eventQueueSchema });
+export const eventQueuesOutputSchema = z.object({
+  data: z.array(eventQueueSchema),
+  pagination: paginationSchema,
+});
+export const eventQueueEventsOutputSchema = z.object({
+  data: z.array(webhookEventEnvelopeSchema),
+  has_more: z.boolean(),
+});
+export const eventQueueAckOutputSchema = z.object({ acknowledged: z.number().int().nonnegative() });
 export const membersOutputSchema = z.object({
   data: z.array(memberSchema),
   pagination: paginationSchema,
@@ -2137,6 +2196,11 @@ export const createInboxDraftInputSchema = z
     subject: noControlString(998, "subject").optional(),
     text: z.string().max(256_000).optional(),
     html: z.string().max(512_000).optional(),
+    staged_attachment_ids: z
+      .array(z.string().regex(/^sat_[0-9a-z]+$/, "Invalid staged attachment ID."))
+      .max(20)
+      .optional()
+      .describe("Files uploaded with shipmail_prepare_staged_attachment_upload."),
     idempotency_key: idempotencyKeySchema,
   })
   .strict()
@@ -2155,6 +2219,11 @@ export const createInboxReplyDraftInputSchema = z
     html: z.string().max(512_000).optional(),
     reply_mode: z.enum(["reply", "reply_all"] as const).default("reply"),
     expected_version: z.number().int().min(1),
+    staged_attachment_ids: z
+      .array(z.string().regex(/^sat_[0-9a-z]+$/, "Invalid staged attachment ID."))
+      .max(20)
+      .optional()
+      .describe("Files uploaded with shipmail_prepare_staged_attachment_upload."),
     idempotency_key: idempotencyKeySchema,
   })
   .refine((value) => Boolean(value.text || value.html), {
@@ -2865,6 +2934,59 @@ export const getWebhookDeliveryInputSchema = z.object({
 });
 export const replayWebhookDeliveryInputSchema = getWebhookDeliveryInputSchema.extend({
   idempotency_key: idempotencyKeySchema,
+});
+
+export const listEventQueuesInputSchema = paginationInputSchema;
+export const createEventQueueInputSchema = z.object({
+  events: z.array(webhookEventSchema).min(1).max(WEBHOOK_EVENT_TYPES.length),
+  description: noControlString(500, "description").optional(),
+  mailbox_ids: webhookScopeIdsInputSchema
+    .optional()
+    .describe(
+      "Only queue events for these mailbox IDs (plus mailboxes of domain_ids). Omit for every mailbox. Organization events are always queued.",
+    ),
+  domain_ids: webhookScopeIdsInputSchema
+    .optional()
+    .describe("Only queue events for these domain IDs and their mailboxes."),
+  include_reply_text: z
+    .boolean()
+    .optional()
+    .describe(
+      "Add reply_text, the sender's new text without quoted history, to message.received events. Needs the messages:read scope.",
+    ),
+  authenticated_senders_only: z
+    .boolean()
+    .optional()
+    .describe("Skip message.received events whose sender_authenticated is false."),
+  allowed_senders: z
+    .array(z.string().max(320))
+    .max(100)
+    .nullable()
+    .optional()
+    .describe(
+      "Queue message.received only from these senders. Each entry is an address (jane@customer.com) or a domain (customer.com) that matches that exact domain, not its subdomains. At most 100. Omit or pass null for every sender.",
+    ),
+  idempotency_key: idempotencyKeySchema,
+});
+export const listEventQueueEventsInputSchema = z.object({
+  id: idSchema.describe("Event queue ID (evq_...)."),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe("How many of the oldest unacknowledged events to return, 1-100. Default 50."),
+});
+export const ackEventQueueEventsInputSchema = z.object({
+  id: idSchema.describe("Event queue ID (evq_...)."),
+  event_ids: z
+    .array(z.string().min(1).max(100))
+    .min(1)
+    .max(100)
+    .describe(
+      "The event_id of each handled event, 1-100. Unknown or already acknowledged IDs are ignored.",
+    ),
 });
 
 export const listSuppressionsInputSchema = paginationInputSchema.extend({

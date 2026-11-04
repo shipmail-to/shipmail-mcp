@@ -3980,7 +3980,7 @@
       "post": {
         "operationId": "sendMessage",
         "summary": "Send a message",
-        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Base64 attachments: max 20 files, and the whole email can be up to 10 MB, attachments and encoding included (a larger one is a 422). staged_attachment_ids take up to 20 files of 25 MB each. To send from a transactional sender (https://shipmail.to/docs/features/transactional-email), set from to its bare address; mailbox_id is optional and, when set, must be the sender's mailbox. Shipmail adds the sender name and Reply-To. Transactional senders send immediately only and refuse scheduled_at, track_reply: true, staged_attachment_ids, a different reply_to and a different display name. A transactional email send that reaches a ceiling returns 429 with details[].code application_daily_limit (daily ceiling for transactional email, a share of the organization's daily sending limit), application_unique_recipients (hourly ceiling of different recipients) or application_storage_full (the sender's mailbox has no transactional email storage left). To send a stored template, pass template: { id, version?, variables? } instead of subject, html and text; messages:send is enough. A template from another organization is a 404, a template with no published version and no pinned version is a 422 with details[].code template_not_published, and missing or unknown variables are a 422 with details[].code missing_variable or unknown_variable.",
+        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Base64 attachments: max 20 files, and the whole email can be up to 10 MB, attachments and encoding included (a larger one is a 422). staged_attachment_ids take up to 20 files of 25 MB each. To send from a transactional sender (https://shipmail.to/docs/features/transactional-email), set from to its bare address; mailbox_id is optional and, when set, must be the sender's mailbox. Shipmail adds the sender name and Reply-To. Transactional senders send immediately only and refuse scheduled_at, track_reply: true, staged_attachment_ids, a different reply_to and a different display name. A transactional email send that reaches a ceiling returns 429 with details[].code application_daily_limit (the transactional daily limit: the organization's safety limit or its plan-share floor, or an approved limit), application_unique_recipients (hourly limit of different recipients), application_storage_full (the sender's mailbox has no transactional email storage left) or sending_capacity (Shipmail is at its sending capacity for transactional email; retry in a few minutes). An organization with transactional overage turned on is metered in emails instead and returns 403 quota_exceeded with details[].code transactional_monthly_limit (the included amount is reached and overage cannot be billed), transactional_payment_failed (the included amount is reached while an overage invoice is unpaid) or transactional_budget_reached (overage reached twice the month's budget). To send a stored template, pass template: { id, version?, variables? } instead of subject, html and text; messages:send is enough. A template from another organization is a 404, a template with no published version and no pinned version is a 422 with details[].code template_not_published, and missing or unknown variables are a 422 with details[].code missing_variable or unknown_variable.",
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
@@ -5661,6 +5661,380 @@
             "$ref": "#/components/responses/RateLimitError"
           }
         }
+      }
+    },
+    "/event-queues": {
+      "post": {
+        "operationId": "createEventQueue",
+        "summary": "Create an event queue",
+        "description": "Create a queue that stores webhook events for you to fetch with your API key, for an agent that has no public HTTPS endpoint. It takes the same events and filters as a webhook, without `url`, `authorization` or `standard_webhooks_secret`. A queue only gets events that happen after it is created. There is no update: to change a filter, delete the queue and create a new one. Maximum 10 event queues per organization; the 11th fails with 403 `quota_exceeded` and `limit.resource` `event_queues`. The key's member must be able to read every mailbox the filter reaches, and `include_reply_text` needs a key that also grants `messages:read`.",
+        "tags": ["Event Queues"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventQueueRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event queue created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventQueue"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key's member cannot read every mailbox the filter reaches, `include_reply_text` is set without `messages:read` (`authorization_error`), or the organization already has 10 event queues (`quota_exceeded`, with `limit.resource` `event_queues`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listEventQueues",
+        "summary": "List event queues",
+        "description": "List the organization's event queues, newest first.",
+        "tags": ["Event Queues"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of event queues.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "pagination"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EventQueue"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/event-queues/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/EventQueueId"
+        }
+      ],
+      "get": {
+        "operationId": "getEventQueue",
+        "summary": "Get an event queue",
+        "tags": ["Event Queues"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:read"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event queue object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventQueue"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteEventQueue",
+        "summary": "Delete an event queue",
+        "description": "Delete the queue and every event it still holds.",
+        "tags": ["Event Queues"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:write"]
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Event queue deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
+    "/event-queues/{id}/events": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/EventQueueId"
+        }
+      ],
+      "get": {
+        "operationId": "listEventQueueEvents",
+        "summary": "Read events from an event queue",
+        "description": "Return the oldest unacknowledged events, oldest first, for the API key's mode (live or test). Each event is the exact envelope a webhook with the same settings receives. Reading changes nothing: the same events come back until you acknowledge them. Delivery is at least once, so deduplicate on `event_id`. Use one reader per queue. Events not acknowledged within 30 days are deleted. `data.conversation_id` on `message.received` and `mailbox.rule_matched` can be null when the event is read right after it happens.",
+        "tags": ["Event Queues"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "webhooks:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of events to return (1-100, default 50).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The oldest unacknowledged events.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "has_more"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookEvent"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "True when more unacknowledged events wait after this page. Acknowledge this page, then read again."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key's member cannot read every mailbox the queue covers, or the queue has `include_reply_text` and the key does not also grant `messages:read`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/event-queues/{id}/events/ack": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/EventQueueId"
+        }
+      ],
+      "post": {
+        "operationId": "ackEventQueueEvents",
+        "summary": "Acknowledge events",
+        "description": "Delete handled events from the queue by their `event_id`. Idempotent: unknown or already acknowledged IDs are not an error.",
+        "tags": ["Event Queues"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "webhooks:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["webhooks:write"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["event_ids"],
+                "properties": {
+                  "event_ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "description": "The `event_id` of each handled event."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Events acknowledged.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["acknowledged"],
+                  "properties": {
+                    "acknowledged": {
+                      "type": "integer",
+                      "description": "Number of events deleted from the queue."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key's member cannot read every mailbox the queue covers, or the queue has `include_reply_text` and the key does not also grant `messages:read`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
       }
     },
     "/suppressions": {
@@ -11903,6 +12277,7 @@
               "messages:write": "Update, move, delete, and inject sandbox messages.",
               "drafts:write": "Create agent-safe reply drafts with server-derived recipients.",
               "drafts:compose": "Save new-message drafts to a mailbox's Drafts folder for review. Cannot send.",
+              "drafts:send": "Send reply drafts that already exist. Cannot write new email.",
               "messages:send": "Send messages, replies, and approved reply drafts.",
               "newsletters:read": "List and retrieve newsletter drafts and campaigns.",
               "newsletters:write": "Create, update, test, schedule, cancel, and resume newsletters.",
@@ -12016,6 +12391,15 @@
         "schema": {
           "type": "integer",
           "minimum": 1
+        }
+      },
+      "EventQueueId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Event queue ID (`evq_...`).",
+        "schema": {
+          "type": "string"
         }
       }
     },
@@ -16054,7 +16438,8 @@
           "calendar.rsvp_updated",
           "booking.created",
           "subscriber.added",
-          "newsletter.sent"
+          "newsletter.sent",
+          "draft.reviewed"
         ]
       },
       "WebhookEventType": {
@@ -16089,8 +16474,108 @@
           "calendar.rsvp_updated",
           "booking.created",
           "subscriber.added",
-          "newsletter.sent"
+          "newsletter.sent",
+          "draft.reviewed"
         ]
+      },
+      "WebhookEvent": {
+        "type": "object",
+        "description": "A webhook event envelope, exactly as a webhook with the same settings receives it. `data` depends on `event_type`; the webhooks guide lists every payload.",
+        "required": ["version", "event_id", "event_type", "created_at", "test", "data"],
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "Payload contract version.",
+            "example": "2026-09-10"
+          },
+          "event_id": {
+            "type": "string",
+            "description": "Stable event ID. Deduplicate on it and pass it to acknowledge the event.",
+            "example": "evt_abc123"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/WebhookEventType"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "test": {
+            "type": "boolean",
+            "description": "True for events produced by a test-mode API key."
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "EventQueue": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "events",
+          "description",
+          "mailbox_ids",
+          "domain_ids",
+          "include_reply_text",
+          "authenticated_senders_only",
+          "allowed_senders",
+          "created_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "event_queue"
+          },
+          "id": {
+            "type": "string",
+            "description": "Event queue ID, `evq_` followed by a random string."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventType"
+            }
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "mailbox_ids": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            },
+            "description": "Mailboxes this queue is limited to, or null."
+          },
+          "domain_ids": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            },
+            "description": "Domains this queue is limited to, or null. When both lists are null the queue gets events for every mailbox."
+          },
+          "include_reply_text": {
+            "type": "boolean",
+            "description": "True when `message.received` events carry `reply_text`."
+          },
+          "authenticated_senders_only": {
+            "type": "boolean",
+            "description": "True when `message.received` is queued only for authenticated senders."
+          },
+          "allowed_senders": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            },
+            "description": "Addresses and domains `message.received` is limited to, lowercased. Null when every sender is queued."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "VerificationResult": {
         "type": "object",
@@ -17151,6 +17636,60 @@
           }
         }
       },
+      "CreateEventQueueRequest": {
+        "type": "object",
+        "required": ["events"],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventType"
+            },
+            "minItems": 1,
+            "description": "Event types to subscribe to."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description.",
+            "maxLength": 500
+          },
+          "mailbox_ids": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "description": "Only queue events for these mailboxes (plus mailboxes of `domain_ids`). Omit or null for every mailbox. Organization events are always queued."
+          },
+          "domain_ids": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "description": "Only queue events for these domains and their mailboxes. Omit or null for every domain."
+          },
+          "include_reply_text": {
+            "type": "boolean",
+            "default": false,
+            "description": "Add `reply_text`, the sender's new text without quoted history or signature, to `message.received` events. Needs an API key that also grants `messages:read`, to create the queue and to read or acknowledge its events."
+          },
+          "authenticated_senders_only": {
+            "type": "boolean",
+            "default": false,
+            "description": "Queue `message.received` only when the sender is authenticated (`sender_authenticated: true`). Other events are unaffected."
+          },
+          "allowed_senders": {
+            "type": ["array", "null"],
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "maxLength": 320
+            },
+            "description": "Queue `message.received` only when `data.from.address` equals an address entry (`jane@customer.com`) or its domain equals a domain entry (`customer.com`) exactly. Null or `[]` queues every sender. Other events are unaffected."
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "required": ["error"],
@@ -17229,7 +17768,7 @@
                 "properties": {
                   "resource": {
                     "type": "string",
-                    "description": "The limited resource, such as `audience_subscribers`, `newsletter_sends`, `sends`, `mailboxes`, `aliases`, `team_members`, `newsletter_storage`, `api_keys` or `webhooks`. New values may be added."
+                    "description": "The limited resource, such as `audience_subscribers`, `newsletter_sends`, `sends`, `mailboxes`, `aliases`, `team_members`, `newsletter_storage`, `api_keys`, `webhooks` or `event_queues`. New values may be added."
                   },
                   "used": {
                     "type": "number"
@@ -18280,6 +18819,12 @@
             "type": "string",
             "maxLength": 512000,
             "description": "HTML body. At least one of html or text is required. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it."
+          },
+          "staged_attachment_ids": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^sat_" },
+            "maxItems": 20,
+            "description": "Files uploaded through the staged attachment flow. A key with drafts:write or drafts:compose may upload them."
           }
         }
       },
@@ -18308,7 +18853,8 @@
           "bcc",
           "subject",
           "removed_formatting",
-          "created_at"
+          "created_at",
+          "review_url"
         ],
         "properties": {
           "object": {
@@ -18356,6 +18902,24 @@
           "created_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "review_url": {
+            "type": ["string", "null"],
+            "format": "uri",
+            "description": "Link for a person to review this one draft and send it, or null for a test-mode key. The person must be signed in with access to the mailbox. Opening it sends nothing, and it stops working once the draft is sent, deleted or replaced."
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type", "size"],
+              "properties": {
+                "name": { "type": ["string", "null"] },
+                "type": { "type": "string" },
+                "size": { "type": "integer" }
+              }
+            },
+            "description": "The files this draft carries."
           }
         }
       },
@@ -18391,6 +18955,12 @@
             "type": "integer",
             "minimum": 1,
             "description": "The conversation version from GET /mailboxes/{id}/inbox/threads/{thread_id} (version) or the inbox thread queue."
+          },
+          "staged_attachment_ids": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^sat_" },
+            "maxItems": 20,
+            "description": "Files uploaded through the staged attachment flow. A key with drafts:write or drafts:compose may upload them."
           }
         }
       },
@@ -18451,7 +19021,8 @@
           "sent_message_id",
           "created_at",
           "updated_at",
-          "sent_at"
+          "sent_at",
+          "review_url"
         ],
         "properties": {
           "object": {
@@ -18552,6 +19123,24 @@
           "sent_at": {
             "type": ["string", "null"],
             "format": "date-time"
+          },
+          "review_url": {
+            "type": ["string", "null"],
+            "format": "uri",
+            "description": "Link for a person to review this one draft and send it, or null when the draft is not in `draft` status or the key is in test mode. The person must be signed in with access to the mailbox. Opening it sends nothing, and it stops working after the send."
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type", "size"],
+              "properties": {
+                "name": { "type": ["string", "null"] },
+                "type": { "type": "string" },
+                "size": { "type": "integer" }
+              }
+            },
+            "description": "The files this draft carries."
           }
         }
       },
@@ -23210,6 +23799,10 @@
     {
       "name": "Webhooks",
       "description": "Subscribe to real-time event notifications."
+    },
+    {
+      "name": "Event Queues",
+      "description": "Fetch webhook events with your API key when you cannot receive a webhook."
     },
     {
       "name": "Audiences",
