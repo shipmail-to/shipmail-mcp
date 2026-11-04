@@ -6699,6 +6699,16 @@
           "404": {
             "$ref": "#/components/responses/NotFoundError"
           },
+          "409": {
+            "description": "The cursor expired because the message it points to left the list. Restart from the first page, without a cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "422": {
             "$ref": "#/components/responses/ValidationError"
           },

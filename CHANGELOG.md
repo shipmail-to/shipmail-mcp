@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.11 (2026-11-04)
+
+
+### Bug Fixes
+
+* **mcp:** add a title and icon to the registry entry and stop requiring an API key header
+
 ## 0.9.10 (2026-11-03)
 
 

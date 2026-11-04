@@ -1,13 +1,23 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.shipmail-to/shipmail-mcp",
+  "title": "Shipmail",
   "description": "Modern email for your business. Inboxes, calendars, newsletters and an API for your agents.",
   "repository": {
     "url": "https://github.com/shipmail-to/shipmail-mcp",
     "source": "github"
   },
-  "version": "0.9.10",
+  "version": "0.9.11",
   "websiteUrl": "https://shipmail.to/docs/mcp",
+  "icons": [
+    {
+      "src": "https://shipmail.to/brand/shipmail-app-icon-512.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ]
+    }
+  ],
   "remotes": [
     {
       "type": "streamable-http",
@@ -15,8 +25,8 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Bearer <Shipmail API key> (sm_live_...). Create one at https://shipmail.to/docs/api/quick-start.",
-          "isRequired": true,
+          "description": "Optional for clients that sign in with OAuth. Otherwise send Bearer <Shipmail API key> (sm_live_...). Create one at https://shipmail.to/docs/api/quick-start.",
+          "isRequired": false,
           "isSecret": true
         }
       ]
@@ -27,7 +37,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "shipmail-mcp",
-      "version": "0.9.10",
+      "version": "0.9.11",
       "transport": {
         "type": "stdio"
       },
