@@ -36,6 +36,7 @@ function newsletterPayload() {
     status: "draft",
     archive_visibility: "private",
     publish_target: "email_and_website",
+    view_in_browser: true,
     feed_entry_url: null,
     styling_mode: "styled",
     track_engagement: false,
@@ -104,6 +105,81 @@ function welcomeStepPayload() {
   };
 }
 
+const RECIPIENT = {
+  object: "newsletter_recipient",
+  id: "nwsrcp_1",
+  newsletter_id: "nws_1",
+  email_address: "reader@example.com",
+  status: "skipped",
+  reason: "opted_out",
+  subscriber_id: "audmem_1",
+  sent_at: null,
+  delivered_at: null,
+  bounced_at: null,
+  complained_at: null,
+  unsubscribed_at: null,
+  created_at: "2026-11-09T10:00:00.000Z",
+} as const;
+
+const NEWSLETTER_DOMAIN = {
+  object: "newsletter_domain",
+  id: "nwsdom_1",
+  root_domain_name: "example.com",
+  domain_name: "news.example.com",
+  from_local_part: "updates",
+  from_address: "updates@news.example.com",
+  mail_from_domain: "bounce.news.example.com",
+  reply_to_address: "hello@example.com",
+  status: "verified",
+  dkim_status: "verified",
+  mail_from_status: "verified",
+  spf_status: "verified",
+  dmarc_status: "verified",
+  verified_at: "2026-11-01T10:00:00.000Z",
+  dns_records: [],
+  created_at: "2026-11-01T09:00:00.000Z",
+  updated_at: "2026-11-01T10:00:00.000Z",
+} as const;
+
+const SENDER_IDENTITY = {
+  object: "newsletter_sender_identity",
+  id: "nwsid_1",
+  newsletter_domain_id: "nwsdom_1",
+  from_name: "Example",
+  from_address: "updates@news.example.com",
+  business_name: "Example Ltd",
+  postal_address: "1 Main Street",
+  footer_text: null,
+  domain_status: "verified",
+  is_default: true,
+  created_at: "2026-11-01T09:00:00.000Z",
+  updated_at: "2026-11-01T10:00:00.000Z",
+} as const;
+
+const PREVIEW = {
+  object: "newsletter_preview",
+  newsletter_id: "nws_1",
+  subject: "Hello Ada",
+  html: "<p>Hello Ada</p><p>Example Ltd, 1 Main Street. Unsubscribe</p>",
+  archive_html: "<p>Hello</p>",
+  text: "Hello Ada",
+  headers: {
+    "List-Unsubscribe": "<https://shipmail.to/u/abc>",
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  },
+  warnings: [],
+  url_breakdown: {
+    href_count: 0,
+    image_src_count: 0,
+    video_href_count: 0,
+    text_url_count: 0,
+    unique_url_count: 0,
+    max_unique_urls: 100,
+    urls: [],
+    offending_urls: [],
+  },
+} as const;
+
 async function buildPair(captured: CapturedRequest[]): Promise<Client> {
   const fetcher: typeof fetch = Object.assign(
     async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
@@ -125,6 +201,20 @@ async function buildPair(captured: CapturedRequest[]): Promise<Client> {
       }
       if (url.pathname.endsWith("/welcome-sequence/steps")) {
         return Response.json(welcomeStepPayload(), { status: 201 });
+      }
+      if (url.pathname.endsWith("/preview")) return Response.json(PREVIEW);
+      if (url.pathname === "/api/v1/newsletter-domains/nwsdom_1") {
+        return Response.json(NEWSLETTER_DOMAIN);
+      }
+      if (url.pathname === "/api/v1/newsletter-sender-identities/nwsid_1") {
+        return Response.json(SENDER_IDENTITY);
+      }
+      if (url.pathname.includes("/recipients/by-email/")) return Response.json(RECIPIENT);
+      if (url.pathname.endsWith("/recipients")) {
+        return Response.json({
+          data: [RECIPIENT],
+          pagination: { next_cursor: null, has_more: false, limit: 10 },
+        });
       }
       if (url.pathname === "/api/v1/newsletter-assets") {
         return Response.json({
@@ -391,6 +481,32 @@ describe("newsletter MCP tools", () => {
     expect(JSON.parse(captured[1]?.body ?? "{}")).toEqual({ add_utm_tags: false });
   });
 
+  test("forwards view_in_browser on create and update", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const createResult = await client.callTool({
+      name: "shipmail_create_newsletter",
+      arguments: {
+        audience_id: "aud_123",
+        sender_identity_id: "nwsid_123",
+        name: "Launch",
+        subject: "What shipped",
+        body_text: "Launch notes",
+        view_in_browser: false,
+      },
+    });
+    const updateResult = await client.callTool({
+      name: "shipmail_update_newsletter",
+      arguments: { id: "nws_123", view_in_browser: true },
+    });
+
+    expect(createResult.isError).toBeFalsy();
+    expect(updateResult.isError).toBeFalsy();
+    expect(JSON.parse(captured[0]?.body ?? "{}")).toMatchObject({ view_in_browser: false });
+    expect(JSON.parse(captured[1]?.body ?? "{}")).toEqual({ view_in_browser: true });
+  });
+
   test("forwards subject test changes on update, including removing the test", async () => {
     const captured: CapturedRequest[] = [];
     const client = await buildPair(captured);
@@ -442,5 +558,102 @@ describe("newsletter MCP tools", () => {
 
     expect(result.isError).toBe(true);
     expect(captured).toHaveLength(0);
+  });
+});
+
+describe("newsletter consent and results tools", () => {
+  test("previews as a subscriber and returns the subject and headers", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const asReader = await client.callTool({
+      name: "shipmail_preview_newsletter",
+      arguments: { id: "nws_1", preview_as: { type: "subscriber", subscriber_id: "audmem_1" } },
+    });
+    expect(asReader.isError).toBeFalsy();
+    expect(asReader.structuredContent).toMatchObject({
+      preview: { subject: "Hello Ada", headers: PREVIEW.headers },
+    });
+    const sample = await client.callTool({
+      name: "shipmail_preview_newsletter",
+      arguments: { id: "nws_1" },
+    });
+    expect(sample.isError).toBeFalsy();
+
+    expect(captured.map((request) => request.url.pathname)).toEqual([
+      "/api/v1/newsletters/nws_1/preview",
+      "/api/v1/newsletters/nws_1/preview",
+    ]);
+    expect(JSON.parse(captured[0]?.body ?? "null")).toEqual({
+      preview_as: { type: "subscriber", subscriber_id: "audmem_1" },
+    });
+    expect(captured[1]?.body).toBeUndefined();
+  });
+
+  test("rejects a subscriber preview without a subscriber ID", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const result = await client.callTool({
+      name: "shipmail_preview_newsletter",
+      arguments: { id: "nws_1", preview_as: { type: "subscriber" } },
+    });
+    expect(result.isError).toBe(true);
+    expect(captured).toHaveLength(0);
+  });
+
+  test("gets one newsletter domain and one sender identity", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const domain = await client.callTool({
+      name: "shipmail_get_newsletter_domain",
+      arguments: { id: "nwsdom_1" },
+    });
+    expect(domain.structuredContent).toEqual({ newsletter_domain: NEWSLETTER_DOMAIN });
+    const identity = await client.callTool({
+      name: "shipmail_get_newsletter_sender_identity",
+      arguments: { id: "nwsid_1" },
+    });
+    expect(identity.structuredContent).toEqual({ newsletter_sender_identity: SENDER_IDENTITY });
+    expect(captured.map((request) => `${request.method} ${request.url.pathname}`)).toEqual([
+      "GET /api/v1/newsletter-domains/nwsdom_1",
+      "GET /api/v1/newsletter-sender-identities/nwsid_1",
+    ]);
+  });
+
+  test("lists recipients with filters and gets one by email", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const list = await client.callTool({
+      name: "shipmail_list_newsletter_recipients",
+      arguments: { id: "nws_1", status: "skipped", reason: "opted_out", limit: 10, cursor: "abc" },
+    });
+    expect(list.isError).toBeFalsy();
+    expect(list.structuredContent).toMatchObject({ data: [RECIPIENT] });
+    const one = await client.callTool({
+      name: "shipmail_get_newsletter_recipient_by_email",
+      arguments: { id: "nws_1", email: "Reader@Example.com" },
+    });
+    expect(one.structuredContent).toEqual({ recipient: RECIPIENT });
+
+    expect(captured[0]?.url.pathname).toBe("/api/v1/newsletters/nws_1/recipients");
+    expect(Object.fromEntries(captured[0]?.url.searchParams ?? [])).toEqual({
+      status: "skipped",
+      reason: "opted_out",
+      limit: "10",
+      cursor: "abc",
+    });
+    expect(captured[1]?.url.pathname).toBe(
+      "/api/v1/newsletters/nws_1/recipients/by-email/reader%40example.com",
+    );
+
+    const invalid = await client.callTool({
+      name: "shipmail_list_newsletter_recipients",
+      arguments: { id: "nws_1", reason: "raw provider text" },
+    });
+    expect(invalid.isError).toBe(true);
+    expect(captured).toHaveLength(2);
   });
 });

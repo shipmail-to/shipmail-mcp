@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.9.13 (2026-11-10)
+
+
+### Features
+
+* **api:** organization time zone and AI settings, draft files, raw messages, automation diagnostics
+* **drafts:** let the approver edit a draft on its review page, and let agents correct new drafts
+* leaked key revocation, inbound category, website dark colors and issue authors
+* **newsletters:** add a consent-gated Meta Pixel and editable confirmation and last-chance wording
+* **newsletters:** events with RSVPs, and clearer import consent
+* **newsletters:** simpler publishing settings and a separate View in browser link
+* **transactional:** set up sending subdomains and senders over the API, SDKs, CLI and MCP
+
+
+### Bug Fixes
+
+* **api:** accept time offsets, read a booking page's slots, set up newsletters by API
+* **newsletters:** preview as sent, visible opt-outs and per-recipient results
+
 ## 0.9.12 (2026-11-04)
 
 

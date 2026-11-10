@@ -24,6 +24,8 @@ export function toInboxMessageSummary(message: InboxFullMessage): InboxMessage {
     size: message.size,
     authentication_results: message.authentication_results,
     security: message.security,
+    category: message.category,
+    out_of_office_until: message.out_of_office_until,
   };
 }
 

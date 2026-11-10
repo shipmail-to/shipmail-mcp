@@ -70,6 +70,7 @@ function bookingPayload() {
     window_start_minutes: 540,
     window_end_minutes: 1020,
     timezone: "America/New_York",
+    lock_timezone: false,
     buffer_minutes: 0,
     minimum_notice_minutes: 0,
     max_advance_days: 30,
@@ -176,7 +177,8 @@ describe("calendar + booking MCP tools", () => {
   });
 
   test("create_calendar_event POSTs to /calendar/events with the event body", async () => {
-    const client = await buildPair(() => mutationEventPayload());
+    const skipped = { recipient: "guest@example.com", reason: "send_invitations_false" };
+    const client = await buildPair(() => mutationEventPayload({ invitation_skipped: [skipped] }));
     const result = await client.callTool({
       name: "shipmail_create_calendar_event",
       arguments: {
@@ -203,10 +205,11 @@ describe("calendar + booking MCP tools", () => {
       attendees: [{ email: "guest@example.com", name: "Guest" }],
     });
     const sc = (result.structuredContent ?? {}) as {
-      event?: { id?: string; invitation_outcomes?: unknown[] };
+      event?: { id?: string; invitation_outcomes?: unknown[]; invitation_skipped?: unknown[] };
     };
     expect(sc.event?.id).toBe("evt_1");
     expect(sc.event?.invitation_outcomes).toEqual([]);
+    expect(sc.event?.invitation_skipped).toEqual([skipped]);
   });
 
   test("get_calendar_event forwards the mailbox query param", async () => {
@@ -272,6 +275,30 @@ describe("calendar + booking MCP tools", () => {
     const url = new URL(captured[0]?.url ?? "");
     expect(url.pathname).toBe("/api/v1/calendar/availability");
     expect(url.searchParams.get("days")).toBe("1,3,5");
+  });
+
+  test("get_booking_page_slots reads the page's slots for the window", async () => {
+    const client = await buildPair(() => ({
+      object: "booking_page_slots",
+      booking_page_id: "bkp_1",
+      timezone: "Europe/Lisbon",
+      duration_minutes: 30,
+      from: "2026-08-03T00:00:00.000Z",
+      to: "2026-08-10T00:00:00.000Z",
+      slots: [{ start: "2026-08-03T09:00:00.000Z", end: "2026-08-03T09:30:00.000Z" }],
+    }));
+    const result = await client.callTool({
+      name: "shipmail_get_booking_page_slots",
+      arguments: { id: "bkp_1", from: "2026-08-03T00:00:00Z", to: "2026-08-10T00:00:00Z" },
+    });
+    expect(result.isError).toBeFalsy();
+    const url = new URL(captured[0]?.url ?? "");
+    expect(url.pathname).toBe("/api/v1/booking-pages/bkp_1/slots");
+    expect(url.searchParams.get("to")).toBe("2026-08-10T00:00:00Z");
+    const sc = (result.structuredContent ?? {}) as {
+      booking_page_slots?: { timezone?: string };
+    };
+    expect(sc.booking_page_slots?.timezone).toBe("Europe/Lisbon");
   });
 
   test("create_booking_page POSTs to /booking-pages", async () => {

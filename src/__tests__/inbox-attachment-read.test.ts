@@ -81,6 +81,8 @@ function inboxMessage(contentType = "application/pdf", attachmentSize = 4, name 
     text_body: [],
     html_body: [],
     reply_text: null,
+    category: "human",
+    out_of_office_until: null,
     security: {
       status: "not_flagged",
       risk_codes: [],

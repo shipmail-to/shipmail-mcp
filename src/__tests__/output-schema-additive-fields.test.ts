@@ -216,6 +216,9 @@ const AUTOMATION = {
   },
   last_run: null,
   next_run_at: null,
+  runnable: true,
+  blocked_reasons: [],
+  send_degraded_reasons: [],
   created_at: "2026-09-11T10:00:00Z",
   updated_at: "2026-09-11T10:00:00Z",
 } as const;

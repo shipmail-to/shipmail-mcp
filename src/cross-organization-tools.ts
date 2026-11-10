@@ -19,7 +19,7 @@ import {
   newsletterSchema,
   newsletterSenderIdentitySchema,
   paginationSchema,
-  suppressionSchema,
+  suppressionEntrySchema,
   webhookSchema,
 } from "./schemas.js";
 
@@ -144,8 +144,8 @@ export const CROSS_ORGANIZATION_LIST_BEHAVIORS = [
     baseToolName: "shipmail_list_suppressions",
     title: "List Suppressions Across Organizations",
     description:
-      "List suppressions in every organization on this connection. Returns one independently paginated success or failure section per organization.",
-    itemSchema: suppressionSchema,
+      "List suppressions and newsletter opt-outs in every organization on this connection. Returns one independently paginated success or failure section per organization.",
+    itemSchema: suppressionEntrySchema,
     list: (client, params) => client.suppressions.list(params),
   },
   {

@@ -32,7 +32,7 @@ For inbox replies, prefer `shipmail_create_inbox_reply_draft`, with `expected_ve
 
 Draft HTML supports `p`, `br`, `strong`, `em`, `u`, `s`, `a`, `ul`, `ol`, `li`, `blockquote`, `code`, `pre`, `h2`, `h3` and inline `cid:` images. Do not use tables or `h4` to `h6`: their text stays but the formatting is dropped. Do not add `<p><br></p>` between paragraphs.
 
-For a new message, assemble the sender identity, To/Cc/Bcc recipients, subject, text or HTML body, and attachments. Present those fields for approval before `shipmail_send_message`. When the user wants a new message to review and send themselves, or the connection cannot send, use `shipmail_create_draft`: it saves the message to the mailbox's Drafts folder and sends nothing. Use `shipmail_reply_to_inbox_message`, `shipmail_reply_to_inbox_thread`, `shipmail_reply_to_message`, or `shipmail_reply_to_thread` only after the user approves the exact reply.
+For a new message, assemble the sender identity, To/Cc/Bcc recipients, subject, text or HTML body, and attachments. Present those fields for approval before `shipmail_send_message`. When the user wants a new message to review and send themselves, or the connection cannot send, use `shipmail_create_draft`: it saves the message to the mailbox's Drafts folder and sends nothing, and `shipmail_update_draft` corrects it. Use `shipmail_reply_to_inbox_message`, `shipmail_reply_to_inbox_thread`, `shipmail_reply_to_message`, or `shipmail_reply_to_thread` only after the user approves the exact reply.
 
 When the user asks to schedule a message, state the exact delivery time and timezone before approval.
 

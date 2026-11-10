@@ -21,6 +21,10 @@ function capabilitiesResponse(
       resource_semantics: "legacy-intersection",
     },
     allowed_mcp_tools: allowedMcpTools,
+    organization: {
+      default_timezone: null,
+      ai: { models_enabled: true, automatic_send_enabled: false },
+    },
   };
 }
 

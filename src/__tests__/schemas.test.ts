@@ -21,6 +21,7 @@ import {
   injectSandboxInboundInputSchema,
   listMailboxInboxMessagesInputSchema,
   listMessageAnalyticsInputSchema,
+  listNewsletterRecipientsInputSchema,
   listWebhookDeliveriesInputSchema,
   mailboxFoldersSchema,
   mailboxIdentitiesSchema,
@@ -29,6 +30,7 @@ import {
   messageSchema,
   moveInboxMessageInputSchema,
   newsletterDomainSchema,
+  newsletterRecipientSchema,
   newsletterSchema,
   paginationInputSchema,
   removeSuppressionInputSchema,
@@ -37,8 +39,10 @@ import {
   scheduleNewsletterInputSchema,
   sendMessageInputSchema,
   sendNewsletterTestInputSchema,
+  suppressionEntrySchema,
   suppressionSchema,
   updateAudienceFeedInputSchema,
+  updateAudienceInputSchema,
   updateAutomationInputSchema,
   updateBookingPageInputSchema,
   updateCalendarEventInputSchema,
@@ -50,7 +54,37 @@ import {
   updateMailboxRuleInputSchema,
   updateNewsletterInputSchema,
   updateWebhookInputSchema,
+  webhookSchema,
 } from "../schemas.js";
+
+describe("updateAudienceInputSchema email wording", () => {
+  test("accepts wording per language and null to clear it", () => {
+    const parsed = updateAudienceInputSchema.parse({
+      id: "aud_123",
+      confirmation_email_copy: {
+        fr: { subject: "Confirmez votre inscription", message: "Un clic.\n\nEt c'est fait." },
+      },
+      last_chance_email_copy: null,
+    });
+    expect(parsed.confirmation_email_copy?.fr?.message).toBe("Un clic.\n\nEt c'est fait.");
+    expect(parsed.last_chance_email_copy).toBeNull();
+  });
+
+  test("refuses an unknown language and a language without a message", () => {
+    expect(
+      updateAudienceInputSchema.safeParse({
+        id: "aud_123",
+        confirmation_email_copy: { de: { subject: "Hallo", message: "Bitte bestätigen." } },
+      }).success,
+    ).toBe(false);
+    expect(
+      updateAudienceInputSchema.safeParse({
+        id: "aud_123",
+        last_chance_email_copy: { en: { subject: "Still with us?" } },
+      }).success,
+    ).toBe(false);
+  });
+});
 
 describe("messageSchema", () => {
   test("preserves tracked inbox rule disposition", () => {
@@ -256,6 +290,7 @@ describe("booking page schemas", () => {
       window_start_minutes: 540,
       window_end_minutes: 1020,
       timezone: "America/New_York",
+      lock_timezone: false,
       buffer_minutes: 0,
       minimum_notice_minutes: 0,
       max_advance_days: 30,
@@ -346,6 +381,9 @@ describe("automation schemas", () => {
           created_at: "2026-08-02T08:00:00.000Z",
         },
         next_run_at: null,
+        runnable: false,
+        blocked_reasons: ["models_disabled"],
+        send_degraded_reasons: [],
         created_at: "2026-08-02T00:00:00.000Z",
         updated_at: "2026-08-02T08:00:00.000Z",
       }).last_run?.status,
@@ -1270,6 +1308,30 @@ describe("newsletter schemas", () => {
     ).toBe(false);
   });
 
+  test("blocks accept an event block with a newsletter event ID", () => {
+    const base = {
+      audience_id: "aud_123",
+      sender_identity_id: "nwsid_123",
+      name: "July Update",
+      subject: "What shipped in July",
+    };
+    const out = createNewsletterInputSchema.parse({
+      ...base,
+      blocks: [{ type: "event", event_id: "nwsevt_abcdefghijklmnopqrstuvwx" }],
+    });
+    expect(out.blocks?.[0]).toEqual({ type: "event", event_id: "nwsevt_abcdefghijklmnopqrstuvwx" });
+    for (const event_id of [
+      "nwsevt_short",
+      "evt_abcdefghijklmnopqrstuvwx",
+      "nwsevt_ABCDEFGHIJKLMNOPQRSTUVWX",
+    ]) {
+      expect(
+        createNewsletterInputSchema.safeParse({ ...base, blocks: [{ type: "event", event_id }] })
+          .success,
+      ).toBe(false);
+    }
+  });
+
   test("create from changelog accepts entries and media", () => {
     const out = createNewsletterFromChangelogInputSchema.parse({
       audience_id: "aud_123",
@@ -1410,6 +1472,7 @@ describe("newsletter schemas", () => {
         status: "sent",
         archive_visibility: "private",
         publish_target: "email_and_website",
+        view_in_browser: false,
         feed_entry_url: null,
         styling_mode: "styled",
         track_engagement: true,
@@ -1465,6 +1528,17 @@ describe("newsletter schemas", () => {
         spf_status: "verified",
         dmarc_status: "verified",
         verified_at: "2026-07-03T00:00:00.000Z",
+        dns_records: [
+          {
+            key: "mail_from_mx",
+            type: "MX",
+            host: "mail.updates.example.com",
+            value: "feedback-smtp.eu-west-1.amazonses.com",
+            priority: 10,
+            ttl: 300,
+            description: "Routes bounce notifications for newsletters.",
+          },
+        ],
         created_at: "2026-07-03T00:00:00.000Z",
         updated_at: "2026-07-03T00:00:00.000Z",
       }).id,
@@ -1594,6 +1668,7 @@ describe("suppressionSchema", () => {
             scope,
             expires_at: reason === "soft_bounce" ? "2026-02-01T00:00:00Z" : null,
             created_at: "2026-01-01T00:00:00Z",
+            source: "suppression",
           }),
         ).not.toThrow();
       }
@@ -1609,19 +1684,94 @@ describe("suppressionSchema", () => {
         scope: "everything",
         expires_at: null,
         created_at: "2026-01-01T00:00:00Z",
+        source: "suppression",
       }),
     ).toThrow();
   });
 
-  test("rejects reasons outside the OpenAPI enum (parity guard)", () => {
-    expect(() =>
+  test("accepts a reason the server adds after this build", () => {
+    expect(
       suppressionSchema.parse({
         object: "suppression",
         email_address: "u@example.com",
-        reason: "spam",
+        reason: "spam_trap",
         scope: "all",
         expires_at: null,
         created_at: "2026-01-01T00:00:00Z",
+        source: "suppression",
+      }).reason,
+    ).toBe("spam_trap");
+  });
+
+  test("keeps a list entry from a source the server adds after this build", () => {
+    expect(
+      suppressionEntrySchema.parse({
+        object: "suppression",
+        email_address: "u@example.com",
+        reason: "role_account",
+        scope: "marketing",
+        expires_at: null,
+        created_at: "2026-01-01T00:00:00Z",
+        source: "role_account_list",
+      }),
+    ).toMatchObject({ source: "role_account_list", reason: "role_account" });
+  });
+});
+
+describe("server-owned enums that grow", () => {
+  const recipient = {
+    object: "newsletter_recipient",
+    id: "nwsrcp_1",
+    newsletter_id: "nws_1",
+    email_address: "u@example.com",
+    status: "deferred_by_isp",
+    reason: "isp_throttled",
+    subscriber_id: null,
+    sent_at: null,
+    delivered_at: null,
+    bounced_at: null,
+    complained_at: null,
+    unsubscribed_at: null,
+    created_at: "2026-01-01T00:00:00Z",
+  };
+
+  test("output schemas accept a recipient status and reason added later", () => {
+    expect(newsletterRecipientSchema.parse(recipient)).toMatchObject({
+      status: "deferred_by_isp",
+      reason: "isp_throttled",
+    });
+  });
+
+  test("output schemas accept a webhook event added later", () => {
+    expect(
+      webhookSchema.parse({
+        object: "webhook",
+        id: "wh_1",
+        url: "https://example.com/hook",
+        events: ["message.received", "newsletter.recipient.opened"],
+        active: true,
+        description: null,
+        mailbox_ids: null,
+        domain_ids: null,
+        has_authorization: false,
+        has_standard_webhooks_secret: true,
+        include_reply_text: false,
+        authenticated_senders_only: false,
+        allowed_senders: null,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      }).events,
+    ).toEqual(["message.received", "newsletter.recipient.opened"]);
+  });
+
+  test("input schemas still refuse values the server does not know", () => {
+    expect(() =>
+      listNewsletterRecipientsInputSchema.parse({ id: "nws_1", status: "deferred_by_isp" }),
+    ).toThrow();
+    expect(() =>
+      createWebhookInputSchema.parse({
+        url: "https://example.com/hook",
+        events: ["newsletter.recipient.opened"],
       }),
     ).toThrow();
   });

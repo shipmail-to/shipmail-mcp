@@ -19,6 +19,7 @@ import {
   type SendMessageParams,
   type ShipmailClient,
   ShipmailError,
+  type SuppressionListReason,
   type SuppressionScope,
   ValidationError,
 } from "shipmail";
@@ -64,12 +65,14 @@ import {
   automationOutputSchema,
   automationRunOutputSchema,
   automationsOutputSchema,
+  automationTestOutputSchema,
   autoReplyInputSchema,
   bookingLinkByIdInputSchema,
   bookingLinkOutputSchema,
   bookingLinksOutputSchema,
   bookingPageByIdInputSchema,
   bookingPageOutputSchema,
+  bookingPageSlotsOutputSchema,
   bookingPagesOutputSchema,
   calendarAvailabilityInputSchema,
   calendarAvailabilityOutputSchema,
@@ -97,18 +100,23 @@ import {
   createMailboxImportInputSchema,
   createMailboxInputSchema,
   createMailboxRuleInputSchema,
+  createNewsletterDomainInputSchema,
   createNewsletterFromChangelogInputSchema,
   createNewsletterInputSchema,
+  createNewsletterSenderIdentityInputSchema,
   createReplyScanInputSchema,
   createSegmentInputSchema,
   createSmtpCredentialInputSchema,
   createTemplateInputSchema,
+  createTransactionalDomainInputSchema,
+  createTransactionalSenderInputSchema,
   createWebhookInputSchema,
   createWelcomeStepInputSchema,
   customerFieldsOutputSchema,
   customerOutputSchema,
   customersOutputSchema,
   deleteCalendarEventInputSchema,
+  deleteInboxDraftInputSchema,
   deleteInboxMessageInputSchema,
   deleteInboxReplyDraftInputSchema,
   deleteMailboxFolderInputSchema,
@@ -125,18 +133,25 @@ import {
   eventQueueEventsOutputSchema,
   eventQueueOutputSchema,
   eventQueuesOutputSchema,
+  getBookingPageSlotsInputSchema,
   getByIdInputSchema,
   getCalendarEventInputSchema,
+  getInboxDraftInputSchema,
   getInboxReplyDraftInputSchema,
   getMailboxInboxMessageInputSchema,
   getMailboxInboxThreadInputSchema,
   getMailboxRuleInputSchema,
+  getNewsletterDomainInputSchema,
+  getNewsletterRecipientByEmailInputSchema,
+  getNewsletterSenderIdentityInputSchema,
   getReplyScanInputSchema,
   getScheduledMessageInputSchema,
   getSegmentInputSchema,
   getSubscriberByEmailInputSchema,
   getSubscriberInputSchema,
   getThreadInputSchema,
+  getTransactionalDomainInputSchema,
+  getTransactionalSenderInputSchema,
   getWebhookDeliveryInputSchema,
   getWelcomeSequenceInputSchema,
   idempotentByIdInputSchema,
@@ -149,6 +164,7 @@ import {
   inboxFullMessageSchema,
   inboxMessageActionOutputSchema,
   inboxMessageOutputSchema,
+  inboxMessageRawOutputSchema,
   inboxMessageSecurityReviewOutputSchema,
   inboxMessageSummariesOutputSchema,
   inboxReplyDraftListOutputSchema,
@@ -178,6 +194,7 @@ import {
   listMessageAnalyticsInputSchema,
   listMessagesInputSchema,
   listNewsletterAssetsInputSchema,
+  listNewsletterRecipientsInputSchema,
   listNewslettersInputSchema,
   listReplyScanResultsInputSchema,
   listScheduledMessagesInputSchema,
@@ -188,6 +205,8 @@ import {
   listTemplatesInputSchema,
   listTemplateVersionsInputSchema,
   listThreadsInputSchema,
+  listTransactionalDomainsInputSchema,
+  listTransactionalSendersInputSchema,
   listWebhookDeliveriesInputSchema,
   listWebhooksInputSchema,
   mailboxAppPasswordsOutputSchema,
@@ -214,22 +233,33 @@ import {
   newsletterAssetsOutputSchema,
   newsletterAssetUploaderOutputSchema,
   newsletterAssetUploadPreparationOutputSchema,
+  newsletterDomainByIdInputSchema,
+  newsletterDomainOutputSchema,
   newsletterDomainsOutputSchema,
+  newsletterOptOutLiftOutputSchema,
   newsletterOutputSchema,
   newsletterPreflightOutputSchema,
   newsletterPreviewOutputSchema,
+  newsletterRecipientOutputSchema,
+  newsletterRecipientsOutputSchema,
   newsletterSenderIdentitiesOutputSchema,
+  newsletterSenderIdentityByIdInputSchema,
+  newsletterSenderIdentityOutputSchema,
   newslettersOutputSchema,
   newsletterTestSendOutputSchema,
   organizationAccessOutputSchema,
+  organizationAiSettingsOutputSchema,
+  organizationOutputSchema,
   prepareNewsletterAssetUploadInputSchema,
   prepareStagedAttachmentUploadInputSchema,
   previewNewsletterInputSchema,
   previewTemplateInputSchema,
   readMailboxInboxAttachmentInputSchema,
+  readMailboxInboxMessageRawInputSchema,
   registerNewsletterAssetInputSchema,
   releaseMailboxInboxMessageSecurityInputSchema,
   removeSuppressionInputSchema,
+  removeSuppressionOutputSchema,
   renderedTemplateOutputSchema,
   replayWebhookDeliveryInputSchema,
   replyScanOutputSchema,
@@ -243,6 +273,7 @@ import {
   respondToInvitationInputSchema,
   restoreMailboxImportInputSchema,
   restoreTemplateVersionInputSchema,
+  resubscribeNewsletterOptOutInputSchema,
   resubscribeSubscriberInputSchema,
   revokeBookingLinkInputSchema,
   revokeMailboxAppPasswordInputSchema,
@@ -275,8 +306,14 @@ import {
   templateVersionInputSchema,
   templateVersionOutputSchema,
   templateVersionsOutputSchema,
+  testAutomationInputSchema,
   threadMessagesOutputSchema,
   threadsOutputSchema,
+  transactionalDomainByIdInputSchema,
+  transactionalDomainOutputSchema,
+  transactionalDomainsOutputSchema,
+  transactionalSenderOutputSchema,
+  transactionalSendersOutputSchema,
   updateAudienceFeedInputSchema,
   updateAudienceInputSchema,
   updateAutomationInputSchema,
@@ -285,6 +322,7 @@ import {
   updateCalendarEventInputSchema,
   updateCustomerInputSchema,
   updateDomainInputSchema,
+  updateInboxDraftInputSchema,
   updateInboxMessageInputSchema,
   updateInboxReplyDraftInputSchema,
   updateInboxThreadAttentionInputSchema,
@@ -293,10 +331,14 @@ import {
   updateMailboxInputSchema,
   updateMailboxRuleInputSchema,
   updateNewsletterInputSchema,
+  updateNewsletterSenderIdentityInputSchema,
+  updateOrganizationAiSettingsInputSchema,
+  updateOrganizationInputSchema,
   updateScheduledMessageInputSchema,
   updateSegmentInputSchema,
   updateSubscriberInputSchema,
   updateTemplateInputSchema,
+  updateTransactionalSenderInputSchema,
   updateWebhookInputSchema,
   updateWelcomeSequenceInputSchema,
   updateWelcomeStepInputSchema,
@@ -347,6 +389,7 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_reply_to_inbox_message: 10,
   shipmail_reply_to_inbox_thread: 10,
   shipmail_create_draft: 20,
+  shipmail_update_draft: 20,
   shipmail_create_inbox_reply_draft: 20,
   shipmail_update_inbox_reply_draft: 20,
   shipmail_delete_inbox_reply_draft: 20,
@@ -369,6 +412,11 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_revoke_mailbox_app_password: 20,
   shipmail_create_smtp_credential: 10,
   shipmail_revoke_smtp_credential: 20,
+  shipmail_create_transactional_domain: 10,
+  shipmail_verify_transactional_domain: 30,
+  shipmail_delete_transactional_domain: 10,
+  shipmail_create_transactional_sender: 20,
+  shipmail_update_transactional_sender: 20,
   shipmail_create_mailbox_import: 5,
   shipmail_cancel_mailbox_import: 10,
   shipmail_resume_mailbox_import: 10,
@@ -399,6 +447,7 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_revoke_member_mailbox_access: 20,
   shipmail_add_suppression: 50,
   shipmail_remove_suppression: 50,
+  shipmail_resubscribe_newsletter_opt_out: 50,
   shipmail_create_customer: 50,
   shipmail_update_customer: 50,
   shipmail_delete_customer: 10,
@@ -446,6 +495,12 @@ const SESSION_LIMITS: Readonly<Record<string, number>> = {
   shipmail_create_calendar_event: 50,
   shipmail_update_calendar_event: 100,
   shipmail_delete_calendar_event: 50,
+  shipmail_create_newsletter_domain: 10,
+  shipmail_verify_newsletter_domain: 30,
+  shipmail_delete_newsletter_domain: 10,
+  shipmail_create_newsletter_sender_identity: 20,
+  shipmail_update_newsletter_sender_identity: 20,
+  shipmail_delete_newsletter_sender_identity: 10,
   shipmail_create_booking_page: 20,
   shipmail_update_booking_page: 20,
   shipmail_delete_booking_page: 10,
@@ -815,6 +870,101 @@ export function registerTools(
     );
   });
 
+  registerIfAllowed("shipmail_get_organization", () => {
+    server.registerTool(
+      "shipmail_get_organization",
+      {
+        title: "Get Organization",
+        description:
+          "Get the organization's name and default_timezone. Calendar availability and timed event creation use that zone when neither the request nor the calendar of the person behind the credential names one; null means Etc/UTC.",
+        outputSchema: organizationOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async () =>
+        runTool("shipmail_get_organization", organizationOutputSchema, async () => ({
+          organization: await client.organization.get(),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_organization", () => {
+    server.registerTool(
+      "shipmail_update_organization",
+      {
+        title: "Update Organization",
+        description:
+          "Set the organization's default_timezone (an IANA zone such as Europe/Paris), or null to clear it. Only works when the person behind the credential is an Owner or Admin; otherwise it returns 403.",
+        inputSchema: updateOrganizationInputSchema,
+        outputSchema: organizationOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_update_organization", organizationOutputSchema, async () => {
+          const { idempotency_key: _key, ...params } = args;
+          return {
+            organization: await client.organization.update(params, mutationOptions(args)),
+          };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_organization_ai_settings", () => {
+    server.registerTool(
+      "shipmail_get_organization_ai_settings",
+      {
+        title: "Get Organization AI Settings",
+        description:
+          "Get the organization's AI switches: models_enabled (AI features) and automatic_send_enabled (automations may send AI-drafted replies without review), plus effective, which says whether each is in effect now. Shipmail can hold either off for every organization.",
+        outputSchema: organizationAiSettingsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async () =>
+        runTool(
+          "shipmail_get_organization_ai_settings",
+          organizationAiSettingsOutputSchema,
+          async () => ({ ai_settings: await client.organization.getAiSettings() }),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_organization_ai_settings", () => {
+    server.registerTool(
+      "shipmail_update_organization_ai_settings",
+      {
+        title: "Update Organization AI Settings",
+        description:
+          "Turn the organization's AI features (models_enabled) on or off. automatic_send_enabled is read-only and cannot be changed here. Only works when the person behind the credential is an Owner or Admin. Change these only when the user asks.",
+        inputSchema: updateOrganizationAiSettingsInputSchema,
+        outputSchema: organizationAiSettingsOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool(
+          "shipmail_update_organization_ai_settings",
+          organizationAiSettingsOutputSchema,
+          async () => {
+            const { idempotency_key: _key, ...params } = args;
+            return {
+              ai_settings: await client.organization.updateAiSettings(
+                params,
+                mutationOptions(args),
+              ),
+            };
+          },
+        ),
+    );
+  });
+
   registerIfAllowed("shipmail_list_domains", () => {
     server.registerTool(
       "shipmail_list_domains",
@@ -1171,6 +1321,235 @@ export function registerTools(
           await client.smtpCredentials.revoke(id);
           return { result: { ok: true, id } };
         }),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_transactional_domains", () => {
+    server.registerTool(
+      "shipmail_list_transactional_domains",
+      {
+        title: "List Transactional Domains",
+        description:
+          "List the organization's transactional sending subdomains with their status and the DNS records to publish.",
+        inputSchema: listTransactionalDomainsInputSchema,
+        outputSchema: transactionalDomainsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async () =>
+        runTool(
+          "shipmail_list_transactional_domains",
+          transactionalDomainsOutputSchema,
+          async () => ({
+            transactional_domains: await client.transactionalDomains.list(),
+          }),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_transactional_domain", () => {
+    server.registerTool(
+      "shipmail_create_transactional_domain",
+      {
+        title: "Create Transactional Domain",
+        description:
+          "Step 1 of transactional email setup: create a sending subdomain (such as mail.example.com) of a verified domain of the organization. Returns dns_records to publish at the DNS host; then verify the domain, create a transactional sender on it, and send with a message send or an SMTP credential. Calling it again with the same values resumes a setup that stopped part way.",
+        inputSchema: createTransactionalDomainInputSchema,
+        outputSchema: transactionalDomainOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool(
+          "shipmail_create_transactional_domain",
+          transactionalDomainOutputSchema,
+          async () => ({
+            transactional_domain: await client.transactionalDomains.create(
+              stripIdempotencyKey(args),
+              mutationOptions(args),
+            ),
+          }),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_transactional_domain", () => {
+    server.registerTool(
+      "shipmail_get_transactional_domain",
+      {
+        title: "Get Transactional Domain",
+        description:
+          "Get one transactional sending subdomain with its status and the DNS records to publish.",
+        inputSchema: getTransactionalDomainInputSchema,
+        outputSchema: transactionalDomainOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id }) =>
+        runTool("shipmail_get_transactional_domain", transactionalDomainOutputSchema, async () => ({
+          transactional_domain: await client.transactionalDomains.get(id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_verify_transactional_domain", () => {
+    server.registerTool(
+      "shipmail_verify_transactional_domain",
+      {
+        title: "Verify Transactional Domain",
+        description:
+          "Step 2 of transactional email setup, after the dns_records are published: check them now and return the domain with the status of each. DNS can take minutes to propagate; call again later while the status is not verified. Once verified, create a transactional sender on it.",
+        inputSchema: transactionalDomainByIdInputSchema,
+        outputSchema: transactionalDomainOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool(
+          "shipmail_verify_transactional_domain",
+          transactionalDomainOutputSchema,
+          async () => ({
+            transactional_domain: await client.transactionalDomains.verify(
+              args.id,
+              mutationOptions(args),
+            ),
+          }),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_transactional_domain", () => {
+    server.registerTool(
+      "shipmail_delete_transactional_domain",
+      {
+        title: "Delete Transactional Domain",
+        description:
+          "Delete a transactional sending subdomain. Refused while any sender uses it, even one turned off. Contact support to remove it.",
+        inputSchema: transactionalDomainByIdInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id }) =>
+        runTool("shipmail_delete_transactional_domain", acknowledgmentOutputSchema, async () => {
+          await client.transactionalDomains.delete(id);
+          return { result: { ok: true, id } };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_transactional_senders", () => {
+    server.registerTool(
+      "shipmail_list_transactional_senders",
+      {
+        title: "List Transactional Senders",
+        description:
+          "List the organization's transactional senders whose reply mailbox this key can reach, or only those on one domain with domain_id.",
+        inputSchema: listTransactionalSendersInputSchema,
+        outputSchema: transactionalSendersOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ domain_id }) =>
+        runTool(
+          "shipmail_list_transactional_senders",
+          transactionalSendersOutputSchema,
+          async () => ({
+            transactional_senders: await client.transactionalSenders.list(
+              domain_id ? { domain_id } : undefined,
+            ),
+          }),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_transactional_sender", () => {
+    server.registerTool(
+      "shipmail_create_transactional_sender",
+      {
+        title: "Create Transactional Sender",
+        description:
+          "Step 3 of transactional email setup, once the transactional domain is verified: create a sender address such as hello@mail.example.com. Replies go to the chosen mailbox. Then send from the address with a message send (the first one to your own address is the test send) or create an SMTP credential for it.",
+        inputSchema: createTransactionalSenderInputSchema,
+        outputSchema: transactionalSenderOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool(
+          "shipmail_create_transactional_sender",
+          transactionalSenderOutputSchema,
+          async () => ({
+            transactional_sender: await client.transactionalSenders.create(
+              stripIdempotencyKey(args),
+              mutationOptions(args),
+            ),
+          }),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_transactional_sender", () => {
+    server.registerTool(
+      "shipmail_get_transactional_sender",
+      {
+        title: "Get Transactional Sender",
+        description: "Get one transactional sender with its address, reply mailbox, and state.",
+        inputSchema: getTransactionalSenderInputSchema,
+        outputSchema: transactionalSenderOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id }) =>
+        runTool("shipmail_get_transactional_sender", transactionalSenderOutputSchema, async () => ({
+          transactional_sender: await client.transactionalSenders.get(id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_transactional_sender", () => {
+    server.registerTool(
+      "shipmail_update_transactional_sender",
+      {
+        title: "Update Transactional Sender",
+        description:
+          "Change a transactional sender: state disabled turns it off and active turns it back on, mailbox_id moves it to another reply mailbox, refuse_disposable refuses throwaway recipient domains. A move applies first. There is no delete; turn a sender off instead.",
+        inputSchema: updateTransactionalSenderInputSchema,
+        outputSchema: transactionalSenderOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool(
+          "shipmail_update_transactional_sender",
+          transactionalSenderOutputSchema,
+          async () => {
+            const { id, idempotency_key: _key, ...params } = args;
+            return {
+              transactional_sender: await client.transactionalSenders.update(
+                id,
+                params,
+                mutationOptions(args),
+              ),
+            };
+          },
+        ),
     );
   });
 
@@ -1998,6 +2377,49 @@ export function registerTools(
     );
   });
 
+  registerIfAllowed("shipmail_read_mailbox_inbox_message_raw", () => {
+    server.registerTool(
+      "shipmail_read_mailbox_inbox_message_raw",
+      {
+        title: "Read Raw Inbox Message",
+        description:
+          "Fetch the stored MIME source of one inbox or sent message: every header, then the encoded body. Use it to inspect headers or a bounce in full. Messages over 3 MB are refused here.",
+        inputSchema: readMailboxInboxMessageRawInputSchema,
+        outputSchema: inboxMessageRawOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: true },
+      },
+      async ({ id, message_id }) => {
+        const result = await runTool(
+          "shipmail_read_mailbox_inbox_message_raw",
+          inboxMessageRawOutputSchema,
+          async () => {
+            const bytes = await client.mailboxes.downloadInboxMessageRaw(id, message_id);
+            if (bytes.byteLength > MAX_MCP_ATTACHMENT_BYTES) {
+              throw new ValidationError("Message exceeds the MCP read limit of 3 MB.");
+            }
+            return {
+              raw_message: {
+                object: "inbox_message_raw",
+                mailbox_id: id,
+                message_id,
+                size: bytes.byteLength,
+                text: new TextDecoder().decode(bytes),
+              },
+            };
+          },
+          { path: ["raw_message", "text"], maxLength: MAX_MCP_ATTACHMENT_BYTES },
+        );
+        if (result.isError) return result;
+        if (Buffer.byteLength(JSON.stringify(result), "utf8") > MAX_MCP_ATTACHMENT_RESPONSE_BYTES) {
+          return errorResult(
+            new ValidationError("Message exceeds the MCP response budget after JSON encoding."),
+          );
+        }
+        return result;
+      },
+    );
+  });
+
   registerIfAllowed("shipmail_list_mailbox_inbox_threads", () => {
     server.registerTool(
       "shipmail_list_mailbox_inbox_threads",
@@ -2076,6 +2498,78 @@ export function registerTools(
     );
   });
 
+  registerIfAllowed("shipmail_get_draft", () => {
+    server.registerTool(
+      "shipmail_get_draft",
+      {
+        title: "Get New Email Draft",
+        description:
+          "Read a saved new-message draft with its recipients, subject, html, text and files. Each file's id keeps that file in an update. Not found once a person sent or deleted the draft in their own client.",
+        inputSchema: getInboxDraftInputSchema,
+        outputSchema: inboxDraftOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id, draft_id }) =>
+        runTool("shipmail_get_draft", inboxDraftOutputSchema, async () => ({
+          inbox_draft: await client.mailboxes.getInboxDraft(id, draft_id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_draft", () => {
+    server.registerTool(
+      "shipmail_delete_draft",
+      {
+        title: "Delete New Email Draft",
+        description:
+          "Delete a saved new-message draft from the Drafts folder. Returns a conflict while a send holds it, it waits in a scheduled send, or a person took it over in the inbox composer.",
+        inputSchema: deleteInboxDraftInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_delete_draft", acknowledgmentOutputSchema, async () => {
+          await client.mailboxes.deleteInboxDraft(args.id, args.draft_id, mutationOptions(args));
+          return { result: { ok: true, id: args.draft_id } };
+        }),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_draft", () => {
+    server.registerTool(
+      "shipmail_update_draft",
+      {
+        title: "Correct New Email Draft",
+        description: `Correct a saved new-message draft. Name only the fields that change: text or html replaces the whole body, and files stay unless attachments is given (read the draft first for current file ids). The draft id and review_url stay the same, and message_id changes. It sends nothing. ${REPLY_DRAFT_HTML_RULES}`,
+        inputSchema: updateInboxDraftInputSchema,
+        outputSchema: inboxDraftOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_update_draft", inboxDraftOutputSchema, async () => {
+          const { id, draft_id: draftId, ...params } = stripIdempotencyKey(args);
+          return {
+            inbox_draft: await client.mailboxes.updateInboxDraft(
+              id,
+              draftId,
+              params,
+              mutationOptions(args),
+            ),
+          };
+        }),
+    );
+  });
+
   registerIfAllowed("shipmail_create_inbox_reply_draft", () => {
     server.registerTool(
       "shipmail_create_inbox_reply_draft",
@@ -2147,7 +2641,7 @@ export function registerTools(
       "shipmail_update_inbox_reply_draft",
       {
         title: "Update Inbox Reply Draft",
-        description: `Replace the body of a reply draft in status draft. This does not send email. The new body replaces the old one: html alone derives the text part, text alone makes a plain-text draft. Recipients, subject and reply headers stay derived from the source message, and the draft ID stays the same. Returns a conflict when the draft is not in status draft, when the thread changed since its expected_version (the draft becomes invalidated: read the thread again and create a new draft), when the draft changed concurrently, or when it belongs to the Shipmail Assistant. ${REPLY_DRAFT_HTML_RULES}`,
+        description: `Replace the body or the files of a reply draft in status draft. This does not send email. Send html, text or attachments; without html and text the body stays. The new body replaces the old one: html alone derives the text part, text alone makes a plain-text draft. Recipients, subject and reply headers stay derived from the source message, and the draft ID stays the same. Returns a conflict when the draft is not in status draft, when the thread changed since its expected_version (the draft becomes invalidated: read the thread again and create a new draft), when the draft changed concurrently, or when it belongs to the Shipmail Assistant. ${REPLY_DRAFT_HTML_RULES}`,
         inputSchema: updateInboxReplyDraftInputSchema,
         outputSchema: inboxReplyDraftWriteOutputSchema,
         annotations: {
@@ -3606,18 +4100,24 @@ export function registerTools(
       {
         title: "List Suppressions",
         description:
-          "List suppressed recipients. Each entry has a reason (hard_bounce, complaint, soft_bounce or manual), a scope (all blocks every send; a complaint blocks only its own kind of email: marketing for newsletters, transactional for application senders, mailbox for mail sent from a mailbox) and expires_at (null when permanent; soft-bounce pauses last 30 days).",
+          "List suppressed recipients and newsletter opt-outs, newest first. source tells them apart. A suppression (source suppression) has a reason (hard_bounce, complaint, soft_bounce or manual), a scope (all blocks every send; a complaint blocks only its own kind of email: marketing for newsletters, transactional for application senders, mailbox for mail sent from a mailbox) and expires_at (null when permanent; soft-bounce pauses last 30 days). An opt-out (source newsletter_optout, reason unsubscribe, scope marketing) is the reader's own choice, with newsletter_id and test_send; only resubscribing the subscriber lifts it. Filter with reason and scope.",
         inputSchema: listSuppressionsInputSchema,
         outputSchema: suppressionsOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: false },
       },
       async (args) =>
         runTool("shipmail_list_suppressions", suppressionsOutputSchema, async () => {
-          const params: { limit: number; cursor?: string; scope?: SuppressionScope } = {
+          const params: {
+            limit: number;
+            cursor?: string;
+            scope?: SuppressionScope;
+            reason?: SuppressionListReason;
+          } = {
             limit: args.limit,
           };
           if (args.cursor !== undefined) params.cursor = args.cursor;
           if (args.scope !== undefined) params.scope = args.scope;
+          if (args.reason !== undefined) params.reason = args.reason;
           return client.suppressions.list(params);
         }),
     );
@@ -3653,9 +4153,10 @@ export function registerTools(
       "shipmail_remove_suppression",
       {
         title: "Remove Suppression",
-        description: "Remove one email address from the suppression list.",
+        description:
+          "Remove the bounce, complaint or manual suppression of one email address. A newsletter opt-out is the reader's consent and is never removed here: when the address also has one, the result says newsletter_optout_remains true; when it has only an opt-out, the call fails with a conflict. Only lifting the opt-out with fresh consent, or resubscribing the subscriber, removes it.",
         inputSchema: removeSuppressionInputSchema,
-        outputSchema: acknowledgmentOutputSchema,
+        outputSchema: removeSuppressionOutputSchema,
         annotations: {
           readOnlyHint: false,
           destructiveHint: false,
@@ -3664,10 +4165,47 @@ export function registerTools(
         },
       },
       async ({ email }) =>
-        runTool("shipmail_remove_suppression", acknowledgmentOutputSchema, async () => {
-          await client.suppressions.remove(email);
-          return { result: { ok: true, id: email } };
+        runTool("shipmail_remove_suppression", removeSuppressionOutputSchema, async () => {
+          const removal = await client.suppressions.remove(email);
+          if (removal === undefined) {
+            return { result: { ok: true, id: email, newsletter_optout_remains: false } };
+          }
+          return {
+            result: {
+              ok: true,
+              id: removal.email_address,
+              newsletter_optout_remains: removal.newsletter_optout_remains,
+              message: removal.message,
+            },
+          };
         }),
+    );
+  });
+
+  registerIfAllowed("shipmail_resubscribe_newsletter_opt_out", () => {
+    server.registerTool(
+      "shipmail_resubscribe_newsletter_opt_out",
+      {
+        title: "Lift Newsletter Opt-Out",
+        description:
+          "Lift the organization-wide newsletter opt-out of an email address, which may be in no audience, after the reader opted in again. consent_source records where and how, and is kept with the time. Audience statuses do not change: resubscribe an unsubscribed subscriber in their audience. Fails with a conflict while a bounce, complaint or manual suppression blocks newsletters to the address, and with not found when it has no opt-out. Needs audiences:write and a key not limited to some audiences.",
+        inputSchema: resubscribeNewsletterOptOutInputSchema,
+        outputSchema: newsletterOptOutLiftOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      async ({ email, consent_source }) =>
+        runTool(
+          "shipmail_resubscribe_newsletter_opt_out",
+          newsletterOptOutLiftOutputSchema,
+          async () => ({
+            lift: await client.suppressions.resubscribe(email, { consent_source }),
+          }),
+        ),
     );
   });
 
@@ -4099,6 +4637,100 @@ export function registerTools(
     );
   });
 
+  registerIfAllowed("shipmail_get_newsletter_domain", () => {
+    server.registerTool(
+      "shipmail_get_newsletter_domain",
+      {
+        title: "Get Newsletter Domain",
+        description:
+          "Get one newsletter sending domain with its verification status and the DNS records to publish.",
+        inputSchema: getNewsletterDomainInputSchema,
+        outputSchema: newsletterDomainOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id }) =>
+        runTool("shipmail_get_newsletter_domain", newsletterDomainOutputSchema, async () => ({
+          newsletter_domain: await client.newsletters.domains.get(id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_newsletter_domain", () => {
+    server.registerTool(
+      "shipmail_create_newsletter_domain",
+      {
+        title: "Create Newsletter Domain",
+        description:
+          "Set up a newsletter sending subdomain of a domain you own. Returns the domain with dns_records: publish them at the DNS host, then verify the domain. Calling it again for a setup that stopped part way resumes it.",
+        inputSchema: createNewsletterDomainInputSchema,
+        outputSchema: newsletterDomainOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_create_newsletter_domain", newsletterDomainOutputSchema, async () => ({
+          newsletter_domain: await client.newsletters.domains.create(
+            stripIdempotencyKey(args),
+            mutationOptions(args),
+          ),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_verify_newsletter_domain", () => {
+    server.registerTool(
+      "shipmail_verify_newsletter_domain",
+      {
+        title: "Verify Newsletter Domain",
+        description:
+          "Check a newsletter domain's published DNS records now and return it with the status of each record. DNS can take minutes to propagate; call again later if a record is still pending.",
+        inputSchema: newsletterDomainByIdInputSchema,
+        outputSchema: newsletterDomainOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool("shipmail_verify_newsletter_domain", newsletterDomainOutputSchema, async () => ({
+          newsletter_domain: await client.newsletters.domains.verify(
+            args.id,
+            mutationOptions(args),
+          ),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_newsletter_domain", () => {
+    server.registerTool(
+      "shipmail_delete_newsletter_domain",
+      {
+        title: "Delete Newsletter Domain",
+        description:
+          "Delete a newsletter sending domain. Refused while a draft or active newsletter uses it.",
+        inputSchema: newsletterDomainByIdInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id }) =>
+        runTool("shipmail_delete_newsletter_domain", acknowledgmentOutputSchema, async () => {
+          await client.newsletters.domains.delete(id);
+          return { result: { ok: true, id } };
+        }),
+    );
+  });
+
   registerIfAllowed("shipmail_list_newsletter_sender_identities", () => {
     server.registerTool(
       "shipmail_list_newsletter_sender_identities",
@@ -4114,6 +4746,119 @@ export function registerTools(
           "shipmail_list_newsletter_sender_identities",
           newsletterSenderIdentitiesOutputSchema,
           async () => client.newsletters.senderIdentities.list(args),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_newsletter_sender_identity", () => {
+    server.registerTool(
+      "shipmail_get_newsletter_sender_identity",
+      {
+        title: "Get Newsletter Sender Identity",
+        description:
+          "Get one newsletter sender identity: its From name and address, business name, footer, domain status and whether it is the default.",
+        inputSchema: getNewsletterSenderIdentityInputSchema,
+        outputSchema: newsletterSenderIdentityOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id }) =>
+        runTool(
+          "shipmail_get_newsletter_sender_identity",
+          newsletterSenderIdentityOutputSchema,
+          async () => ({
+            newsletter_sender_identity: await client.newsletters.senderIdentities.get(id),
+          }),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_create_newsletter_sender_identity", () => {
+    server.registerTool(
+      "shipmail_create_newsletter_sender_identity",
+      {
+        title: "Create Newsletter Sender Identity",
+        description:
+          "Create the From name, business name and footer newsletters are sent with, on a newsletter domain. The organization's first identity becomes the default unless make_default is false; make_default true makes this one the default.",
+        inputSchema: createNewsletterSenderIdentityInputSchema,
+        outputSchema: newsletterSenderIdentityOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool(
+          "shipmail_create_newsletter_sender_identity",
+          newsletterSenderIdentityOutputSchema,
+          async () => ({
+            newsletter_sender_identity: await client.newsletters.senderIdentities.create(
+              stripIdempotencyKey(args),
+              mutationOptions(args),
+            ),
+          }),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_update_newsletter_sender_identity", () => {
+    server.registerTool(
+      "shipmail_update_newsletter_sender_identity",
+      {
+        title: "Update Newsletter Sender Identity",
+        description:
+          "Change a sender identity. Fields left out keep their value. make_default true makes it the default; false stops it being the default; left out, the default is unchanged.",
+        inputSchema: updateNewsletterSenderIdentityInputSchema,
+        outputSchema: newsletterSenderIdentityOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async (args) =>
+        runTool(
+          "shipmail_update_newsletter_sender_identity",
+          newsletterSenderIdentityOutputSchema,
+          async () => {
+            const { id, idempotency_key: _key, ...params } = args;
+            return {
+              newsletter_sender_identity: await client.newsletters.senderIdentities.update(
+                id,
+                params,
+                mutationOptions(args),
+              ),
+            };
+          },
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_delete_newsletter_sender_identity", () => {
+    server.registerTool(
+      "shipmail_delete_newsletter_sender_identity",
+      {
+        title: "Delete Newsletter Sender Identity",
+        description: "Delete a sender identity. Refused while a newsletter uses it.",
+        inputSchema: newsletterSenderIdentityByIdInputSchema,
+        outputSchema: acknowledgmentOutputSchema,
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      async ({ id }) =>
+        runTool(
+          "shipmail_delete_newsletter_sender_identity",
+          acknowledgmentOutputSchema,
+          async () => {
+            await client.newsletters.senderIdentities.delete(id);
+            return { result: { ok: true, id } };
+          },
         ),
     );
   });
@@ -4293,15 +5038,58 @@ export function registerTools(
       {
         title: "Preview Newsletter",
         description:
-          "Render a newsletter draft into sanitized email HTML, archive HTML, text, warnings, and counted URL breakdown.",
+          "Render a newsletter into the full email exactly as delivered: subject, HTML and text with the footer (business name, postal address, unsubscribe link) and the headers such as List-Unsubscribe and Reply-To, plus archive HTML, warnings and a counted URL breakdown. Links are not tracked. preview_as renders for sample merge values (the default) or for one subscriber a send would reach; a subscriber preview needs the audiences:read scope and fails with not found for a reader the send would skip.",
         inputSchema: previewNewsletterInputSchema,
         outputSchema: newsletterPreviewOutputSchema,
         annotations: { readOnlyHint: true, openWorldHint: false },
       },
       (args) =>
         runTool("shipmail_preview_newsletter", newsletterPreviewOutputSchema, async () => ({
-          preview: await client.newsletters.preview(args.id),
+          preview: await client.newsletters.preview(
+            args.id,
+            args.preview_as === undefined ? undefined : { preview_as: args.preview_as },
+          ),
         })),
+    );
+  });
+
+  registerIfAllowed("shipmail_list_newsletter_recipients", () => {
+    server.registerTool(
+      "shipmail_list_newsletter_recipients",
+      {
+        title: "List Newsletter Recipients",
+        description:
+          "List each reader's result for a newsletter, newest first: status (pending, retrying, sending, sent, delivered, bounced, complained, failed, skipped, unsubscribed), a reason code for skips and failures (such as opted_out, suppressed, dormant or send_failed), and when it was sent, delivered, bounced, complained or unsubscribed. Filter by status or reason. Needs the audiences:read scope as well as newsletters:read.",
+        inputSchema: listNewsletterRecipientsInputSchema,
+        outputSchema: newsletterRecipientsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id, ...params }) =>
+        runTool("shipmail_list_newsletter_recipients", newsletterRecipientsOutputSchema, async () =>
+          client.newsletters.recipients.list(id, params),
+        ),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_newsletter_recipient_by_email", () => {
+    server.registerTool(
+      "shipmail_get_newsletter_recipient_by_email",
+      {
+        title: "Get Newsletter Recipient by Email",
+        description:
+          "Get one reader's result for a newsletter by email address: whether it was sent, delivered, bounced or skipped, and why. Not found when the address was not a recipient of that newsletter. Needs the audiences:read scope as well as newsletters:read.",
+        inputSchema: getNewsletterRecipientByEmailInputSchema,
+        outputSchema: newsletterRecipientOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id, email }) =>
+        runTool(
+          "shipmail_get_newsletter_recipient_by_email",
+          newsletterRecipientOutputSchema,
+          async () => ({
+            recipient: await client.newsletters.recipients.getByEmail(id, email),
+          }),
+        ),
     );
   });
 
@@ -4399,6 +5187,9 @@ export function registerTools(
                 ? { archive_visibility: rest.archive_visibility }
                 : {}),
               ...(rest.publish_target !== undefined ? { publish_target: rest.publish_target } : {}),
+              ...(rest.view_in_browser !== undefined
+                ? { view_in_browser: rest.view_in_browser }
+                : {}),
               ...(rest.feed_entry_url !== undefined ? { feed_entry_url: rest.feed_entry_url } : {}),
               ...(rest.styling_mode !== undefined ? { styling_mode: rest.styling_mode } : {}),
               ...(rest.track_engagement !== undefined
@@ -4632,7 +5423,8 @@ export function registerTools(
       "shipmail_update_audience",
       {
         title: "Update Audience",
-        description: "Update a newsletter audience's name or description.",
+        description:
+          "Update a newsletter audience: its name, description, whether new issues start with a View in browser link, list cleanup settings, or the wording of its confirmation and last-chance emails. Show the user any new email wording before saving it.",
         inputSchema: updateAudienceInputSchema,
         outputSchema: audienceOutputSchema,
         annotations: {
@@ -5501,6 +6293,24 @@ export function registerTools(
     );
   });
 
+  registerIfAllowed("shipmail_test_automation", () => {
+    server.registerTool(
+      "shipmail_test_automation",
+      {
+        title: "Test Automation on a Message",
+        description:
+          "Dry-run an automation on one stored inbox message: each condition's result, whether it would run, and the actions it would take. Nothing is changed, queued or sent. Needs messages:read as well as automations:read. A semantic condition calls the classifier only when every other condition matched, and that call counts against the AI budget. Limited to 10 tests a minute per key.",
+        inputSchema: testAutomationInputSchema,
+        outputSchema: automationTestOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id, mailbox_id, message_id }) =>
+        runTool("shipmail_test_automation", automationTestOutputSchema, async () => ({
+          automation_test: await client.automations.test(id, { mailbox_id, message_id }),
+        })),
+    );
+  });
+
   registerIfAllowed("shipmail_list_booking_pages", () => {
     server.registerTool(
       "shipmail_list_booking_pages",
@@ -5531,6 +6341,24 @@ export function registerTools(
       async ({ id }) =>
         runTool("shipmail_get_booking_page", bookingPageOutputSchema, async () => ({
           booking_page: await client.bookingPages.get(id),
+        })),
+    );
+  });
+
+  registerIfAllowed("shipmail_get_booking_page_slots", () => {
+    server.registerTool(
+      "shipmail_get_booking_page_slots",
+      {
+        title: "Get Booking Page Slots",
+        description:
+          "List the open slots a booking page offers, exactly as its public page shows them, as UTC instants. Use this rather than calendar availability to answer which times a booking page offers.",
+        inputSchema: getBookingPageSlotsInputSchema,
+        outputSchema: bookingPageSlotsOutputSchema,
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async ({ id, from, to }) =>
+        runTool("shipmail_get_booking_page_slots", bookingPageSlotsOutputSchema, async () => ({
+          booking_page_slots: await client.bookingPages.slots(id, { from, to }),
         })),
     );
   });

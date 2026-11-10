@@ -18,6 +18,7 @@ export const MCP_PERMISSION_GROUP_NAMES = [
   "mailbox_rules",
   "members",
   "team_admin",
+  "organization_settings",
   "webhooks",
   "credentials",
   "mailbox_export",
@@ -168,6 +169,14 @@ export const MCP_PERMISSION_GROUPS = [
     persistent: true,
   },
   {
+    name: "organization_settings",
+    label: "Organization settings",
+    description:
+      "Read the default timezone and AI settings, and change the timezone and whether AI models are on.",
+    scopes: ["organization:read", "organization:write"],
+    persistent: true,
+  },
+  {
     name: "webhooks",
     label: "Webhooks",
     description: "Read and manage persistent webhook destinations, deliveries and event queues.",
@@ -248,11 +257,20 @@ type CapabilityRow = readonly [
 const CAPABILITY_ROWS = [
   ["shipmail_status", "getStatus", "public"],
   ["shipmail_get_organization_access", "getOrganizationAccess", "public"],
+  ["shipmail_get_organization", "getOrganization", "organization:read"],
+  ["shipmail_update_organization", "updateOrganization", "organization:write"],
+  ["shipmail_get_organization_ai_settings", "getOrganizationAiSettings", "organization:read"],
+  [
+    "shipmail_update_organization_ai_settings",
+    "updateOrganizationAiSettings",
+    "organization:write",
+  ],
   ["shipmail_list_automations", "listAutomations", "automations:read"],
   ["shipmail_create_automation", "createAutomation", "automations:write"],
   ["shipmail_get_automation", "getAutomation", "automations:read"],
   ["shipmail_update_automation", "updateAutomation", "automations:write"],
   ["shipmail_run_automation", "runAutomation", "automations:write"],
+  ["shipmail_test_automation", "testAutomation", "automations:read"],
   ["shipmail_create_domain", "createDomain", "domains:write"],
   ["shipmail_list_domains", "listDomains", "domains:read"],
   ["shipmail_get_domain", "getDomain", "domains:read"],
@@ -262,6 +280,11 @@ const CAPABILITY_ROWS = [
   ["shipmail_delete_domain", "deleteDomain", "domains:write"],
   ["shipmail_verify_domain", "verifyDomain", "domains:write"],
   ["shipmail_search_domains", "searchDomains", "domains:read"],
+  ["shipmail_list_transactional_domains", "listTransactionalDomains", "domains:read"],
+  ["shipmail_create_transactional_domain", "createTransactionalDomain", "domains:write"],
+  ["shipmail_get_transactional_domain", "getTransactionalDomain", "domains:read"],
+  ["shipmail_verify_transactional_domain", "verifyTransactionalDomain", "domains:write"],
+  ["shipmail_delete_transactional_domain", "deleteTransactionalDomain", "domains:write"],
   ["shipmail_create_mailbox", "createMailbox", "mailboxes:write"],
   ["shipmail_list_mailboxes", "listMailboxes", "mailboxes:read"],
   ["shipmail_get_mailbox", "getMailbox", "mailboxes:read"],
@@ -271,6 +294,10 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_smtp_credentials", "listSmtpCredentials", "mailbox_credentials:read"],
   ["shipmail_create_smtp_credential", "createSmtpCredential", "mailbox_credentials:write"],
   ["shipmail_revoke_smtp_credential", "revokeSmtpCredential", "mailbox_credentials:write"],
+  ["shipmail_list_transactional_senders", "listTransactionalSenders", "mailboxes:read"],
+  ["shipmail_create_transactional_sender", "createTransactionalSender", "mailboxes:write"],
+  ["shipmail_get_transactional_sender", "getTransactionalSender", "mailboxes:read"],
+  ["shipmail_update_transactional_sender", "updateTransactionalSender", "mailboxes:write"],
   ["shipmail_suspend_mailbox", "suspendMailbox", "mailboxes:write"],
   ["shipmail_resume_mailbox", "resumeMailbox", "mailboxes:write"],
   ["shipmail_create_mailbox_export", "createMailboxExport", "mailboxes:export"],
@@ -295,10 +322,14 @@ const CAPABILITY_ROWS = [
     "messages:review",
   ],
   ["shipmail_read_mailbox_inbox_attachment", "downloadMailboxInboxAttachment", "messages:read"],
+  ["shipmail_read_mailbox_inbox_message_raw", "downloadMailboxInboxMessageRaw", "messages:read"],
   ["shipmail_list_mailbox_inbox_threads", "listMailboxInboxThreads", "messages:read"],
   ["shipmail_get_mailbox_inbox_thread", "getMailboxInboxThread", "messages:read"],
   ["shipmail_update_inbox_thread_attention", "updateMailboxInboxThreadAttention", "messages:write"],
   ["shipmail_create_draft", "createMailboxInboxDraft", "drafts:compose"],
+  ["shipmail_get_draft", "getMailboxInboxDraft", "drafts:compose"],
+  ["shipmail_update_draft", "updateMailboxInboxDraft", "drafts:compose"],
+  ["shipmail_delete_draft", "deleteMailboxInboxDraft", "drafts:compose"],
   ["shipmail_create_inbox_reply_draft", "createMailboxInboxReplyDraft", "drafts:write"],
   ["shipmail_list_inbox_reply_drafts", "listMailboxInboxReplyDrafts", "drafts:write"],
   ["shipmail_get_inbox_reply_draft", "getMailboxInboxReplyDraft", "drafts:write"],
@@ -369,6 +400,7 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_suppressions", "listSuppressions", "suppressions:read"],
   ["shipmail_add_suppression", "createSuppression", "suppressions:write"],
   ["shipmail_remove_suppression", "removeSuppression", "suppressions:write"],
+  ["shipmail_resubscribe_newsletter_opt_out", "resubscribeNewsletterOptOut", "audiences:write"],
   ["shipmail_list_customers", "listCustomers", "customers:read"],
   ["shipmail_get_customer", "getCustomer", "customers:read"],
   ["shipmail_create_customer", "createCustomer", "customers:write"],
@@ -412,10 +444,30 @@ const CAPABILITY_ROWS = [
   ["shipmail_resend_subscriber_confirmation", "resendSubscriberConfirmation", "audiences:write"],
   ["shipmail_remove_subscriber", "removeSubscriber", "audiences:write"],
   ["shipmail_list_newsletter_domains", "listNewsletterDomains", "newsletters:read"],
+  ["shipmail_get_newsletter_domain", "getNewsletterDomain", "newsletters:read"],
+  ["shipmail_create_newsletter_domain", "createNewsletterDomain", "newsletters:write"],
+  ["shipmail_verify_newsletter_domain", "verifyNewsletterDomain", "newsletters:write"],
+  ["shipmail_delete_newsletter_domain", "deleteNewsletterDomain", "newsletters:write"],
   [
     "shipmail_list_newsletter_sender_identities",
     "listNewsletterSenderIdentities",
     "newsletters:read",
+  ],
+  ["shipmail_get_newsletter_sender_identity", "getNewsletterSenderIdentity", "newsletters:read"],
+  [
+    "shipmail_create_newsletter_sender_identity",
+    "createNewsletterSenderIdentity",
+    "newsletters:write",
+  ],
+  [
+    "shipmail_update_newsletter_sender_identity",
+    "updateNewsletterSenderIdentity",
+    "newsletters:write",
+  ],
+  [
+    "shipmail_delete_newsletter_sender_identity",
+    "deleteNewsletterSenderIdentity",
+    "newsletters:write",
   ],
   ["shipmail_create_newsletter", "createNewsletter", "newsletters:write"],
   [
@@ -435,6 +487,12 @@ const CAPABILITY_ROWS = [
   ["shipmail_prepare_newsletter_asset_upload", "prepareNewsletterAssetUpload", "newsletters:write"],
   ["shipmail_register_newsletter_asset", "uploadNewsletterAsset", "newsletters:write"],
   ["shipmail_preview_newsletter", "previewNewsletter", "newsletters:read"],
+  ["shipmail_list_newsletter_recipients", "listNewsletterRecipients", "newsletters:read"],
+  [
+    "shipmail_get_newsletter_recipient_by_email",
+    "getNewsletterRecipientByEmail",
+    "newsletters:read",
+  ],
   ["shipmail_run_newsletter_preflight", "runNewsletterPreflight", "newsletters:write"],
   ["shipmail_send_newsletter_test", "sendNewsletterTest", "newsletters:write"],
   ["shipmail_schedule_newsletter", "scheduleNewsletter", "newsletters:write"],
@@ -455,6 +513,7 @@ const CAPABILITY_ROWS = [
   ["shipmail_list_booking_pages", "listBookingPages", "booking_pages:read"],
   ["shipmail_create_booking_page", "createBookingPage", "booking_pages:write"],
   ["shipmail_get_booking_page", "getBookingPage", "booking_pages:read"],
+  ["shipmail_get_booking_page_slots", "getBookingPageSlots", "calendar:read"],
   ["shipmail_update_booking_page", "updateBookingPage", "booking_pages:write"],
   ["shipmail_delete_booking_page", "deleteBookingPage", "booking_pages:write"],
   ["shipmail_list_booking_links", "listBookingLinks", "booking_pages:read"],
@@ -552,6 +611,7 @@ const SERVER_DERIVED_RECIPIENT_TOOLS: ReadonlySet<string> = new Set([
 const CALLER_SUPPLIED_RECIPIENT_TOOLS: ReadonlySet<string> = new Set([
   "shipmail_send_message",
   "shipmail_create_draft",
+  "shipmail_update_draft",
   "shipmail_create_mailbox_forwarding",
   "shipmail_create_webhook",
   "shipmail_update_webhook",
@@ -590,6 +650,7 @@ function permissionGroupFor(
   if (requiredScope.startsWith("automations:")) return "automations";
   if (requiredScope === "members:write") return "team_admin";
   if (requiredScope.startsWith("members:")) return "members";
+  if (requiredScope.startsWith("organization:")) return "organization_settings";
   if (requiredScope.startsWith("webhooks:")) return "webhooks";
   if (requiredScope.startsWith("newsletters:")) return "newsletters";
   if (requiredScope.startsWith("audiences:")) return "audiences";
@@ -597,7 +658,9 @@ function permissionGroupFor(
   if (requiredScope.startsWith("suppressions:")) return "suppressions";
   if (requiredScope.startsWith("templates:")) return "templates";
   if (requiredScope === "mailboxes:read") {
-    return toolName.includes("_import") ? "mailbox_admin" : "mail_read";
+    return toolName.includes("_import") || toolName.includes("transactional_sender")
+      ? "mailbox_admin"
+      : "mail_read";
   }
   return "mailbox_admin";
 }
@@ -605,6 +668,7 @@ function permissionGroupFor(
 function effectFor(toolName: McpToolName): McpCapabilityEffect {
   if (
     toolName === "shipmail_status" ||
+    toolName === "shipmail_test_automation" ||
     toolName === "shipmail_compose_message_with_file" ||
     toolName === "shipmail_upload_newsletter_asset_with_file" ||
     toolName.startsWith("shipmail_list_") ||

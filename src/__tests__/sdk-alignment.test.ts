@@ -17,6 +17,7 @@ import type {
   Audience,
   AudienceFeed,
   Automation,
+  AutomationTest,
   BookingLink,
   BookingPage,
   CalendarEvent,
@@ -26,6 +27,7 @@ import type {
   CreatedSmtpCredential,
   Customer,
   CustomerField,
+  DeliveryStatus,
   Domain,
   DomainSearchResult,
   DomainVerificationResult,
@@ -55,16 +57,28 @@ import type {
   Newsletter,
   NewsletterAsset,
   NewsletterDomain,
+  NewsletterOptOutLift,
+  NewsletterOptOutSuppression,
   NewsletterPreflight,
   NewsletterPreflightItem,
   NewsletterPreview,
+  NewsletterRecipient,
   NewsletterTestSend,
+  NotMailableReason,
+  OrganizationAccess,
+  OrganizationAiSettings,
+  OrganizationSettings,
   RenderedTemplate,
   ServiceLevel,
   SmtpCredential,
+  Subscriber,
   Suppression,
+  SuppressionRemoval,
   Template,
   TemplateVersion,
+  TransactionalDnsRecord,
+  TransactionalDomain,
+  TransactionalSender,
   Webhook,
   WebhookDelivery,
   WebhookDeliveryDetail,
@@ -75,6 +89,7 @@ import {
   audienceFeedSchema,
   audienceSchema,
   automationSchema,
+  automationTestSchema,
   bookingLinkSchema,
   bookingPageSchema,
   calendarEventMutationSchema,
@@ -84,6 +99,7 @@ import {
   createdSmtpCredentialSchema,
   customerFieldSchema,
   customerSchema,
+  deliveryStatusSchema,
   domainSchema,
   domainSearchResultSchema,
   domainVerificationSchema,
@@ -111,17 +127,29 @@ import {
   messageSchema,
   newsletterAssetSchema,
   newsletterDomainSchema,
+  newsletterOptOutLiftSchema,
+  newsletterOptoutSuppressionSchema,
   newsletterPreflightItemSchema,
   newsletterPreflightSchema,
   newsletterPreviewSchema,
+  newsletterRecipientSchema,
   newsletterSchema,
   newsletterTestSendSchema,
+  notMailableReasonSchema,
+  organizationAccessSchema,
+  organizationAiSettingsSchema,
+  organizationSchema,
   renderedTemplateSchema,
   serviceLevelSchema,
   smtpCredentialSchema,
+  subscriberSchema,
+  suppressionRemovalSchema,
   suppressionSchema,
   templateSchema,
   templateVersionSchema,
+  transactionalDnsRecordSchema,
+  transactionalDomainSchema,
+  transactionalSenderSchema,
   webhookDeliveryDetailSchema,
   webhookDeliverySchema,
   webhookSchema,
@@ -153,6 +181,9 @@ type _ConfirmationResendKeys = AssertTrue<
   KeysMatch<ConfirmationResend, z.infer<typeof confirmationResendSchema>>
 >;
 type _AutomationKeys = AssertTrue<KeysMatch<Automation, z.infer<typeof automationSchema>>>;
+type _AutomationTestKeys = AssertTrue<
+  KeysMatch<AutomationTest, z.infer<typeof automationTestSchema>>
+>;
 type _BookingLinkKeys = AssertTrue<KeysMatch<BookingLink, z.infer<typeof bookingLinkSchema>>>;
 type _BookingPageKeys = AssertTrue<KeysMatch<BookingPage, z.infer<typeof bookingPageSchema>>>;
 type _CalendarEventKeys = AssertTrue<KeysMatch<CalendarEvent, z.infer<typeof calendarEventSchema>>>;
@@ -172,6 +203,24 @@ type _SmtpCredentialKeys = AssertTrue<
 type _CreatedSmtpCredentialKeys = AssertTrue<
   KeysMatch<CreatedSmtpCredential, z.infer<typeof createdSmtpCredentialSchema>>
 >;
+type _TransactionalDomainKeys = AssertTrue<
+  KeysMatch<TransactionalDomain, z.infer<typeof transactionalDomainSchema>>
+>;
+type _TransactionalDnsRecordKeys = AssertTrue<
+  KeysMatch<TransactionalDnsRecord, z.infer<typeof transactionalDnsRecordSchema>>
+>;
+type _OrganizationAccessKeys = AssertTrue<
+  KeysMatch<OrganizationAccess, z.infer<typeof organizationAccessSchema>>
+>;
+type _OrganizationKeys = AssertTrue<
+  KeysMatch<OrganizationSettings, z.infer<typeof organizationSchema>>
+>;
+type _OrganizationAiSettingsKeys = AssertTrue<
+  KeysMatch<OrganizationAiSettings, z.infer<typeof organizationAiSettingsSchema>>
+>;
+type _TransactionalSenderKeys = AssertTrue<
+  KeysMatch<TransactionalSender, z.infer<typeof transactionalSenderSchema>>
+>;
 type _MailboxExportKeys = AssertTrue<KeysMatch<MailboxExport, z.infer<typeof mailboxExportSchema>>>;
 type _MailboxFolderKeys = AssertTrue<KeysMatch<MailboxFolder, z.infer<typeof mailboxFolderSchema>>>;
 type _MailboxFoldersKeys = AssertTrue<
@@ -190,6 +239,9 @@ type _MailboxRulesKeys = AssertTrue<KeysMatch<MailboxRules, z.infer<typeof mailb
 type _InboxMessageKeys = AssertTrue<KeysMatch<InboxMessage, z.infer<typeof inboxMessageSchema>>>;
 type _InboxMessageActionKeys = AssertTrue<
   KeysMatch<InboxMessageAction, z.infer<typeof inboxMessageActionSchema>>
+>;
+type _DeliveryStatusKeys = AssertTrue<
+  KeysMatch<DeliveryStatus, z.infer<typeof deliveryStatusSchema>>
 >;
 type _InboxFullMessageKeys = AssertTrue<
   KeysMatch<InboxFullMessage, z.infer<typeof inboxFullMessageSchema>>
@@ -251,6 +303,22 @@ type _CustomerKeys = AssertTrue<KeysMatch<Customer, z.infer<typeof customerSchem
 type _ServiceLevelKeys = AssertTrue<KeysMatch<ServiceLevel, z.infer<typeof serviceLevelSchema>>>;
 type _CustomerFieldKeys = AssertTrue<KeysMatch<CustomerField, z.infer<typeof customerFieldSchema>>>;
 type _SuppressionKeys = AssertTrue<KeysMatch<Suppression, z.infer<typeof suppressionSchema>>>;
+type _NewsletterOptOutLiftKeys = AssertTrue<
+  KeysMatch<NewsletterOptOutLift, z.infer<typeof newsletterOptOutLiftSchema>>
+>;
+type _NewsletterOptOutSuppressionKeys = AssertTrue<
+  KeysMatch<NewsletterOptOutSuppression, z.infer<typeof newsletterOptoutSuppressionSchema>>
+>;
+type _SuppressionRemovalKeys = AssertTrue<
+  KeysMatch<SuppressionRemoval, z.infer<typeof suppressionRemovalSchema>>
+>;
+type _NewsletterRecipientKeys = AssertTrue<
+  KeysMatch<NewsletterRecipient, z.infer<typeof newsletterRecipientSchema>>
+>;
+type _NotMailableReasonKeys = AssertTrue<
+  KeysMatch<NotMailableReason, z.infer<typeof notMailableReasonSchema>>
+>;
+type _SubscriberKeys = AssertTrue<KeysMatch<Subscriber, z.infer<typeof subscriberSchema>>>;
 type _TemplateKeys = AssertTrue<KeysMatch<Template, z.infer<typeof templateSchema>>>;
 type _TemplateVersionKeys = AssertTrue<
   KeysMatch<TemplateVersion, z.infer<typeof templateVersionSchema>>
@@ -284,6 +352,12 @@ type _AllChecks = [
   _CreatedMailboxAppPasswordKeys,
   _SmtpCredentialKeys,
   _CreatedSmtpCredentialKeys,
+  _TransactionalDomainKeys,
+  _TransactionalDnsRecordKeys,
+  _TransactionalSenderKeys,
+  _OrganizationAccessKeys,
+  _OrganizationKeys,
+  _OrganizationAiSettingsKeys,
   _MailboxExportKeys,
   _MailboxFolderKeys,
   _MailboxFoldersKeys,
@@ -294,6 +368,8 @@ type _AllChecks = [
   _InboxMessageKeys,
   _InboxMessageActionKeys,
   _InboxFullMessageKeys,
+  _DeliveryStatusKeys,
+  _AutomationTestKeys,
   _InboxMessagesKeys,
   _InboxThreadKeys,
   _MessageKeys,
@@ -317,6 +393,11 @@ type _AllChecks = [
   _ServiceLevelKeys,
   _CustomerFieldKeys,
   _SuppressionKeys,
+  _NewsletterOptOutSuppressionKeys,
+  _SuppressionRemovalKeys,
+  _NewsletterRecipientKeys,
+  _NotMailableReasonKeys,
+  _SubscriberKeys,
   _TemplateKeys,
   _TemplateVersionKeys,
   _RenderedTemplateKeys,
@@ -381,7 +462,20 @@ describe("SDK / MCP schema alignment", () => {
       true,
       true,
       true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
     ];
-    if (checks.length !== 52) throw new Error("alignment matrix size changed");
+    if (checks.length !== 65) throw new Error("alignment matrix size changed");
   });
 });

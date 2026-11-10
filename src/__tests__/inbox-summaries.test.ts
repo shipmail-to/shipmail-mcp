@@ -40,6 +40,8 @@ function fullMessagePayload(id: string) {
     html_body: [{ part_id: "2", type: "text/html" }],
     attachments: [],
     reply_text: "A short reply",
+    category: "human",
+    out_of_office_until: null,
     security: {
       status: "flagged",
       risk_codes: ["instruction_override"],

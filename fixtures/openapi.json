@@ -346,7 +346,7 @@
       "get": {
         "operationId": "getCalendarAvailability",
         "summary": "Get open availability",
-        "description": "Compute open meeting slots for one mailbox from its own calendar. Derived app-side (not a cross-user free/busy lookup).",
+        "description": "Compute open meeting slots for one mailbox from its own calendar, with the duration, weekly hours and timezone you pass. Derived app-side (not a cross-user free/busy lookup). It does not read a booking page: timezone defaults to the calendar time zone of the person behind the credential, then the organization's default_timezone, then Etc/UTC (before November 2026, always Etc/UTC), and every other setting to the defaults below, so its slots can differ from a booking page's. To get the slots a booking page offers, use GET /booking-pages/{id}/slots.",
         "tags": ["Calendar"],
         "x-rate-limit-tier": "read",
         "x-scope": "calendar:read",
@@ -413,7 +413,7 @@
           {
             "name": "timezone",
             "in": "query",
-            "description": "IANA time zone the working window is defined in (default Etc/UTC).",
+            "description": "IANA time zone the working window is defined in. Defaults to the calendar time zone of the person behind the credential (the API key's creator or the OAuth user), then the organization's default_timezone, then Etc/UTC.",
             "schema": {
               "type": "string"
             }
@@ -769,6 +769,100 @@
         ]
       }
     },
+    "/automations/{id}/test": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Automation ID.",
+          "schema": {
+            "type": "string",
+            "pattern": "^aaut_[0-9a-z]{24}$"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "testAutomation",
+        "summary": "Test an automation on a message",
+        "description": "A dry run: evaluates the automation's conditions against one stored inbox message and reports each condition's result, whether it would run, and the actions it would take. Nothing is changed, queued or sent. Needs automations:read and messages:read (403 without messages:read). Deterministic conditions never call a model. A semantic_positive_match condition calls the classifier only when every other condition matched and models and budget are available, and that call counts against the AI budget. Limited to 10 tests a minute per key.",
+        "tags": ["Automations"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "automations:read",
+        "x-additional-scopes": ["messages:read"],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["automations:read", "messages:read"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestAutomationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The test result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationTest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "description": "The key lacks messages:read, or the message is held for security review and the key lacks messages:review.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown automation, mailbox or message.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "description": "More than 10 tests a minute for this key, or the general rate limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
     "/booking-pages": {
       "get": {
         "operationId": "listBookingPages",
@@ -1015,6 +1109,79 @@
             "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ]
+      }
+    },
+    "/booking-pages/{id}/slots": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Booking page ID.",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getBookingPageSlots",
+        "summary": "List a booking page's open slots",
+        "description": "The open slots a booking page offers, computed exactly as its public page computes them from the mailbox's calendar, as UTC instants. The page's own duration, weekly hours, timezone, buffer, minimum notice and horizon apply. A page that is not active offers no slots. Use this endpoint, not GET /calendar/availability, to know which times a booking page shows.",
+        "tags": ["Booking Pages"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "calendar:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["calendar:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Start of the window, an ISO 8601 instant (default now). A past value starts at now.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "End of the window, an ISO 8601 instant. Defaults to the end of the page's booking horizon (max_advance_days from now). At most 62 days after from. A window holding 5,000 slots or more is refused with 422; request a shorter one.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The page's open slots.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingPageSlots"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
       }
     },
     "/booking-links": {
@@ -1331,7 +1498,7 @@
       "get": {
         "operationId": "getCapabilities",
         "summary": "Get effective API and MCP capabilities",
-        "description": "Return the authenticated API key's effective scopes, resource constraints, MCP tool catalog, and capability contract version.",
+        "description": "Return the authenticated API key's effective scopes, resource constraints, MCP tool catalog, and capability contract version, plus the organization's default time zone and whether AI models and automatic sending are in effect.",
         "tags": ["Capabilities"],
         "x-rate-limit-tier": "read",
         "x-scope": "authenticated",
@@ -2436,6 +2603,704 @@
             "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ]
+      }
+    },
+    "/transactional-domains": {
+      "get": {
+        "operationId": "listTransactionalDomains",
+        "summary": "List transactional domains",
+        "description": "List the organization's transactional sending subdomains, each with its status and the DNS records to publish. A key limited to domains reaches only the subdomains of the root domains it lists; a key limited to mailboxes reaches no transactional domain. Guide: https://shipmail.to/docs/features/transactional-email",
+        "tags": ["Transactional Email"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "domains:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transactional domains. The list is not paginated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["object", "data"],
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "const": "list"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TransactionalDomain"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTransactionalDomain",
+        "summary": "Create a transactional domain",
+        "description": "Step 1 of transactional email setup: create a sending subdomain of a verified domain of the organization, such as mail.example.com from root_domain example.com and subdomain mail. The 201 response lists the dns_records to publish at the DNS host; then call POST /transactional-domains/{id}/verify, create a sender with POST /transactional-senders, and send with POST /messages or an SMTP credential. dns_records is empty while setup has not finished: send the same request again to resume a setup that stopped part way. The API key's person must be an Owner or Admin with access to every mailbox. A key limited to domains reaches only the subdomains of the root domains it lists; a key limited to mailboxes reaches no transactional domain. Guide: https://shipmail.to/docs/features/transactional-email",
+        "tags": ["Transactional Email"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "domains:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransactionalDomainRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Transactional domain created or resumed. Publish its dns_records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionalDomain"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "root_domain is not a verified domain of this organization (details[].code transactional_root_domain_not_verified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The subdomain is already in use (details[].code transactional_subdomain_unavailable), or mailbox changes are paused for the organization (mailbox_writes_paused; retry later).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed, for example a subdomain that is not one DNS label (details[].code transactional_subdomain_invalid).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "description": "A setup step failed (details[].code transactional_domain_setup_failed). Send the same request again; nothing is left half done that a retry cannot finish.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactional-domains/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Transactional domain ID (txdom_...).",
+          "schema": {
+            "type": "string",
+            "pattern": "^txdom_[0-9a-z]{24}$"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getTransactionalDomain",
+        "summary": "Get a transactional domain",
+        "description": "Retrieve one transactional sending subdomain with its status and DNS records.",
+        "tags": ["Transactional Email"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "domains:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The transactional domain.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionalDomain"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "Transactional domain not found, or outside this API key's domains (details[].code transactional_domain_not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTransactionalDomain",
+        "summary": "Delete a transactional domain",
+        "description": "Delete a transactional sending subdomain. Refused while any sender uses it, even one turned off. Contact support to remove it. The API key's person must be an Owner or Admin with access to every mailbox.",
+        "tags": ["Transactional Email"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "domains:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Transactional domain deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "Transactional domain not found, or outside this API key's domains (details[].code transactional_domain_not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The subdomain still has senders (details[].code transactional_domain_has_senders), the organization is under an abuse hold (transactional_domain_abuse_hold), or mailbox changes are paused (mailbox_writes_paused; retry later).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "description": "A setup step failed (details[].code transactional_domain_remove_failed). Send the same request again; nothing is left half done that a retry cannot finish.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactional-domains/{id}/verify": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Transactional domain ID (txdom_...).",
+          "schema": {
+            "type": "string",
+            "pattern": "^txdom_[0-9a-z]{24}$"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "verifyTransactionalDomain",
+        "summary": "Verify a transactional domain",
+        "description": "Step 2 of transactional email setup, after publishing the dns_records: check them now and return the domain with the status of each record. DNS changes can take minutes to propagate; call it again while status is not verified. Once verified, create a sender with POST /transactional-senders. The API key's person must be an Owner or Admin with access to every mailbox.",
+        "tags": ["Transactional Email"],
+        "x-rate-limit-tier": "verification",
+        "x-scope": "domains:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["domains:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The transactional domain with its current statuses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionalDomain"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "Transactional domain not found, or outside this API key's domains (details[].code transactional_domain_not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Setup has not finished (details[].code transactional_domain_setup_incomplete): send POST /transactional-domains again with the same values to resume.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "description": "Checking the DNS records failed (details[].code transactional_domain_check_failed). Try again in a minute.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactional-senders": {
+      "get": {
+        "operationId": "listTransactionalSenders",
+        "summary": "List transactional senders",
+        "description": "List the organization's transactional senders whose reply mailbox this API key and its person can see. Pass domain_id for one transactional domain's senders.",
+        "tags": ["Transactional Email"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "mailboxes:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "domain_id",
+            "in": "query",
+            "required": false,
+            "description": "A transactional domain ID (txdom_...). Returns only its senders.",
+            "schema": {
+              "type": "string",
+              "pattern": "^txdom_[0-9a-z]{24}$"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transactional senders. The list is not paginated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["object", "data"],
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "const": "list"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TransactionalSender"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTransactionalSender",
+        "summary": "Create a transactional sender",
+        "description": "Step 3 of transactional email setup, once the transactional domain is verified: create a sender address local_part@<domain name>, such as hello@mail.example.com. Replies go to mailbox_id, whose address becomes the sender's Reply-To. Then send with POST /messages and from set to the sender address (a first send to your own address is the test send), or create an SMTP credential with POST /smtp-credentials. The API key's person must be an Owner or Admin with access to every mailbox. The API key must reach mailbox_id and the transactional domain: a key limited to mailboxes cannot create a sender. Guide: https://shipmail.to/docs/features/transactional-email",
+        "tags": ["Transactional Email"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransactionalSenderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Transactional sender created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionalSender"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "Transactional domain not found (details[].code transactional_domain_not_found), or the mailbox does not exist or is outside this API key's reach (transactional_mailbox_not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The domain is not verified yet (details[].code transactional_domain_not_verified), the address is already in use (transactional_sender_unavailable), the same sender exists but is turned off or removed (transactional_sender_exists; turn it on with PATCH), or mailbox changes are paused (mailbox_writes_paused; retry later).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed: a local_part that is not the part before @ (details[].code transactional_local_part_invalid), or a mailbox that is temporary or suspended (transactional_mailbox_unavailable).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "description": "A setup step failed (details[].code transactional_sender_setup_failed). Send the same request again; nothing is left half done that a retry cannot finish.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactional-senders/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Transactional sender ID (txbind_...).",
+          "schema": {
+            "type": "string",
+            "pattern": "^txbind_[0-9a-z]{24}$"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getTransactionalSender",
+        "summary": "Get a transactional sender",
+        "description": "Retrieve one transactional sender.",
+        "tags": ["Transactional Email"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "mailboxes:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The transactional sender.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionalSender"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "Transactional sender not found, or its reply mailbox is outside this API key's reach (details[].code transactional_sender_not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateTransactionalSender",
+        "summary": "Update a transactional sender",
+        "description": "Change a transactional sender. Send at least one of state, mailbox_id and refuse_disposable. A move to mailbox_id applies first, then state, then refuse_disposable; each is its own step, so one that fails leaves the earlier ones in place. There is no delete: turn a sender off with state disabled. The API key's person must be an Owner or Admin with access to every mailbox. The API key must reach the sender's mailbox and, for a move, the new one.",
+        "tags": ["Transactional Email"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "mailboxes:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["mailboxes:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionalSenderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The transactional sender after the changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionalSender"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "description": "Transactional sender not found (details[].code transactional_sender_not_found), or the new mailbox does not exist or is outside this API key's reach (transactional_mailbox_not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The sender was removed and cannot change (details[].code transactional_sender_removed), its mailbox is being deleted or archived so it cannot be turned on (transactional_sender_mailbox_unavailable), it cannot move to this mailbox now (transactional_sender_move_unavailable), or mailbox changes are paused (mailbox_writes_paused; retry later).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed, for example an empty body or a mailbox that is temporary or suspended (details[].code transactional_mailbox_unavailable).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "500": {
+            "description": "A setup step failed (details[].code transactional_sender_move_failed, transactional_sender_state_failed or transactional_sender_settings_failed). Send the same request again; nothing is left half done that a retry cannot finish.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/smtp-credentials": {
@@ -3980,7 +4845,7 @@
       "post": {
         "operationId": "sendMessage",
         "summary": "Send a message",
-        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Base64 attachments: max 20 files, and the whole email can be up to 10 MB, attachments and encoding included (a larger one is a 422). staged_attachment_ids take up to 20 files of 25 MB each. To send from a transactional sender (https://shipmail.to/docs/features/transactional-email), set from to its bare address; mailbox_id is optional and, when set, must be the sender's mailbox. Shipmail adds the sender name and Reply-To. Transactional senders send immediately only and refuse scheduled_at, track_reply: true, staged_attachment_ids, a different reply_to and a different display name. A transactional email send that reaches a ceiling returns 429 with details[].code application_daily_limit (the transactional daily limit: the organization's safety limit or its plan-share floor, or an approved limit), application_unique_recipients (hourly limit of different recipients), application_storage_full (the sender's mailbox has no transactional email storage left) or sending_capacity (Shipmail is at its sending capacity for transactional email; retry in a few minutes). An organization with transactional overage turned on is metered in emails instead and returns 403 quota_exceeded with details[].code transactional_monthly_limit (the included amount is reached and overage cannot be billed), transactional_payment_failed (the included amount is reached while an overage invoice is unpaid) or transactional_budget_reached (overage reached twice the month's budget). To send a stored template, pass template: { id, version?, variables? } instead of subject, html and text; messages:send is enough. A template from another organization is a 404, a template with no published version and no pinned version is a 422 with details[].code template_not_published, and missing or unknown variables are a 422 with details[].code missing_variable or unknown_variable.",
+        "description": "Send an email from a mailbox. Provide from (email address) or mailbox_id to identify the sender. Prefer from when you know the mailbox email address; Shipmail resolves it to a mailbox ID. At least one of html or text is required. Total recipients (to + cc + bcc) must not exceed 50. Base64 attachments: max 20 files, and the whole email can be up to 10 MB, attachments and encoding included (a larger one is a 422). staged_attachment_ids take up to 20 files of 25 MB each. To send from a transactional sender (https://shipmail.to/docs/features/transactional-email), set from to its bare address; mailbox_id is optional and, when set, must be the sender's mailbox. Shipmail adds the sender name and Reply-To. Transactional senders send immediately only and refuse scheduled_at, track_reply: true, staged_attachment_ids, a different reply_to and a different display name. A transactional email send that reaches a ceiling returns 429 with details[].code application_daily_limit (the transactional daily limit: the organization's safety limit or its plan-share floor, or an approved limit), application_unique_recipients (hourly limit of different recipients), application_storage_full (the sender's mailbox has no transactional email storage left) or sending_capacity (Shipmail is at its sending capacity for transactional email; retry in a few minutes). An organization metered in emails instead returns 403 quota_exceeded with details[].code transactional_monthly_limit (the included amount is reached and extra sending is off or cannot be billed), transactional_payment_failed (the included amount is reached while an invoice for extra email is unpaid) or transactional_budget_reached (extra email reached the month's spending limit). To send a stored template, pass template: { id, version?, variables? } instead of subject, html and text; messages:send is enough. A template from another organization is a 404, a template with no published version and no pinned version is a 422 with details[].code template_not_published, and missing or unknown variables are a 422 with details[].code missing_variable or unknown_variable.",
         "tags": ["Messages"],
         "x-rate-limit-tier": "send",
         "x-scope": "messages:send",
@@ -6102,8 +6967,8 @@
       },
       "get": {
         "operationId": "listSuppressions",
-        "summary": "List suppressed email addresses",
-        "description": "Returns a paginated list of email addresses that have been suppressed for your organization. Addresses are suppressed automatically on hard bounces, complaints and repeated soft bounces, or by importing a suppression list into an audience. A complaint blocks only the kind of email it was about: scope `marketing` for a newsletter, `transactional` for an application sender, `mailbox` for email sent from a mailbox. Hard bounces, repeated soft bounces and manual entries have scope `all` and block every send. A soft-bounce entry expires 30 days after it is created, unless the address had already been paused once.",
+        "summary": "List suppressed addresses and newsletter opt-outs",
+        "description": "Returns a paginated list of email addresses that have been suppressed for your organization, together with newsletter opt-outs, newest first. Each entry has `source`: `suppression` or `newsletter_optout`. An opt-out has `reason: \"unsubscribe\"`, `scope: \"marketing\"` and no expiry; only a resubscribe with fresh consent lifts it. A cursor from before opt-outs were listed is rejected with 422. Addresses are suppressed automatically on hard bounces, complaints and repeated soft bounces, or by importing a suppression list into an audience. A complaint blocks only the kind of email it was about: scope `marketing` for a newsletter, `transactional` for an application sender, `mailbox` for email sent from a mailbox. Hard bounces, repeated soft bounces and manual entries have scope `all` and block every send. A soft-bounce entry expires 30 days after it is created, unless the address had already been paused once.",
         "tags": ["Suppressions"],
         "x-rate-limit-tier": "read",
         "x-scope": "suppressions:read",
@@ -6133,6 +6998,16 @@
             }
           },
           {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "description": "Return only entries with this reason. `unsubscribe` returns newsletter opt-outs.",
+            "schema": {
+              "type": "string",
+              "enum": ["hard_bounce", "complaint", "manual", "soft_bounce", "unsubscribe"]
+            }
+          },
+          {
             "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ],
@@ -6147,7 +7022,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Suppression"
+                        "$ref": "#/components/schemas/SuppressionEntry"
                       }
                     },
                     "pagination": {
@@ -6161,6 +7036,9 @@
           "401": {
             "$ref": "#/components/responses/AuthenticationError"
           },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
           "429": {
             "$ref": "#/components/responses/RateLimitError"
           }
@@ -6171,7 +7049,7 @@
       "delete": {
         "operationId": "removeSuppression",
         "summary": "Remove a suppressed address",
-        "description": "Removes an email address from the suppression list, allowing you to send to it again. Use with caution: if the address is invalid, future sends will bounce and damage your reputation.",
+        "description": "Removes the address-health suppression for an email address, allowing you to send to it again. Use with caution: if the address is invalid, future sends will bounce and damage your reputation. A newsletter opt-out is the reader's consent and is never removed here; only a resubscribe with fresh consent lifts it: POST /newsletter-opt-outs/{email}/resubscribe for any address, or POST /audiences/{id}/subscribers/{subscriber_id}/resubscribe for a subscriber. Only a suppression: 204. A suppression and an opt-out: the suppression is removed and the answer is 200 with a `suppression_removal` object. Only an opt-out: 409 `conflict` with a detail of code `consent_opt_out` on `email`. Neither: 404.",
         "tags": ["Suppressions"],
         "x-rate-limit-tier": "write",
         "x-scope": "suppressions:write",
@@ -6199,6 +7077,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "The suppression was removed, but a newsletter opt-out remains, so newsletters stay blocked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuppressionRemoval"
+                }
+              }
+            }
+          },
           "204": {
             "description": "Suppression removed."
           },
@@ -6207,6 +7095,82 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/newsletter-opt-outs/{email}/resubscribe": {
+      "post": {
+        "operationId": "resubscribeNewsletterOptOut",
+        "summary": "Lift a newsletter opt-out with fresh consent",
+        "description": "Lifts the organization-wide newsletter opt-out of an address, which may be in no audience, after the reader opted in again. `consent_source` records where and how, as a subscriber resubscribe does, and is kept with the time and the opt-out it replaced. A subscriber who unsubscribed in an audience stays unsubscribed there; resubscribe them in that audience to send to them again. A key limited to some audiences gets 403. An active suppression that blocks newsletters (a bounce, a complaint or a manual entry) answers 409: remove it first with DELETE /suppressions/{email}. An address without an opt-out answers 404.",
+        "tags": ["Suppressions"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "audiences:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["audiences:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "description": "The opted-out email address.",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResubscribeNewsletterOptOutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The opt-out was lifted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterOptOutLift"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           },
           "429": {
             "$ref": "#/components/responses/RateLimitError"
@@ -7117,11 +8081,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Exact full inbox message.",
+            "description": "Exact full inbox message, with delivery_status.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboxFullMessage"
+                  "$ref": "#/components/schemas/InboxMessageDetail"
                 }
               }
             }
@@ -7246,6 +8210,85 @@
             "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ]
+      }
+    },
+    "/mailboxes/{id}/inbox/messages/{message_id}/raw": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        },
+        {
+          "$ref": "#/components/parameters/InboxMessageId"
+        }
+      ],
+      "get": {
+        "operationId": "downloadMailboxInboxMessageRaw",
+        "summary": "Download a message as raw MIME",
+        "description": "Return the stored message, inbound or sent, as message/rfc822 bytes with Content-Disposition: attachment; filename=\"<message_id>.eml\". Keys limited to particular mailboxes must reach this one. A message held for API-agent security review needs messages:review, as its attachments do.",
+        "tags": ["Mailboxes"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "messages:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["messages:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stored message.",
+            "content": {
+              "message/rfc822": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "413": {
+            "description": "The message is larger than 25 MB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          },
+          "503": {
+            "description": "The mail server could not return the message now. Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/mailboxes/{id}/inbox/messages/{message_id}/security-review": {
@@ -7693,7 +8736,7 @@
       "post": {
         "operationId": "createMailboxInboxDraft",
         "summary": "Save a new message draft",
-        "description": "Save a new message (not a reply) to the mailbox's Drafts folder for a person to review, edit, and send from Shipmail or any mail client. Nothing is sent, and there is no endpoint to send it. The returned id is an inbox message ID, so the draft can be read or deleted with the inbox message endpoints. Recipients must be allowed by the API key's recipient limits. The response lists in removed_formatting any formatting the HTML sanitiser dropped. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it.",
+        "description": "Save a new message (not a reply) to the mailbox's Drafts folder for a person to review, edit, and send from Shipmail or any mail client. Nothing is sent, and there is no endpoint to send it. The returned id stays the draft's id. message_id is the inbox message that holds the draft now, so read or delete the draft with the inbox message endpoints through message_id. Recipients must be allowed by the API key's recipient limits. The response lists in removed_formatting any formatting the HTML sanitiser dropped. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it.",
         "tags": ["Mailboxes", "Messages"],
         "x-rate-limit-tier": "write",
         "x-scope": "drafts:compose",
@@ -7734,6 +8777,175 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      }
+    },
+    "/mailboxes/{id}/inbox/drafts/{draft_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ResourceId"
+        },
+        {
+          "name": "draft_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "The id returned when the draft was created."
+        }
+      ],
+      "get": {
+        "operationId": "getMailboxInboxDraft",
+        "summary": "Get a new message draft",
+        "description": "Read a draft that POST /mailboxes/{id}/inbox/drafts saved, with its recipients, subject, html, text and files. Returns 404 once a person sent or deleted it in their own client, or for a draft this API did not save. Each attachment id names the file in the current stored draft and changes after every PATCH.",
+        "tags": ["Mailboxes", "Messages"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "drafts:compose",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["drafts:compose"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The draft.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxDraft"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateMailboxInboxDraft",
+        "summary": "Correct a new message draft",
+        "description": "Correct a draft that POST /mailboxes/{id}/inbox/drafts saved. Name only the fields that change: to, cc, bcc and subject replace the old values, and text or html replaces the whole body. Files stay unless attachments is given: it replaces the set, keeping current files by id and adding staged uploads. The draft id and review_url stay the same, so a review link already given to a person keeps working and shows the new content. A page open on the old content refuses to send it. message_id changes with every correction, so use the returned value to read or delete the draft. Returns 404 for a draft saved before this endpoint existed, a draft a person wrote, or one that is gone. Returns 409 while the draft is being sent or once a person took it over in the inbox. Recipients must be allowed by the API key's recipient limits. Nothing is sent.",
+        "tags": ["Mailboxes", "Messages"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "drafts:compose",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["drafts:compose"]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInboxDraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Draft corrected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxDraft"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteMailboxInboxDraft",
+        "summary": "Delete a new message draft",
+        "description": "Delete a draft that POST /mailboxes/{id}/inbox/drafts saved and remove it from the Drafts folder. Returns 409 while a send holds it, while it waits in a scheduled send, or once a person took it over in the inbox composer. Returns 404 when the draft is unknown. There is no send endpoint for these drafts: a person sends them.",
+        "tags": ["Mailboxes", "Messages"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "drafts:compose",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["drafts:compose"]
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Draft deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
@@ -9107,6 +10319,9 @@
               }
             }
           },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
           },
@@ -10129,6 +11344,200 @@
             "$ref": "#/components/responses/RateLimitError"
           }
         }
+      },
+      "post": {
+        "operationId": "createNewsletterSenderIdentity",
+        "summary": "Create a newsletter sender identity",
+        "description": "Create the From name, business name and footer newsletters are sent with, on one of your newsletter domains. The organization's first identity becomes its default. The API key's person must be an Owner or Administrator, and a key limited to mailboxes, domains or audiences is refused.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNewsletterSenderIdentityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The sender identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterSenderIdentity"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/newsletter-sender-identities/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Sender identity ID (nwsid_...).",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getNewsletterSenderIdentity",
+        "summary": "Retrieve a newsletter sender identity",
+        "description": "Returns one sender identity in the same shape as the list items. Answers 404 for an ID outside the organization and for a key limited to domains or mailboxes.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "newsletters:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newsletter sender identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterSenderIdentity"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateNewsletterSenderIdentity",
+        "summary": "Update a newsletter sender identity",
+        "description": "Change a sender identity. Fields left out keep their value. make_default true makes it the organization's default. The API key's person must be an Owner or Administrator, and a key limited to mailboxes, domains or audiences is refused. While an issue that is scheduled, in review, sending or paused, or an enabled welcome sequence, uses the identity, emptying business_name or postal_address answers 422 with a details entry per emptied field whose code is sender_identity_footer_in_use.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNewsletterSenderIdentityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The sender identity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterSenderIdentity"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteNewsletterSenderIdentity",
+        "summary": "Delete a newsletter sender identity",
+        "description": "Delete a sender identity. Refused with 422 while a newsletter uses it. The API key's person must be an Owner or Administrator, and a key limited to mailboxes, domains or audiences is refused.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sender identity deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
       }
     },
     "/newsletter-domains": {
@@ -10180,6 +11589,212 @@
                 }
               }
             }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createNewsletterDomain",
+        "summary": "Create a newsletter domain",
+        "description": "Set up a newsletter sending subdomain of a domain you own. The response carries the domain's status and dns_records: publish those records at your DNS host, then call POST /newsletter-domains/{id}/verify. Sending a request again for a setup that stopped part way resumes it. The API key's person must be an Owner or Administrator with access to every mailbox, and a key limited to mailboxes, domains or audiences is refused.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNewsletterDomainRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The newsletter domain, with the DNS records to publish.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterDomain"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/QuotaExceededError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/newsletter-domains/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Newsletter domain ID (nwsdom_...).",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getNewsletterDomain",
+        "summary": "Retrieve a newsletter domain",
+        "description": "Returns one newsletter sending domain in the same shape as the list items. Answers 404 for an ID outside the organization, a domain still being set up, and for a key limited to domains or mailboxes.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "newsletters:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newsletter domain.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterDomain"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteNewsletterDomain",
+        "summary": "Delete a newsletter domain",
+        "description": "Delete a newsletter sending domain. Refused with 409 while a draft or active newsletter uses it. The API key's person must be an Owner or Administrator with access to every mailbox, and a key limited to mailboxes, domains or audiences is refused.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Newsletter domain deleted."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/newsletter-domains/{id}/verify": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Newsletter domain ID (nwsdom_...).",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "verifyNewsletterDomain",
+        "summary": "Verify a newsletter domain",
+        "description": "Check the domain's published DNS records and its sending identity now, and return the domain with the status of each. DNS changes can take minutes to propagate: call it again while a record is still pending. The API key's person must be an Owner or Administrator with access to every mailbox, and a key limited to mailboxes, domains or audiences is refused.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "newsletters:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The newsletter domain with its current statuses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterDomain"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictError"
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
@@ -10641,6 +12256,189 @@
         }
       }
     },
+    "/newsletters/{id}/recipients": {
+      "get": {
+        "operationId": "listNewsletterRecipients",
+        "summary": "List a newsletter's recipients",
+        "description": "One row per reader of the issue, newest first: who was sent it, who was skipped and why, and what happened after (delivered, bounced, complained, unsubscribed). Same access rules as GET /newsletters/{id}. Also needs the `audiences:read` scope, because each row carries a reader's address.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "newsletters:read",
+        "x-additional-scopes": ["audiences:read"],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read", "audiences:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Newsletter ID (nws_...).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Return only recipients with this status.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "retrying",
+                "sending",
+                "sent",
+                "delivered",
+                "bounced",
+                "complained",
+                "failed",
+                "skipped",
+                "unsubscribed"
+              ]
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "description": "Return only recipients with this reason.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "opted_out",
+                "suppressed",
+                "never_email",
+                "undeliverable_domain",
+                "dormant",
+                "last_chance_waiting",
+                "no_longer_eligible",
+                "cancelled",
+                "content_in_review",
+                "email_removed",
+                "skipped_other",
+                "bounced",
+                "complained",
+                "unsubscribed",
+                "send_failed"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of the newsletter's recipients.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "pagination"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NewsletterRecipient"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/newsletters/{id}/recipients/by-email/{email}": {
+      "get": {
+        "operationId": "getNewsletterRecipientByEmail",
+        "summary": "Get a newsletter recipient by email",
+        "description": "Returns what happened to one address for this issue. Answers 404 when the address is not a recipient of the newsletter. Same access rules as GET /newsletters/{id}. Also needs the `audiences:read` scope, because the result carries a reader's address.",
+        "tags": ["Newsletters"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "newsletters:read",
+        "x-additional-scopes": ["audiences:read"],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["newsletters:read", "audiences:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Newsletter ID (nws_...).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "description": "URL-encoded email address of the recipient.",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newsletter recipient.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsletterRecipient"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
     "/newsletter-assets": {
       "get": {
         "operationId": "listNewsletterAssets",
@@ -10975,6 +12773,7 @@
       "post": {
         "operationId": "previewNewsletter",
         "summary": "Preview newsletter draft",
+        "description": "Renders the email exactly as one reader receives it, with the same renderer as the send: `html` and `text` include the footer with the business name, postal address and unsubscribe link, `subject` has its merge tags filled in, and `headers` lists the headers the send adds. Links in a preview are never tracked. The body is optional and defaults to a sample reader. Previewing as a subscriber also needs the `audiences:read` scope, and answers 404 when the subscriber is not among the readers a send would reach: subscribed, inside the newsletter's segment, not unsubscribed and not suppressed.",
         "tags": ["Newsletters"],
         "x-rate-limit-tier": "read",
         "x-scope": "newsletters:read",
@@ -10986,6 +12785,16 @@
             "oauth2": ["newsletters:read"]
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewsletterPreviewRequest"
+              }
+            }
+          }
+        },
         "parameters": [
           {
             "name": "id",
@@ -11009,6 +12818,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
@@ -11076,6 +12888,244 @@
             "$ref": "#/components/parameters/ShipmailOrganization"
           }
         ]
+      }
+    },
+    "/organization": {
+      "get": {
+        "operationId": "getOrganization",
+        "summary": "Get the organization",
+        "description": "Return the credential's organization with its name and default time zone. Calendar availability and timed event creation use default_timezone when neither the request nor the calendar of the person behind the credential names a zone.",
+        "tags": ["Organization"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "organization:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["organization:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateOrganization",
+        "summary": "Update the organization",
+        "description": "Set or clear the organization's default time zone, as General settings does in the dashboard. The person behind the credential (the API key's creator, or the person who approved the OAuth connection) must be an Owner or Admin. API keys limited to particular mailboxes, domains or audiences are refused. The change is recorded in the audit log.",
+        "tags": ["Organization"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "organization:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["organization:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrganizationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The organization after the change.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "description": "The credential lacks organization:write, the API key is limited to particular mailboxes, domains or audiences, the person behind it is not an Owner or Admin, or the key has no creator to act for (type authorization_error).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "description": "Validation failed: default_timezone is missing, is not an IANA time zone, or the body has another field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/organization/ai-settings": {
+      "get": {
+        "operationId": "getOrganizationAiSettings",
+        "summary": "Get the organization's AI settings",
+        "description": "Return the organization's own AI switches and, under effective, whether each is in effect. Shipmail can hold AI models or automatic sending off for every organization, so a switch that is on can still be off in effect.",
+        "tags": ["Organization"],
+        "x-rate-limit-tier": "read",
+        "x-scope": "organization:read",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["organization:read"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The organization's AI settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationAiSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateOrganizationAiSettings",
+        "summary": "Update the organization's AI settings",
+        "description": "Turn AI models on or off for the organization, the same switch as the dashboard's organization settings. automatic_send_enabled is read-only and refused with a 422 validation error. The person behind the credential must be an Owner or Admin. API keys limited to particular mailboxes, domains or audiences are refused. The change is recorded in the audit log.",
+        "tags": ["Organization"],
+        "x-rate-limit-tier": "write",
+        "x-scope": "organization:write",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauth2": ["organization:write"]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmailOrganization"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrganizationAiSettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The AI settings after the change.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationAiSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "403": {
+            "description": "The credential lacks organization:write, the API key is limited to particular mailboxes, domains or audiences, the person behind it is not an Owner or Admin, or the key has no creator to act for (type authorization_error).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed: neither field was sent, a value is not a boolean, or the body has another field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
       }
     },
     "/organization/access": {
@@ -12272,6 +14322,8 @@
               "mailbox_rules:write": "Create, replace, and remove deterministic rules for allowed mailboxes.",
               "members:read": "List and retrieve organization members.",
               "members:write": "Invite people, cancel invitations, and share or unshare mailboxes with members.",
+              "organization:read": "Read organization settings: default timezone and AI settings.",
+              "organization:write": "Change organization settings: default timezone, and whether AI models are on.",
               "messages:read": "List and retrieve messages.",
               "messages:review": "Inspect and release messages held by API-agent security review.",
               "messages:write": "Update, move, delete, and inject sandbox messages.",
@@ -12704,7 +14756,7 @@
           },
           "timezone": {
             "type": "string",
-            "description": "IANA time zone the start is defined in."
+            "description": "IANA time zone the start is defined in. A timed event without one is created in the calendar time zone of the person behind the credential, then the organization's default_timezone, then Etc/UTC (before November 2026, it was created without a zone). An all-day event has no zone."
           },
           "duration": {
             "type": "string",
@@ -12765,7 +14817,7 @@
           "send_invitations": {
             "type": "boolean",
             "default": true,
-            "description": "Send invitations to attendees."
+            "description": "Send invitations to attendees. When false, each attendee other than the organizer is reported in invitation_skipped with reason send_invitations_false."
           }
         }
       },
@@ -12873,7 +14925,7 @@
           "send_guest_updates": {
             "type": "boolean",
             "default": true,
-            "description": "Send scheduling updates to attendees."
+            "description": "Send scheduling updates to attendees. When false, each attendee who would have received an update or a cancellation is reported in invitation_skipped with reason send_guest_updates_false."
           }
         }
       },
@@ -12915,7 +14967,8 @@
             "type": "integer"
           },
           "timezone": {
-            "type": "string"
+            "type": "string",
+            "description": "The time zone used: the requested one, or the default it resolved to."
           },
           "slots": {
             "type": "array",
@@ -13320,6 +15373,154 @@
           }
         }
       },
+      "AutomationBlockedReason": {
+        "type": "string",
+        "enum": [
+          "automation_not_active",
+          "no_active_version",
+          "invalid_definition",
+          "policy_version_outdated",
+          "trigger_mailbox_outside_scope",
+          "owner_unavailable",
+          "message_not_live",
+          "mailbox_not_in_trigger",
+          "message_in_junk",
+          "models_disabled",
+          "model_budget_exhausted"
+        ],
+        "description": "A stable code for why an automation would not run. automation_not_active: its status is not active. no_active_version: it has no active version. invalid_definition: the stored version no longer validates. policy_version_outdated: the active version was saved under an older Assistant policy; save it again. trigger_mailbox_outside_scope: the trigger watches a mailbox the scope leaves out, and a run on mail from it fails. owner_unavailable: the person who owns it lost access. message_not_live, mailbox_not_in_trigger and message_in_junk: only in a test result, about the message (a test-mode message, a mailbox the trigger does not watch, or a message in Junk or Trash). models_disabled: AI models are off for the organization or the platform, and the automation uses a semantic condition or writes replies. model_budget_exhausted: the AI budget is used up."
+      },
+      "AutomationSendDegradedReason": {
+        "type": "string",
+        "enum": ["automatic_send_disabled", "writing_style_required"],
+        "description": "Why a Send-mode automation runs, but writes drafts instead of sending. automatic_send_disabled: automatic sending is off for the organization. writing_style_required: the writing style it drafts with (pinned when it was saved) has not passed its check."
+      },
+      "TestAutomationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["mailbox_id", "message_id"],
+        "properties": {
+          "mailbox_id": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": "string",
+            "description": "An inbox message ID in that mailbox."
+          }
+        }
+      },
+      "AutomationTest": {
+        "type": "object",
+        "required": [
+          "object",
+          "automation_id",
+          "mailbox_id",
+          "message_id",
+          "runnable",
+          "blocked_reasons",
+          "send_degraded_reasons",
+          "conditions",
+          "conditions_matched",
+          "would_run",
+          "mode",
+          "actions",
+          "model_calls"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "automation_test"
+          },
+          "automation_id": {
+            "type": "string"
+          },
+          "mailbox_id": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": "string"
+          },
+          "runnable": {
+            "type": "boolean"
+          },
+          "blocked_reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationBlockedReason"
+            }
+          },
+          "send_degraded_reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationSendDegradedReason"
+            },
+            "description": "Runs, but writes drafts instead of sending. Empty unless a Send-mode automation would only draft."
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["index", "type", "matched", "confidence", "not_evaluated_reason"],
+              "properties": {
+                "index": {
+                  "type": "integer"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "matched": {
+                  "type": ["boolean", "null"],
+                  "description": "Null when the condition was not evaluated."
+                },
+                "confidence": {
+                  "type": ["number", "null"],
+                  "description": "The classifier's confidence for a semantic_positive_match condition, else null."
+                },
+                "not_evaluated_reason": {
+                  "type": ["string", "null"],
+                  "enum": [
+                    "earlier_condition_failed",
+                    "models_disabled",
+                    "model_budget_exhausted",
+                    "classifier_failed",
+                    null
+                  ]
+                }
+              }
+            }
+          },
+          "conditions_matched": {
+            "type": ["boolean", "null"],
+            "description": "Null when a condition could not be evaluated."
+          },
+          "would_run": {
+            "type": "boolean"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["draft", "send"]
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["index", "type"],
+              "properties": {
+                "index": {
+                  "type": "integer"
+                },
+                "type": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "model_calls": {
+            "type": "integer",
+            "description": "Classifier calls this test made. They count against the AI budget."
+          }
+        }
+      },
       "Automation": {
         "type": "object",
         "required": [
@@ -13332,6 +15533,9 @@
           "definition",
           "last_run",
           "next_run_at",
+          "runnable",
+          "blocked_reasons",
+          "send_degraded_reasons",
           "created_at",
           "updated_at"
         ],
@@ -13376,6 +15580,24 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "runnable": {
+            "type": "boolean",
+            "description": "True when blocked_reasons is empty: the automation would run now."
+          },
+          "blocked_reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationBlockedReason"
+            },
+            "description": "Why it would not run now, in the order checked. Empty when it would."
+          },
+          "send_degraded_reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationSendDegradedReason"
+            },
+            "description": "Runs, but writes drafts instead of sending. Empty unless a Send-mode automation would only draft."
           },
           "created_at": {
             "type": "string",
@@ -13436,6 +15658,7 @@
           "window_start_minutes",
           "window_end_minutes",
           "timezone",
+          "lock_timezone",
           "buffer_minutes",
           "minimum_notice_minutes",
           "max_advance_days",
@@ -13493,6 +15716,10 @@
           "timezone": {
             "type": "string"
           },
+          "lock_timezone": {
+            "type": "boolean",
+            "description": "When true, every visitor sees times in the page's timezone instead of their own, and the page offers no timezone selector. Use it for in-person meetings."
+          },
           "buffer_minutes": {
             "type": "integer"
           },
@@ -13518,6 +15745,50 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "BookingPageSlots": {
+        "type": "object",
+        "required": [
+          "object",
+          "booking_page_id",
+          "timezone",
+          "duration_minutes",
+          "from",
+          "to",
+          "slots"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "enum": ["booking_page_slots"]
+          },
+          "booking_page_id": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "The page's IANA time zone."
+          },
+          "duration_minutes": {
+            "type": "integer"
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start of the window read (UTC)."
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time",
+            "description": "End of the window read (UTC)."
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarAvailabilitySlot"
+            }
           }
         }
       },
@@ -13699,6 +15970,11 @@
           "timezone": {
             "type": "string"
           },
+          "lock_timezone": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, every visitor sees times in the page's timezone instead of their own, and the page offers no timezone selector. Use it for in-person meetings."
+          },
           "description": {
             "type": "string",
             "nullable": true,
@@ -13851,6 +16127,10 @@
           "timezone": {
             "type": "string"
           },
+          "lock_timezone": {
+            "type": "boolean",
+            "description": "When true, every visitor sees times in the page's timezone instead of their own, and the page offers no timezone selector. Use it for in-person meetings."
+          },
           "description": {
             "type": "string",
             "nullable": true,
@@ -13975,7 +16255,16 @@
       },
       "Suppression": {
         "type": "object",
-        "required": ["object", "email_address", "reason", "scope", "expires_at", "created_at"],
+        "description": "An address-health suppression: a bounce, complaint or manual entry.",
+        "required": [
+          "object",
+          "email_address",
+          "reason",
+          "scope",
+          "expires_at",
+          "created_at",
+          "source"
+        ],
         "properties": {
           "object": {
             "type": "string",
@@ -14005,6 +16294,108 @@
             "type": "string",
             "format": "date-time",
             "description": "When the address was suppressed."
+          },
+          "source": {
+            "type": "string",
+            "const": "suppression",
+            "description": "Always `suppression` for an address-health entry."
+          }
+        }
+      },
+      "NewsletterOptoutSuppression": {
+        "type": "object",
+        "description": "A newsletter opt-out: the reader unsubscribed from the organization's newsletters. Only a resubscribe with fresh consent lifts it.",
+        "required": [
+          "object",
+          "email_address",
+          "reason",
+          "scope",
+          "expires_at",
+          "created_at",
+          "source",
+          "newsletter_id",
+          "test_send"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "enum": ["suppression"]
+          },
+          "email_address": {
+            "type": "string",
+            "format": "email"
+          },
+          "reason": {
+            "type": "string",
+            "const": "unsubscribe"
+          },
+          "scope": {
+            "type": "string",
+            "const": "marketing"
+          },
+          "expires_at": {
+            "type": "null"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the reader unsubscribed."
+          },
+          "source": {
+            "type": "string",
+            "const": "newsletter_optout"
+          },
+          "newsletter_id": {
+            "type": ["string", "null"],
+            "description": "The newsletter the reader unsubscribed from, when known."
+          },
+          "test_send": {
+            "type": "boolean",
+            "description": "True when the reader unsubscribed from a test send."
+          }
+        }
+      },
+      "SuppressionEntry": {
+        "description": "An entry of the suppression list: an address-health suppression or a newsletter opt-out.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Suppression"
+          },
+          {
+            "$ref": "#/components/schemas/NewsletterOptoutSuppression"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "source",
+          "mapping": {
+            "suppression": "#/components/schemas/Suppression",
+            "newsletter_optout": "#/components/schemas/NewsletterOptoutSuppression"
+          }
+        }
+      },
+      "SuppressionRemoval": {
+        "type": "object",
+        "description": "Returned by DELETE /suppressions/{email} when the suppression was removed but a newsletter opt-out remains.",
+        "required": ["object", "email_address", "removed", "newsletter_optout_remains", "message"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "suppression_removal"
+          },
+          "email_address": {
+            "type": "string",
+            "format": "email"
+          },
+          "removed": {
+            "type": "boolean",
+            "const": true
+          },
+          "newsletter_optout_remains": {
+            "type": "boolean",
+            "const": true
+          },
+          "message": {
+            "type": "string"
           }
         }
       },
@@ -14840,6 +17231,235 @@
               "type": "string",
               "description": "IPv4 or IPv6 CIDR range."
             }
+          }
+        }
+      },
+      "TransactionalDnsRecord": {
+        "type": "object",
+        "description": "A DNS record to publish at the DNS host for a transactional domain.",
+        "required": ["key", "type", "host", "value", "priority", "ttl", "description", "status"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable record name, such as dkim, mail_from_mx or mail_from_spf."
+          },
+          "type": {
+            "type": "string",
+            "examples": ["TXT", "MX"]
+          },
+          "host": {
+            "type": "string",
+            "description": "The full host name to publish the record at."
+          },
+          "value": {
+            "type": "string"
+          },
+          "priority": {
+            "type": ["integer", "null"],
+            "description": "MX priority, null for other types."
+          },
+          "ttl": {
+            "type": ["integer", "null"]
+          },
+          "description": {
+            "type": "string",
+            "description": "What the record does."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "verified", "failed"]
+          }
+        }
+      },
+      "TransactionalDomain": {
+        "type": "object",
+        "description": "A sending subdomain of a verified domain, used by transactional senders.",
+        "required": [
+          "object",
+          "id",
+          "name",
+          "root_domain",
+          "status",
+          "mail_from_domain",
+          "dns_records",
+          "verified_at",
+          "created_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "transactional_domain"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^txdom_[0-9a-z]{24}$"
+          },
+          "name": {
+            "type": "string",
+            "description": "The sending subdomain.",
+            "examples": ["mail.example.com"]
+          },
+          "root_domain": {
+            "type": "string",
+            "description": "The organization's verified domain it belongs to.",
+            "examples": ["example.com"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "verifying", "verified", "failed"],
+            "description": "verified once every DNS record checks out. Senders can be created only on a verified domain."
+          },
+          "mail_from_domain": {
+            "type": "string",
+            "description": "The bounce (MAIL FROM) domain under the subdomain."
+          },
+          "dns_records": {
+            "type": "array",
+            "description": "The records to publish before verifying. Empty while setup has not finished: send POST /transactional-domains again with the same values to resume.",
+            "items": {
+              "$ref": "#/components/schemas/TransactionalDnsRecord"
+            }
+          },
+          "verified_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateTransactionalDomainRequest": {
+        "type": "object",
+        "required": ["root_domain", "subdomain"],
+        "properties": {
+          "root_domain": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 253,
+            "description": "A verified domain of the organization, such as example.com. Lowercased."
+          },
+          "subdomain": {
+            "type": "string",
+            "pattern": "^(?!-)[a-z0-9-]{1,63}(?<!-)$",
+            "description": "One DNS label: mail sends from mail.example.com. Lowercased."
+          }
+        }
+      },
+      "TransactionalSender": {
+        "type": "object",
+        "description": "An address on a transactional domain that your app sends from.",
+        "required": [
+          "object",
+          "id",
+          "from",
+          "display_name",
+          "domain_id",
+          "mailbox_id",
+          "reply_to",
+          "state",
+          "refuse_disposable",
+          "smtp_enabled",
+          "created_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "transactional_sender"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^txbind_[0-9a-z]{24}$"
+          },
+          "from": {
+            "type": "string",
+            "format": "email",
+            "description": "The sender address. Use it as from on POST /messages.",
+            "examples": ["hello@mail.example.com"]
+          },
+          "display_name": {
+            "type": "string",
+            "description": "The name recipients see."
+          },
+          "domain_id": {
+            "type": ["string", "null"],
+            "description": "The transactional domain (txdom_...)."
+          },
+          "mailbox_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The mailbox that receives replies."
+          },
+          "reply_to": {
+            "type": "string",
+            "format": "email",
+            "description": "The reply mailbox's address, set as Reply-To on every send."
+          },
+          "state": {
+            "type": "string",
+            "enum": ["active", "disabled", "revoked"],
+            "description": "Only an active sender sends. A revoked sender cannot change."
+          },
+          "refuse_disposable": {
+            "type": "boolean",
+            "description": "Whether sends to recipients on throwaway email domains are refused."
+          },
+          "smtp_enabled": {
+            "type": "boolean",
+            "description": "Whether the sender may send over SMTP. Its first SMTP credential turns this on, and it stays on after the credentials are revoked."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateTransactionalSenderRequest": {
+        "type": "object",
+        "required": ["domain_id", "mailbox_id", "local_part", "display_name"],
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^txdom_[0-9a-z]{24}$",
+            "description": "A verified transactional domain."
+          },
+          "mailbox_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The mailbox that receives replies. Its address becomes the sender's Reply-To."
+          },
+          "local_part": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "The part before @: hello sends from hello@mail.example.com. Lowercased."
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The name recipients see. No line breaks."
+          }
+        }
+      },
+      "UpdateTransactionalSenderRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "description": "At least one field.",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["active", "disabled"],
+            "description": "disabled turns the sender off; active turns it back on."
+          },
+          "mailbox_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Move the sender to another reply mailbox."
+          },
+          "refuse_disposable": {
+            "type": "boolean",
+            "description": "Refuse sends to recipients on throwaway email domains."
           }
         }
       },
@@ -16439,6 +19059,9 @@
           "booking.created",
           "subscriber.added",
           "newsletter.sent",
+          "newsletter.recipient.bounced",
+          "newsletter.recipient.complained",
+          "newsletter.recipient.unsubscribed",
           "draft.reviewed"
         ]
       },
@@ -16475,6 +19098,9 @@
           "booking.created",
           "subscriber.added",
           "newsletter.sent",
+          "newsletter.recipient.bounced",
+          "newsletter.recipient.complained",
+          "newsletter.recipient.unsubscribed",
           "draft.reviewed"
         ]
       },
@@ -16675,7 +19301,13 @@
       },
       "CapabilitiesResponse": {
         "type": "object",
-        "required": ["capability_version", "scopes", "constraints", "allowed_mcp_tools"],
+        "required": [
+          "capability_version",
+          "scopes",
+          "constraints",
+          "allowed_mcp_tools",
+          "organization"
+        ],
         "properties": {
           "capability_version": {
             "type": "string",
@@ -16720,6 +19352,29 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          },
+          "organization": {
+            "type": "object",
+            "required": ["default_timezone", "ai"],
+            "properties": {
+              "default_timezone": {
+                "type": ["string", "null"],
+                "description": "IANA time zone used when a request and the calendar of the person behind the credential name none. Null means Etc/UTC."
+              },
+              "ai": {
+                "type": "object",
+                "required": ["models_enabled", "automatic_send_enabled"],
+                "description": "Whether AI models and automatic sending are in effect for the organization now, after Shipmail's own switches.",
+                "properties": {
+                  "models_enabled": {
+                    "type": "boolean"
+                  },
+                  "automatic_send_enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
             }
           }
         }
@@ -18041,6 +20696,8 @@
           "has_attachment",
           "size",
           "authentication_results",
+          "category",
+          "out_of_office_until",
           "security"
         ],
         "properties": {
@@ -18119,10 +20776,79 @@
               }
             ]
           },
+          "category": {
+            "type": ["string", "null"],
+            "enum": [
+              "human",
+              "out_of_office",
+              "auto_reply",
+              "bounce",
+              "bulk",
+              "notification",
+              null
+            ],
+            "description": "What kind of mail this is, from its headers, sender address and subject: `human`, `out_of_office`, `auto_reply`, `bounce`, `bulk` (list and newsletter mail) or `notification` (a program's sender such as `no-reply@`). The sender controls these values, so use it for routing and never as a security decision. Null while the message is held."
+          },
+          "out_of_office_until": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The day an out-of-office sender says they are back, as `YYYY-MM-DD`, read from the reply in English, French or Spanish. Null for other mail or when the reply names no clear date."
+          },
           "security": {
             "$ref": "#/components/schemas/MessageSecurityMetadata"
           }
         }
+      },
+      "DeliveryStatus": {
+        "type": "object",
+        "required": ["status", "action", "diagnostic_code", "final_recipient", "reporting_mta"],
+        "description": "What a bounce or other delivery report (RFC 3464) says, parsed from its message/delivery-status part, for the first failed recipient or else the first.",
+        "properties": {
+          "status": {
+            "type": ["string", "null"],
+            "description": "Enhanced status code, such as 5.1.1."
+          },
+          "action": {
+            "type": ["string", "null"],
+            "description": "failed, delayed, delivered, relayed or expanded, in lowercase."
+          },
+          "diagnostic_code": {
+            "type": ["string", "null"],
+            "description": "The remote server's diagnostic, such as smtp; 550 5.1.1 User unknown."
+          },
+          "final_recipient": {
+            "type": ["string", "null"],
+            "description": "The address the report is about."
+          },
+          "reporting_mta": {
+            "type": ["string", "null"],
+            "description": "The server that wrote the report."
+          }
+        }
+      },
+      "InboxMessageDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/InboxFullMessage"
+          },
+          {
+            "type": "object",
+            "required": ["delivery_status"],
+            "properties": {
+              "delivery_status": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/DeliveryStatus"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Null for messages that are not delivery reports, and for messages held for security review. Only a single message read carries it, not lists or threads."
+              }
+            }
+          }
+        ]
       },
       "InboxFullMessage": {
         "type": "object",
@@ -18153,6 +20879,8 @@
           "attachments",
           "authentication_results",
           "reply_text",
+          "category",
+          "out_of_office_until",
           "security"
         ],
         "properties": {
@@ -18284,6 +21012,24 @@
                 "type": "null"
               }
             ]
+          },
+          "category": {
+            "type": ["string", "null"],
+            "enum": [
+              "human",
+              "out_of_office",
+              "auto_reply",
+              "bounce",
+              "bulk",
+              "notification",
+              null
+            ],
+            "description": "What kind of mail this is, from its headers, sender address and subject: `human`, `out_of_office`, `auto_reply`, `bounce`, `bulk` (list and newsletter mail) or `notification` (a program's sender such as `no-reply@`). The sender controls these values, so use it for routing and never as a security decision. Null while the message is held."
+          },
+          "out_of_office_until": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The day an out-of-office sender says they are back, as `YYYY-MM-DD`, read from the reply in English, French or Spanish. Null for other mail or when the reply names no clear date."
           },
           "reply_text": {
             "type": ["string", "null"],
@@ -18841,17 +21587,94 @@
           }
         }
       },
+      "UpdateInboxDraftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "description": "Name only what changes. text or html replaces the whole body. Files stay unless attachments is given.",
+        "properties": {
+          "to": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Recipient"
+            }
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recipient"
+            }
+          },
+          "bcc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recipient"
+            }
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 998
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 256000
+          },
+          "html": {
+            "type": "string",
+            "maxLength": 512000
+          },
+          "attachments": {
+            "$ref": "#/components/schemas/DraftAttachmentSelection"
+          }
+        }
+      },
+      "DraftAttachmentSelection": {
+        "type": "array",
+        "maxItems": 20,
+        "description": "Replaces the draft's files, in the order given. Leave it out to keep the files; [] removes them all. At most 20 files and 25 MB in total. An id that is not on the draft, a duplicate, more than 20 files or over 25 MB returns 422; a staged id that is invalid, expired, or belongs to another key or mailbox returns 404.",
+        "items": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "A file the draft has now, by the id the latest draft response returned."
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["staged_attachment_id"],
+              "properties": {
+                "staged_attachment_id": {
+                  "type": "string",
+                  "pattern": "^sat_",
+                  "description": "A file uploaded through the staged attachment flow."
+                }
+              }
+            }
+          ]
+        }
+      },
       "InboxDraft": {
         "type": "object",
         "required": [
           "object",
           "id",
+          "message_id",
           "mailbox_id",
           "from",
           "to",
           "cc",
           "bcc",
           "subject",
+          "html",
+          "text",
           "removed_formatting",
           "created_at",
           "review_url"
@@ -18863,7 +21686,11 @@
           },
           "id": {
             "type": "string",
-            "description": "Inbox message ID of the saved draft. Read it with GET /mailboxes/{id}/inbox/messages/{message_id}."
+            "description": "The draft's id. It stays the same when the draft is corrected."
+          },
+          "message_id": {
+            "type": "string",
+            "description": "Inbox message that holds the draft now. Read it with GET /mailboxes/{id}/inbox/messages/{message_id}. It changes with every correction."
           },
           "mailbox_id": {
             "type": "string"
@@ -18892,6 +21719,14 @@
           "subject": {
             "type": "string"
           },
+          "html": {
+            "type": ["string", "null"],
+            "description": "Stored HTML after sanitisation, or null for a plain-text draft."
+          },
+          "text": {
+            "type": ["string", "null"],
+            "description": "Stored text part."
+          },
           "removed_formatting": {
             "type": "array",
             "items": {
@@ -18906,14 +21741,18 @@
           "review_url": {
             "type": ["string", "null"],
             "format": "uri",
-            "description": "Link for a person to review this one draft and send it, or null for a test-mode key. The person must be signed in with access to the mailbox. Opening it sends nothing, and it stops working once the draft is sent, deleted or replaced."
+            "description": "Link for a person to review this one draft and send it, or null for a test-mode key. The person must be signed in with access to the mailbox. Opening it sends nothing, and it stops working once the draft is sent or deleted, or a person replaces it in the inbox. A correction through the API keeps it working."
           },
           "attachments": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name", "type", "size"],
+              "required": ["id", "name", "type", "size"],
               "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Names the file in the stored draft as it is now. It changes after every update; read the draft again for current ids."
+                },
                 "name": { "type": ["string", "null"] },
                 "type": { "type": "string" },
                 "size": { "type": "integer" }
@@ -18973,19 +21812,25 @@
           },
           {
             "required": ["html"]
+          },
+          {
+            "required": ["attachments"]
           }
         ],
-        "description": "The new body replaces the old one. html alone derives the text part; text alone makes a plain-text draft. Recipients, subject and reply headers stay derived from the source message.",
+        "description": "The new body replaces the old one. html alone derives the text part; text alone makes a plain-text draft. Send html, text or attachments; without html and text the body stays. Recipients, subject and reply headers stay derived from the source message.",
         "properties": {
           "text": {
             "type": "string",
             "maxLength": 256000,
-            "description": "Plain text body. At least one of html or text is required."
+            "description": "Plain text body."
           },
           "html": {
             "type": "string",
             "maxLength": 512000,
-            "description": "HTML body. At least one of html or text is required. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it."
+            "description": "HTML body. Supported HTML tags: p, br, strong/b, em/i, u, s, a (http, https, mailto, tel), ul, ol, li, blockquote, code, pre, h2, h3, span/mark with the composer's styles, and inline cid: images. h1 becomes h2. Tables and h4-h6 are not supported: their text stays as paragraphs and removed_formatting lists them (\"table\" for any table part, \"h4\", ...), as it lists other dropped elements such as script, style or iframe. Attributes and inline styles outside the composer set are dropped and not reported. Paragraphs are spaced like the Shipmail composer, so do not add <p><br></p> between them. When html is given without text, the text part is derived from it."
+          },
+          "attachments": {
+            "$ref": "#/components/schemas/DraftAttachmentSelection"
           }
         }
       },
@@ -19133,8 +21978,12 @@
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name", "type", "size"],
+              "required": ["id", "name", "type", "size"],
               "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Names the file in the stored draft as it is now. It changes after every update; read the draft again for current ids."
+                },
                 "name": { "type": ["string", "null"] },
                 "type": { "type": "string" },
                 "size": { "type": "integer" }
@@ -19832,9 +22681,12 @@
           "consent_source",
           "feed_enabled",
           "feed_url",
+          "view_in_browser_default",
           "cleanup_enabled",
           "cleanup_ignored_issues",
           "cleanup_inactive_days",
+          "confirmation_email_copy",
+          "last_chance_email_copy",
           "created_at",
           "updated_at"
         ],
@@ -19874,6 +22726,11 @@
             "nullable": true,
             "description": "Unguessable Shipmail Atom feed URL, or null when the feed is disabled."
           },
+          "view_in_browser_default": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether new issues created in the dashboard for this audience start with a View in browser link. API calls follow view_in_browser and archive_visibility instead."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -19897,6 +22754,62 @@
             "minimum": 30,
             "maximum": 3650,
             "description": "How many days without a sign of life (a human open or click, a reply, a confirmation, a signup again, a keep click) before a subscriber counts as cold. Default 180."
+          },
+          "confirmation_email_copy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmailCopy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This audience's own subject and message for the double opt-in confirmation email, per language. Null means the built-in wording."
+          },
+          "last_chance_email_copy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmailCopy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This audience's own subject and message for the list-cleanup last-chance email, per language. Null means the built-in wording."
+          }
+        }
+      },
+      "EmailCopy": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Custom wording for one audience email: a subject and a message per language (`en`, `fr`, `es`). Only the subject and the opening message change; the button and its label, the fallback link, the expiry and \"if you didn't sign up\" line, the \"last email\" line, the unsubscribe link, the business name and postal address, and the preheader stay fixed. A language left out uses the whole built-in email, and a reader whose email resolves to another language gets the built-in email in that language. If the organization stops qualifying (a paid plan, newsletter sending in good standing), sends fall back to the built-in wording without deleting it.",
+        "properties": {
+          "en": {
+            "$ref": "#/components/schemas/EmailCopyEntry"
+          },
+          "fr": {
+            "$ref": "#/components/schemas/EmailCopyEntry"
+          },
+          "es": {
+            "$ref": "#/components/schemas/EmailCopyEntry"
+          }
+        }
+      },
+      "EmailCopyEntry": {
+        "type": "object",
+        "required": ["subject", "message"],
+        "additionalProperties": false,
+        "description": "One language's wording. Both fields are required. Text is NFKC-normalized and trimmed. Refused, with the detail `code` in brackets: links or anything that works as one, such as `https://`, `www.`, bare domains like `example.com` or `bit.ly/x`, and spaced or spelled-out forms (`link`); email addresses (`email`); phone numbers of 7 or more digits (`phone`); invisible or direction-changing characters (`invisible`); a line break in the subject (`lineBreak`); text over the limit (`tooLong`); an empty field (`required`).",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "One line, plain text, at most 120 characters."
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 600,
+            "description": "Plain text, at most 600 characters. Line breaks are kept; a blank line starts a new paragraph."
           }
         }
       },
@@ -19983,6 +22896,8 @@
           "email_address",
           "display_name",
           "status",
+          "mailable",
+          "not_mailable_reasons",
           "merge_fields",
           "consent_source",
           "created_at",
@@ -20019,7 +22934,18 @@
               "transactional_only",
               "dormant"
             ],
-            "description": "dormant: stopped reading and did not answer the last-chance email of list cleanup. Newsletters skip dormant subscribers until they sign up again or click the keep link; resubscribe brings one back."
+            "description": "dormant: stopped reading and did not answer the last-chance email of list cleanup. Newsletters skip dormant subscribers until they sign up again or click the keep link; resubscribe brings one back. Status belongs to this audience; `mailable` reports the organization-wide block."
+          },
+          "mailable": {
+            "type": "boolean",
+            "description": "Whether the organization may send newsletters to this address now. False when the address has a newsletter opt-out or a suppression that blocks newsletters."
+          },
+          "not_mailable_reasons": {
+            "type": "array",
+            "description": "Why the address cannot receive newsletters, most decisive first. Empty when `mailable` is true.",
+            "items": {
+              "$ref": "#/components/schemas/SubscriberNotMailableReason"
+            }
           },
           "merge_fields": {
             "$ref": "#/components/schemas/MergeFields"
@@ -20038,9 +22964,66 @@
           }
         }
       },
+      "SubscriberNotMailableReason": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["reason", "source", "created_at", "newsletter_id", "test_send"],
+            "properties": {
+              "reason": {
+                "type": "string",
+                "const": "unsubscribed"
+              },
+              "source": {
+                "type": "string",
+                "const": "newsletter_optout"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "newsletter_id": {
+                "type": ["string", "null"],
+                "description": "The newsletter the reader unsubscribed from, when known."
+              },
+              "test_send": {
+                "type": "boolean",
+                "description": "True when the reader unsubscribed from a test send."
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["reason", "source", "created_at", "expires_at"],
+            "properties": {
+              "reason": {
+                "type": "string",
+                "enum": ["hard_bounce", "soft_bounce", "complaint", "manual"]
+              },
+              "source": {
+                "type": "string",
+                "const": "suppression"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "expires_at": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "When a soft-bounce pause ends, or null when the entry is permanent."
+              }
+            }
+          }
+        ],
+        "discriminator": {
+          "propertyName": "source"
+        },
+        "description": "One reason an address cannot receive newsletters: a newsletter opt-out or a suppression."
+      },
       "SubscriberResult": {
         "type": "object",
-        "description": "Per-row outcome. email_address echoes the normalized (trimmed, lowercased) address. Skip reasons are generic and never reveal suppression or opt-out state.",
+        "description": "Per-row outcome. email_address echoes the normalized (trimmed, lowercased) address. A `skipped_not_mailable` outcome carries `reason`.",
         "required": ["email_address", "outcome"],
         "properties": {
           "email_address": {
@@ -20057,6 +23040,18 @@
               "skipped_cap",
               "skipped_quota"
             ]
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "unsubscribed",
+              "complaint",
+              "hard_bounce",
+              "soft_bounce",
+              "manual",
+              "not_resubscribable_status"
+            ],
+            "description": "Present only when `outcome` is `skipped_not_mailable`. `not_resubscribable_status`: the subscriber is unsubscribed, bounced or complained in this audience, and only resubscribe changes that."
           }
         }
       },
@@ -20095,6 +23090,10 @@
             "maxLength": 2000,
             "nullable": true
           },
+          "view_in_browser_default": {
+            "type": "boolean",
+            "description": "Whether new issues for this audience start with a View in browser link."
+          },
           "cleanup_enabled": {
             "type": "boolean"
           },
@@ -20107,6 +23106,28 @@
             "type": "integer",
             "minimum": 30,
             "maximum": 3650
+          },
+          "confirmation_email_copy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmailCopy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Replaces the confirmation email's wording. A language left out uses the built-in wording; `null` or `{}` clears it; omit to leave it unchanged. Adding or changing text needs a paid plan (a trial does not count) and newsletter sending in good standing, otherwise 403 `authorization_error` with a detail code `plan` or `standing`. Removing text is always allowed. Rule violations return 422 with one detail per field, such as `confirmation_email_copy.fr.message` with code `link`."
+          },
+          "last_chance_email_copy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmailCopy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Replaces the list-cleanup last-chance email's wording, with the same rules as `confirmation_email_copy`."
           }
         }
       },
@@ -20205,6 +23226,57 @@
           },
           "merge_fields": {
             "$ref": "#/components/schemas/MergeFields"
+          }
+        }
+      },
+      "ResubscribeNewsletterOptOutRequest": {
+        "type": "object",
+        "required": ["consent_source"],
+        "properties": {
+          "consent_source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Where and how the reader opted in again."
+          }
+        }
+      },
+      "NewsletterOptOutLift": {
+        "type": "object",
+        "required": [
+          "object",
+          "email_address",
+          "consent_source",
+          "consent_attested_at",
+          "opted_out_at",
+          "newsletter_id"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "enum": ["newsletter_opt_out_lift"]
+          },
+          "email_address": {
+            "type": "string",
+            "format": "email"
+          },
+          "consent_source": {
+            "type": "string",
+            "description": "Where and how the reader opted in again."
+          },
+          "consent_attested_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the opt-out was lifted with this consent."
+          },
+          "opted_out_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the lifted opt-out was recorded."
+          },
+          "newsletter_id": {
+            "type": ["string", "null"],
+            "description": "The newsletter the reader had unsubscribed from, when known."
           }
         }
       },
@@ -20315,6 +23387,7 @@
           "spf_status",
           "dmarc_status",
           "verified_at",
+          "dns_records",
           "created_at",
           "updated_at"
         ],
@@ -20369,6 +23442,13 @@
             "type": ["string", "null"],
             "format": "date-time"
           },
+          "dns_records": {
+            "type": "array",
+            "description": "The records to publish at your DNS host before verifying.",
+            "items": {
+              "$ref": "#/components/schemas/NewsletterDomainDnsRecord"
+            }
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -20376,6 +23456,67 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "NewsletterDomainDnsRecord": {
+        "type": "object",
+        "required": ["key", "type", "host", "value", "priority", "ttl", "description"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": ["dkim", "mail_from_mx", "mail_from_spf", "dmarc"]
+          },
+          "type": {
+            "type": "string",
+            "enum": ["CNAME", "MX", "TXT"]
+          },
+          "host": {
+            "type": "string",
+            "description": "The full record name."
+          },
+          "value": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Set for MX records."
+          },
+          "ttl": {
+            "type": "integer",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateNewsletterDomainRequest": {
+        "type": "object",
+        "required": ["root_domain", "reply_to_address"],
+        "properties": {
+          "root_domain": {
+            "type": "string",
+            "description": "The domain you own, e.g. example.com."
+          },
+          "subdomain": {
+            "type": "string",
+            "default": "news",
+            "description": "A label under root_domain (news, updates, announce, hello or your own) or the full subdomain name."
+          },
+          "from_local_part": {
+            "type": "string",
+            "default": "updates",
+            "description": "The part before @ in the From address."
+          },
+          "reply_to_address": {
+            "type": "string",
+            "format": "email",
+            "description": "Where reader replies go. It cannot be a temporary try.shipmail.to inbox."
+          },
+          "reply_to_name": {
+            "type": "string"
           }
         }
       },
@@ -20441,6 +23582,70 @@
           }
         }
       },
+      "CreateNewsletterSenderIdentityRequest": {
+        "type": "object",
+        "required": ["newsletter_domain_id", "from_name", "business_name"],
+        "properties": {
+          "newsletter_domain_id": {
+            "type": "string",
+            "description": "Newsletter domain ID (nwsdom_...)."
+          },
+          "from_name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "business_name": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "The sender's legal or trading name, shown in the footer."
+          },
+          "postal_address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "footer_text": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "make_default": {
+            "type": "boolean",
+            "description": "`true` makes this the organization's default identity. `false` keeps it from being the default, even when it is the first one. Omitted, it becomes the default only when the organization has none yet, so the first identity is the default."
+          }
+        }
+      },
+      "UpdateNewsletterSenderIdentityRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "newsletter_domain_id": {
+            "type": "string"
+          },
+          "from_name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "business_name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "postal_address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "footer_text": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "make_default": {
+            "type": "boolean",
+            "description": "`true` makes this the organization's default identity. `false` stops it being the default, leaving the organization without one until another is chosen. Omitted, the default is unchanged, unless the organization has none, in which case this identity becomes it."
+          }
+        }
+      },
       "Newsletter": {
         "type": "object",
         "required": [
@@ -20453,6 +23658,7 @@
           "status",
           "archive_visibility",
           "publish_target",
+          "view_in_browser",
           "feed_entry_url",
           "styling_mode",
           "track_engagement",
@@ -20539,12 +23745,17 @@
           },
           "archive_visibility": {
             "type": "string",
-            "enum": ["private", "public"]
+            "enum": ["private", "public"],
+            "description": "public: the issue is listed on the audience's newsletter website and in its Atom feed. A website issue is always listed and an email issue never is. The View in browser link is view_in_browser."
           },
           "publish_target": {
             "type": "string",
             "enum": ["email_and_website", "email", "website"],
-            "description": "Where the newsletter goes. email_and_website (default) sends it, and archive_visibility decides whether it also appears on the website and feed. email never appears on the web: no archive page, website, sitemap, feed entry or View in browser link. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the website must be on."
+            "description": "Where the newsletter goes. email_and_website (default) sends it, and lists it on the audience's newsletter website and Atom feed when archive_visibility is public. email is never listed on the website, sitemap or feed. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the audience needs its website or its feed on."
+          },
+          "view_in_browser": {
+            "type": "boolean",
+            "description": "Whether the email carries a View in browser link to the issue's own page (/n/<token>). Independent of the website and the feed. A website-only issue sends no email, so it never has the link."
           },
           "feed_entry_url": {
             "type": ["string", "null"],
@@ -20726,13 +23937,17 @@
           "archive_visibility": {
             "type": "string",
             "enum": ["private", "public"],
-            "default": "private"
+            "description": "public lists an email_and_website issue on the audience's newsletter website and in its Atom feed. Defaults to private. A website issue is always listed and an email issue never is. When view_in_browser is omitted, a public email_and_website issue also gets the View in browser link."
           },
           "publish_target": {
             "type": "string",
             "enum": ["email_and_website", "email", "website"],
             "default": "email_and_website",
-            "description": "Where the newsletter goes. email_and_website (default) sends it, and archive_visibility decides whether it also appears on the website and feed. email never appears on the web: no archive page, website, sitemap, feed entry or View in browser link. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the website must be on."
+            "description": "Where the newsletter goes. email_and_website (default) sends it, and lists it on the audience's newsletter website and Atom feed when archive_visibility is public. email is never listed on the website, sitemap or feed. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the audience needs its website or its feed on."
+          },
+          "view_in_browser": {
+            "type": "boolean",
+            "description": "Whether the email carries a View in browser link to the issue's own page. Anyone with the link can open that page. When omitted, it is true for a public email_and_website issue and false otherwise, as in earlier v1 releases. A website issue sends no email, so it never has the link."
           },
           "feed_entry_url": {
             "type": ["string", "null"],
@@ -20824,12 +24039,16 @@
           "archive_visibility": {
             "type": "string",
             "enum": ["private", "public"],
-            "default": "private"
+            "description": "public lists the issue on the audience's newsletter website and in its Atom feed, private removes it. Changing it without view_in_browser also sets view_in_browser to match, as before."
           },
           "publish_target": {
             "type": "string",
             "enum": ["email_and_website", "email", "website"],
-            "description": "Where the newsletter goes. email_and_website (default) sends it, and archive_visibility decides whether it also appears on the website and feed. email never appears on the web: no archive page, website, sitemap, feed entry or View in browser link. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the website must be on."
+            "description": "Where the newsletter goes. email_and_website (default) sends it, and lists it on the audience's newsletter website and Atom feed when archive_visibility is public. email is never listed on the website, sitemap or feed. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the audience needs its website or its feed on."
+          },
+          "view_in_browser": {
+            "type": "boolean",
+            "description": "Whether the email carries a View in browser link to the issue's own page. Anyone with the link can open that page. When omitted, it keeps the current value, unless archive_visibility changes in the same request: then it is true for a public email_and_website issue and false otherwise."
           },
           "feed_entry_url": {
             "type": ["string", "null"],
@@ -20956,6 +24175,107 @@
             "type": ["string", "null"]
           },
           "sent_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NewsletterRecipient": {
+        "type": "object",
+        "description": "One reader of a newsletter issue: whether it was sent, skipped and why, and what happened after.",
+        "required": [
+          "object",
+          "id",
+          "newsletter_id",
+          "email_address",
+          "status",
+          "reason",
+          "subscriber_id",
+          "sent_at",
+          "delivered_at",
+          "bounced_at",
+          "complained_at",
+          "unsubscribed_at",
+          "created_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "newsletter_recipient"
+          },
+          "id": {
+            "type": "string",
+            "description": "Recipient ID (nwsrcp_...)."
+          },
+          "newsletter_id": {
+            "type": "string"
+          },
+          "email_address": {
+            "type": "string",
+            "format": "email"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "retrying",
+              "sending",
+              "sent",
+              "delivered",
+              "bounced",
+              "complained",
+              "failed",
+              "skipped",
+              "unsubscribed"
+            ]
+          },
+          "reason": {
+            "type": ["string", "null"],
+            "enum": [
+              "opted_out",
+              "suppressed",
+              "never_email",
+              "undeliverable_domain",
+              "dormant",
+              "last_chance_waiting",
+              "no_longer_eligible",
+              "cancelled",
+              "content_in_review",
+              "email_removed",
+              "skipped_other",
+              "bounced",
+              "complained",
+              "unsubscribed",
+              "send_failed",
+              null
+            ],
+            "description": "Why the reader was skipped, or what ended the delivery. Null while the email is on its way or delivered. The raw error text from the receiving server is never returned."
+          },
+          "subscriber_id": {
+            "type": ["string", "null"],
+            "description": "Subscriber ID (audmem_...), or null when the subscriber was removed."
+          },
+          "sent_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "delivered_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "bounced_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "complained_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "unsubscribed_at": {
             "type": ["string", "null"],
             "format": "date-time"
           },
@@ -21615,6 +24935,26 @@
           {
             "type": "object",
             "additionalProperties": false,
+            "required": ["type", "event_id"],
+            "description": "An event's card: title, date and time in the event's time zone, location, and places left when capped, with Going and Not going buttons. Each email recipient gets their own answer links; the website, archive and test sends link to the event's public page, or show no buttons when the public page is off. Only an event of the newsletter's own organization and audience renders; any other event_id renders nothing. Events are created in the dashboard.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "event"
+              },
+              "event_id": {
+                "type": "string",
+                "pattern": "^nwsevt_[0-9a-z]{24}$",
+                "description": "A newsletter event (nwsevt_)."
+              },
+              "visibility": {
+                "$ref": "#/components/schemas/NewsletterBlockVisibility"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
             "required": ["type", "html"],
             "properties": {
               "type": {
@@ -21738,14 +25078,54 @@
           }
         }
       },
+      "NewsletterPreviewRequest": {
+        "type": "object",
+        "properties": {
+          "preview_as": {
+            "description": "Whom to render the email for. Defaults to `{ \"type\": \"sample\" }`, a sample reader.",
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["type"],
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "sample"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": ["type", "subscriber_id"],
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "subscriber"
+                  },
+                  "subscriber_id": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "description": "Subscriber ID (audmem_...). Needs the `audiences:read` scope."
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "NewsletterPreview": {
         "type": "object",
         "required": [
           "object",
           "newsletter_id",
+          "subject",
           "html",
-          "archive_html",
           "text",
+          "headers",
+          "archive_html",
           "warnings",
           "url_breakdown"
         ],
@@ -21757,14 +25137,32 @@
           "newsletter_id": {
             "type": "string"
           },
-          "html": {
-            "type": "string"
+          "subject": {
+            "type": "string",
+            "description": "The subject line with merge tags filled in for the reader."
           },
-          "archive_html": {
-            "type": "string"
+          "html": {
+            "type": "string",
+            "description": "The HTML part exactly as delivered, footer and unsubscribe link included."
           },
           "text": {
-            "type": "string"
+            "type": "string",
+            "description": "The plain-text part exactly as delivered, footer and unsubscribe link included."
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Headers the send adds, by name: `List-Unsubscribe`, `List-Unsubscribe-Post` and, when set, `Reply-To`.",
+            "example": {
+              "List-Unsubscribe": "<https://shipmail.to/u/...>",
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"
+            }
+          },
+          "archive_html": {
+            "type": "string",
+            "description": "The body as the public archive shows it."
           },
           "warnings": {
             "type": "array",
@@ -22223,13 +25621,17 @@
           "archive_visibility": {
             "type": "string",
             "enum": ["private", "public"],
-            "default": "private"
+            "description": "public lists an email_and_website issue on the audience's newsletter website and in its Atom feed. Defaults to private. A website issue is always listed and an email issue never is. When view_in_browser is omitted, a public email_and_website issue also gets the View in browser link."
           },
           "publish_target": {
             "type": "string",
             "enum": ["email_and_website", "email", "website"],
             "default": "email_and_website",
-            "description": "Where the newsletter goes. email_and_website (default) sends it, and archive_visibility decides whether it also appears on the website and feed. email never appears on the web: no archive page, website, sitemap, feed entry or View in browser link. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the website must be on."
+            "description": "Where the newsletter goes. email_and_website (default) sends it, and lists it on the audience's newsletter website and Atom feed when archive_visibility is public. email is never listed on the website, sitemap or feed. website is published on the audience's newsletter website and feed at the scheduled time without any email, uses no sends, and ends in the published status; the audience needs its website or its feed on."
+          },
+          "view_in_browser": {
+            "type": "boolean",
+            "description": "Whether the email carries a View in browser link to the issue's own page. Anyone with the link can open that page. When omitted, it is true for a public email_and_website issue and false otherwise, as in earlier v1 releases. A website issue sends no email, so it never has the link."
           },
           "feed_entry_url": {
             "type": ["string", "null"],
@@ -22254,7 +25656,23 @@
           },
           "status": {
             "type": "string",
-            "enum": ["sent", "failed", "unknown"]
+            "enum": ["sent", "failed", "unknown"],
+            "description": "sent and failed are final. unknown means the submission may or may not have reached the mail server; retrying the same operation_key settles it."
+          }
+        }
+      },
+      "CalendarInvitationSkip": {
+        "type": "object",
+        "required": ["recipient", "reason"],
+        "properties": {
+          "recipient": {
+            "type": "string",
+            "format": "email"
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["send_invitations_false", "send_guest_updates_false"],
+            "description": "The request turned invitations (create) or guest updates (update) off, so no message was attempted."
           }
         }
       },
@@ -22265,7 +25683,7 @@
           },
           {
             "type": "object",
-            "required": ["invitation_outcomes", "invitation_failures"],
+            "required": ["invitation_outcomes", "invitation_skipped", "invitation_failures"],
             "properties": {
               "invitation_outcomes": {
                 "type": "array",
@@ -22274,17 +25692,100 @@
                 },
                 "description": "Per-recipient delivery outcome for this mutation."
               },
+              "invitation_skipped": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CalendarInvitationSkip"
+                },
+                "description": "Attendees who were not emailed because the request set send_invitations or send_guest_updates to false. They are not in invitation_outcomes or invitation_failures, and a retry does not send to them."
+              },
               "invitation_failures": {
                 "type": "array",
                 "items": {
                   "type": "string",
                   "format": "email"
                 },
-                "description": "Compatibility list of failed and unknown recipients."
+                "description": "Compatibility list of failed and unknown recipients. Skipped recipients are not failures and are not listed."
               }
             }
           }
         ]
+      },
+      "Organization": {
+        "type": "object",
+        "required": ["object", "id", "name", "default_timezone"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "organization"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "default_timezone": {
+            "type": ["string", "null"],
+            "description": "IANA time zone used when a request and the calendar of the person behind the credential name none. Null means Etc/UTC."
+          }
+        }
+      },
+      "UpdateOrganizationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["default_timezone"],
+        "properties": {
+          "default_timezone": {
+            "type": ["string", "null"],
+            "description": "An IANA time zone such as Europe/Paris, or null to clear it so requests fall back to Etc/UTC.",
+            "examples": ["Europe/Paris"]
+          }
+        }
+      },
+      "OrganizationAiSettings": {
+        "type": "object",
+        "required": ["object", "models_enabled", "automatic_send_enabled", "effective"],
+        "properties": {
+          "object": {
+            "type": "string",
+            "const": "organization_ai_settings"
+          },
+          "models_enabled": {
+            "type": "boolean",
+            "description": "The organization's own switch for AI features."
+          },
+          "automatic_send_enabled": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Read-only. Whether automations may send AI-drafted replies without review for this organization. Off, they save a draft instead. The API cannot change it."
+          },
+          "effective": {
+            "type": "object",
+            "required": ["models_enabled", "automatic_send_enabled"],
+            "description": "Whether each switch is in effect now. Shipmail can hold either off for every organization.",
+            "properties": {
+              "models_enabled": {
+                "type": "boolean"
+              },
+              "automatic_send_enabled": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "UpdateOrganizationAiSettingsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["models_enabled"],
+        "description": "automatic_send_enabled is read-only; a request that includes it is refused with a 422 validation error.",
+        "properties": {
+          "models_enabled": {
+            "type": "boolean",
+            "description": "Turn AI features on or off for the organization."
+          }
+        }
       },
       "OrganizationAccess": {
         "type": "object",
@@ -22304,13 +25805,17 @@
           },
           "organization": {
             "type": "object",
-            "required": ["id", "name"],
+            "required": ["id", "name", "default_timezone"],
             "properties": {
               "id": {
                 "type": "string"
               },
               "name": {
                 "type": "string"
+              },
+              "default_timezone": {
+                "type": ["string", "null"],
+                "description": "IANA time zone used when a request and the calendar of the person behind the credential name none. Null means Etc/UTC."
               }
             }
           },
@@ -23773,6 +27278,10 @@
       "description": "API health check."
     },
     {
+      "name": "Organization",
+      "description": "Organization settings: the default time zone and AI switches."
+    },
+    {
       "name": "Domains",
       "description": "Manage custom email domains."
     },
@@ -23783,6 +27292,10 @@
     {
       "name": "Messages",
       "description": "Send email and retrieve messages."
+    },
+    {
+      "name": "Transactional Email",
+      "description": "Sending subdomains and sender addresses for your app's transactional email."
     },
     {
       "name": "SMTP Credentials",

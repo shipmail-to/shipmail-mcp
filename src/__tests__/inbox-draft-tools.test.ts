@@ -37,14 +37,18 @@ function stubFetch(handler: StubFetch): typeof fetch {
 const INBOX_DRAFT = {
   object: "inbox_draft",
   id: "eml_draft_1",
+  message_id: "eml_draft_1",
   mailbox_id: MAILBOX_ID,
   from: { address: "founder@example.com", name: null },
   to: [{ address: "jane@example.com", name: "Jane" }],
   cc: [],
   bcc: [],
   subject: "Quick intro",
+  html: null,
+  text: "Hi Jane,",
   removed_formatting: [],
   created_at: "2026-09-24T12:00:00.000Z",
+  attachments: [{ id: "blob_1", name: "deck.pdf", type: "application/pdf", size: 2048 }],
 };
 
 const REPLY_DRAFT = {
@@ -160,6 +164,65 @@ describe("shipmail_create_draft", () => {
     ]);
     expect(result.structuredContent).toMatchObject({
       inbox_draft: { object: "inbox_draft", id: "eml_draft_1" },
+    });
+  });
+
+  test("corrects a saved draft through its own path", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured);
+
+    const result = await client.callTool({
+      name: "shipmail_update_draft",
+      arguments: { id: MAILBOX_ID, draft_id: "eml_draft_1", text: "Hi Jane, thanks." },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(captured[0]).toMatchObject({
+      method: "PATCH",
+      path: `/api/v1/mailboxes/${MAILBOX_ID}/inbox/drafts/eml_draft_1`,
+      body: { text: "Hi Jane, thanks." },
+    });
+    expect(result.structuredContent).toMatchObject({
+      inbox_draft: { object: "inbox_draft", id: "eml_draft_1" },
+    });
+  });
+
+  test("reads, deletes and replaces the files of a saved draft", async () => {
+    const captured: CapturedRequest[] = [];
+    const client = await buildPair(captured, undefined, (method) =>
+      method === "DELETE" ? new Response(null, { status: 204 }) : Response.json(INBOX_DRAFT),
+    );
+
+    const read = await client.callTool({
+      name: "shipmail_get_draft",
+      arguments: { id: MAILBOX_ID, draft_id: "eml_draft_1" },
+    });
+    expect(read.isError).toBeFalsy();
+    expect(read.structuredContent).toMatchObject({
+      inbox_draft: { text: "Hi Jane,", attachments: [{ id: "blob_1" }] },
+    });
+    const update = await client.callTool({
+      name: "shipmail_update_draft",
+      arguments: {
+        id: MAILBOX_ID,
+        draft_id: "eml_draft_1",
+        attachments: [{ id: "blob_1" }, { staged_attachment_id: "sat_2" }],
+      },
+    });
+    expect(update.isError).toBeFalsy();
+    const removed = await client.callTool({
+      name: "shipmail_delete_draft",
+      arguments: { id: MAILBOX_ID, draft_id: "eml_draft_1" },
+    });
+    expect(removed.isError).toBeFalsy();
+
+    expect(captured.map((request) => `${request.method} ${request.path}`)).toEqual([
+      `GET /api/v1/mailboxes/${MAILBOX_ID}/inbox/drafts/eml_draft_1`,
+      `PATCH /api/v1/mailboxes/${MAILBOX_ID}/inbox/drafts/eml_draft_1`,
+      `DELETE /api/v1/mailboxes/${MAILBOX_ID}/inbox/drafts/eml_draft_1`,
+    ]);
+    expect(captured[1]?.body).toEqual({
+      attachments: [{ id: "blob_1" }, { staged_attachment_id: "sat_2" }],
     });
   });
 

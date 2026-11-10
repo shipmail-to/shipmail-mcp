@@ -23,11 +23,16 @@ import type {
   CreateNewsletterParams,
   CreateSmtpCredentialParams,
   CreateTemplateParams,
+  CreateTransactionalDomainParams,
+  CreateTransactionalSenderParams,
   CreateWebhookParams,
   InjectSandboxInboundParams,
   ListInboxMessagesParams,
   ListInboxThreadsParams,
+  ListNewsletterRecipientsParams,
+  ListSuppressionsParams,
   MoveInboxMessageParams,
+  PreviewNewsletterParams,
   RenderTemplateParams,
   ReplyToMessageParams,
   ReplyToThreadParams,
@@ -36,6 +41,7 @@ import type {
   SearchDomainsParams,
   SendMessageParams,
   SendNewsletterTestParams,
+  TestAutomationParams,
   UpdateAudienceFeedParams,
   UpdateAutomationParams,
   UpdateAutoReplyParams,
@@ -46,7 +52,10 @@ import type {
   UpdateMailboxFolderParams,
   UpdateMailboxParams,
   UpdateNewsletterParams,
+  UpdateOrganizationAiSettingsParams,
+  UpdateOrganizationParams,
   UpdateTemplateParams,
+  UpdateTransactionalSenderParams,
   UpdateWebhookParams,
 } from "shipmail";
 import type { z } from "zod/v4";
@@ -66,11 +75,16 @@ import type {
   createNewsletterInputSchema,
   createSmtpCredentialInputSchema,
   createTemplateInputSchema,
+  createTransactionalDomainInputSchema,
+  createTransactionalSenderInputSchema,
   createWebhookInputSchema,
   injectSandboxInboundInputSchema,
   listMailboxInboxMessagesInputSchema,
   listMailboxInboxThreadsInputSchema,
+  listNewsletterRecipientsInputSchema,
+  listSuppressionsInputSchema,
   moveInboxMessageInputSchema,
+  previewNewsletterInputSchema,
   previewTemplateInputSchema,
   replyToMessageInputSchema,
   replyToThreadInputSchema,
@@ -79,6 +93,7 @@ import type {
   searchDomainsInputSchema,
   sendMessageInputSchema,
   sendNewsletterTestInputSchema,
+  testAutomationInputSchema,
   updateAudienceFeedInputSchema,
   updateAutomationInputSchema,
   updateBookingPageInputSchema,
@@ -88,7 +103,10 @@ import type {
   updateMailboxFolderInputSchema,
   updateMailboxInputSchema,
   updateNewsletterInputSchema,
+  updateOrganizationAiSettingsInputSchema,
+  updateOrganizationInputSchema,
   updateTemplateInputSchema,
+  updateTransactionalSenderInputSchema,
   updateWebhookInputSchema,
 } from "../schemas.js";
 
@@ -129,6 +147,12 @@ type _CreateAutomation = AssertTrue<
 type _UpdateAutomation = AssertTrue<
   KeysMatch<UpdateAutomationParams, StripMcpOnly<z.infer<typeof updateAutomationInputSchema>>>
 >;
+type _TestAutomation = AssertTrue<
+  KeysMatch<
+    TestAutomationParams,
+    StripMcpOnlyKeepFolderId<z.infer<typeof testAutomationInputSchema>>
+  >
+>;
 type _CreateBookingPage = AssertTrue<
   KeysMatch<CreateBookingPageParams, StripMcpOnly<z.infer<typeof createBookingPageInputSchema>>>
 >;
@@ -166,6 +190,33 @@ type _CreateSmtpCredential = AssertTrue<
   KeysMatch<
     CreateSmtpCredentialParams,
     StripMcpOnly<z.infer<typeof createSmtpCredentialInputSchema>>
+  >
+>;
+type _CreateTransactionalDomain = AssertTrue<
+  KeysMatch<
+    CreateTransactionalDomainParams,
+    StripMcpOnly<z.infer<typeof createTransactionalDomainInputSchema>>
+  >
+>;
+type _CreateTransactionalSender = AssertTrue<
+  KeysMatch<
+    CreateTransactionalSenderParams,
+    StripMcpOnly<z.infer<typeof createTransactionalSenderInputSchema>>
+  >
+>;
+type _UpdateOrganization = AssertTrue<
+  KeysMatch<UpdateOrganizationParams, StripMcpOnly<z.infer<typeof updateOrganizationInputSchema>>>
+>;
+type _UpdateOrganizationAiSettings = AssertTrue<
+  KeysMatch<
+    UpdateOrganizationAiSettingsParams,
+    StripMcpOnly<z.infer<typeof updateOrganizationAiSettingsInputSchema>>
+  >
+>;
+type _UpdateTransactionalSender = AssertTrue<
+  KeysMatch<
+    UpdateTransactionalSenderParams,
+    StripMcpOnly<z.infer<typeof updateTransactionalSenderInputSchema>>
   >
 >;
 type _CreateMailboxForwarding = AssertTrue<
@@ -243,6 +294,18 @@ type _SendNewsletterTest = AssertTrue<
 type _ScheduleNewsletter = AssertTrue<
   KeysMatch<ScheduleNewsletterParams, StripMcpOnly<z.infer<typeof scheduleNewsletterInputSchema>>>
 >;
+type _PreviewNewsletter = AssertTrue<
+  KeysMatch<PreviewNewsletterParams, StripMcpOnly<z.infer<typeof previewNewsletterInputSchema>>>
+>;
+type _ListNewsletterRecipients = AssertTrue<
+  KeysMatch<
+    ListNewsletterRecipientsParams,
+    StripMcpOnly<z.infer<typeof listNewsletterRecipientsInputSchema>>
+  >
+>;
+type _ListSuppressions = AssertTrue<
+  KeysMatch<ListSuppressionsParams, z.infer<typeof listSuppressionsInputSchema>>
+>;
 type _CreateWebhook = AssertTrue<
   KeysMatch<CreateWebhookParams, StripMcpOnly<z.infer<typeof createWebhookInputSchema>>>
 >;
@@ -270,6 +333,7 @@ type _AllChecks = [
   _CreateEventQueue,
   _CreateAutomation,
   _UpdateAutomation,
+  _TestAutomation,
   _UpdateAudienceFeed,
   _CreateBookingPage,
   _UpdateBookingPage,
@@ -282,6 +346,11 @@ type _AllChecks = [
   _CreateMailboxAppPassword,
   _CreateMailboxForwarding,
   _CreateSmtpCredential,
+  _CreateTransactionalDomain,
+  _CreateTransactionalSender,
+  _UpdateTransactionalSender,
+  _UpdateOrganization,
+  _UpdateOrganizationAiSettings,
   _UpdateMailbox,
   _InjectSandboxInbound,
   _CreateMailboxFolder,
@@ -300,6 +369,9 @@ type _AllChecks = [
   _UpdateNewsletter,
   _SendNewsletterTest,
   _ScheduleNewsletter,
+  _PreviewNewsletter,
+  _ListNewsletterRecipients,
+  _ListSuppressions,
   _CreateWebhook,
   _UpdateWebhook,
   _CreateTemplate,
@@ -348,7 +420,16 @@ describe("SDK request params / MCP input schema alignment", () => {
       true,
       true,
       true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
     ];
-    if (checks.length !== 38) throw new Error("alignment matrix size changed");
+    if (checks.length !== 47) throw new Error("alignment matrix size changed");
   });
 });
